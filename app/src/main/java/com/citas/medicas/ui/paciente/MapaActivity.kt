@@ -76,7 +76,8 @@ class MapaActivity : AppCompatActivity() {
     private fun cargarUnidades() {
         lifecycleScope.launch {
             try {
-                val response = RetrofitClient.apiService.getUnidadesMapa()
+                val apiService = RetrofitClient.getApiService(this@MapaActivity)
+                val response = apiService.getUnidadesMapa()
 
                 if (response.isSuccessful && response.body()?.exito == true) {
                     val datos = response.body()?.datos

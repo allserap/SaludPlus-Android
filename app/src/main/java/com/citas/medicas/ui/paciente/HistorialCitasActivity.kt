@@ -95,7 +95,8 @@ class HistorialCitasActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             try {
-                val response = RetrofitClient.apiService.getHistorialCitas(pacienteIdId)
+                val apiService = RetrofitClient.getApiService(this@HistorialCitasActivity)
+                val response = apiService.getHistorialCitas(pacienteIdId)
 
                 if (response.isSuccessful && response.body()?.exito == true) {
                     val datos = response.body()?.datos

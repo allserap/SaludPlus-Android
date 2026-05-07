@@ -18,6 +18,21 @@
         android:padding="16dp">
 
         <TextView
+            android:id="@+id/tvEstado"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Activo"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:textColor="#027A48"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="4dp"
+            android:background="@drawable/bg_input_border"
+            android:backgroundTint="#D1FADF"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
+        <TextView
             android:id="@+id/tvIniciales"
             android:layout_width="52dp"
             android:layout_height="52dp"
@@ -41,9 +56,9 @@
             android:layout_marginEnd="16dp"
             android:backgroundTint="@color/citas_white"
             app:layout_constraintStart_toEndOf="@id/tvIniciales"
-            app:layout_constraintEnd_toStartOf="@+id/lytEstado"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent">
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/tvEstado">
 
             <TextView
                 android:id="@+id/tvNombre"
@@ -53,6 +68,15 @@
                 android:textColor="#030229"
                 android:textSize="16sp"
                 android:fontFamily="sans-serif-medium"/>
+
+            <TextView
+                android:id="@+id/tvUnidadMedica"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="ISSS San Jacinto"
+                android:textColor="@color/citas_primary"
+                android:textSize="14sp"
+                android:textStyle="bold"/>
 
             <TextView
                 android:id="@+id/tvEspecialidad"
@@ -76,5 +100,6 @@
                 android:backgroundTint="#E0EAFF"
                 android:textColor="#3538CD"/>
         </LinearLayout>
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 </com.google.android.material.card.MaterialCardView>

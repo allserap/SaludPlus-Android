@@ -8,11 +8,13 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.citas.medicas.data.RetrofitClient
 import com.citas.medicas.databinding.ActivityLoginBinding
+import com.citas.medicas.models.ErrorResponse
 import com.citas.medicas.models.LoginRequest
 import com.citas.medicas.ui.admin.DashboardAdminActivity
 import com.citas.medicas.ui.medico.DashboardMedicoActivity
 import com.citas.medicas.ui.paciente.HomePacienteActivity
 import com.citas.medicas.utils.RolesUsuario
+import com.google.gson.Gson
 import kotlinx.coroutines.launch
 
 class LoginActivity : AppCompatActivity() {
@@ -61,48 +63,54 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun ejecutarLogin(usuario: String, clave: String) {
-        //temporal
-        when {
-            usuario == "admin@citas.com" && clave == "admin123" -> {
-                persistirYNAvegar("admin_01", "Administrador", RolesUsuario.ADMIN, DashboardAdminActivity::class.java)
-                return
-            }
-            usuario == "medico@citas.com" && clave == "medico123" -> {
-                persistirYNAvegar("med_01", "Roberto Flores", RolesUsuario.MEDICO, DashboardMedicoActivity::class.java)
-                return
-            }
+        val request = when (idRol) {
+            RolesUsuario.PACIENTE -> LoginRequest(numAfiliado = usuario, password = clave, rolId = idRol)
+            RolesUsuario.MEDICO -> LoginRequest(numJvpm = usuario, password = clave, rolId = idRol)
+            RolesUsuario.ADMIN -> LoginRequest(email = usuario, password = clave, rolId = idRol)
+            else -> LoginRequest(password = clave, rolId = idRol)
         }
-
-        val request = LoginRequest(usuario, clave, idRol)
 
         lifecycleScope.launch {
             try {
-                val response = RetrofitClient.apiService.loginUsuario(request)
+                val response = RetrofitClient.getApiService(this@LoginActivity).loginUsuario(request)
 
                 if (response.isSuccessful && response.body()?.success == true) {
                     val loginResponse = response.body()!!
                     val user = loginResponse.data
+                    val tokenExtraido = user?.token
 
                     // --- PERSISTENCIA DE DATOS ---
                     val prefs = getSharedPreferences("CitasMedicasPrefs", MODE_PRIVATE)
                     with(prefs.edit()) {
-                        putString("user_id", user?.id)
+                        putString("user_usuarioid", user?.id)
                         putString("user_nombre", user?.nombre)
-                        putString("user_afiliado", user?.numafiliado)
-                        putInt("user_rol", idRol)
+                        putInt("user_id_rol",  idRol)
+                        putString("token_jwt", tokenExtraido)
                         apply()
                     }
 
                     val nombreUsuario = user?.nombre ?: "Usuario"
+
                         when (idRol) {
                             RolesUsuario.PACIENTE -> navegarA(HomePacienteActivity::class.java, "Bienvenido $nombreUsuario")
-                           //RolesUsuario.MEDICO -> navegarA(DashboardMedicoActivity::class.java, "Bienvenido Dr. $nombreUsuario")
-                            //RolesUsuario.ADMIN -> navegarA(DashboardAdminActivity::class.java, "Panel Admin")
+                            RolesUsuario.MEDICO -> navegarA(DashboardMedicoActivity::class.java, "Bienvenido Dr. $nombreUsuario")
+                            RolesUsuario.ADMIN -> navegarA(DashboardAdminActivity::class.java, "Panel Administración")
+                            else -> Toast.makeText(this@LoginActivity, "Rol no reconocido", Toast.LENGTH_SHORT).show()
                         }
                     finish()
                     } else {
-                    val errorMsg = response.errorBody()?.string() ?: "Credenciales incorrectas"
-                    Toast.makeText(this@LoginActivity, errorMsg, Toast.LENGTH_SHORT).show()
+                    // Obtener error como String
+                    val errorJson = response.errorBody()?.string()
+
+                    val mensajeParaMostrar = try {
+                        val parsedError = Gson().fromJson(errorJson, ErrorResponse::class.java)
+                        parsedError.message
+                    } catch (e: Exception) {
+                        "Credenciales incorrectas"
+                    }
+
+                    Toast.makeText(this@LoginActivity, mensajeParaMostrar, Toast.LENGTH_SHORT).show()
+
                 }
 
 
@@ -111,23 +119,6 @@ class LoginActivity : AppCompatActivity() {
                 Toast.makeText(this@LoginActivity, "Error de red: Verifique su conexión", Toast.LENGTH_SHORT).show()
             }
         }
-    }
-
-    //temporal
-    private fun persistirYNAvegar(id: String, nombre: String, rol: Int, destino: Class<*>) {
-        // Persistencia
-        val prefs = getSharedPreferences("CitasMedicasPrefs", MODE_PRIVATE)
-        with(prefs.edit()) {
-            putString("user_id", id)
-            putString("user_nombre", nombre)
-            putInt("user_rol", rol)
-            apply()
-        }
-
-        // Navegación
-        val mensaje = if (rol == RolesUsuario.MEDICO) "Bienvenido Dr. $nombre" else "Bienvenido $nombre"
-        navegarA(destino, mensaje)
-        finish()
     }
 
     // Función auxiliar

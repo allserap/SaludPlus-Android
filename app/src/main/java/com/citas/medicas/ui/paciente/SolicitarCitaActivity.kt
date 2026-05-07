@@ -25,6 +25,7 @@ import com.google.android.material.button.MaterialButton
 import kotlinx.coroutines.launch
 
 class SolicitarCitaActivity : AppCompatActivity() {
+    val apiService = RetrofitClient.getApiService(this@SolicitarCitaActivity)
     private var pasoActual = 1
 
     private var fechaSeleccionadaReal: String? = null
@@ -219,7 +220,8 @@ class SolicitarCitaActivity : AppCompatActivity() {
     private fun cargarEspecialidades() {
         lifecycleScope.launch {
             try {
-                val response = RetrofitClient.apiService.getEspecialidades()
+
+                val response = apiService.getEspecialidades()
                 if (response.isSuccessful) {
                     val datos = response.body()?.datos
                     if (datos != null && datos.isNotEmpty()) {
@@ -241,7 +243,7 @@ class SolicitarCitaActivity : AppCompatActivity() {
     private fun cargarUnidades(idEspecialidad: Int) {
         lifecycleScope.launch {
             try {
-                val response = RetrofitClient.apiService.getUnidadesFiltradas(idEspecialidad)
+                val response = apiService.getUnidadesFiltradas(idEspecialidad)
                 if (response.isSuccessful) {
                     val datos = response.body()?.datos
                     if (datos != null && datos.isNotEmpty()) {
@@ -270,7 +272,7 @@ class SolicitarCitaActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             try {
-                val response = RetrofitClient.apiService.getHorariosDisponibles(idUnidad, idEspecialidad, fecha)
+                val response = apiService.getHorariosDisponibles(idUnidad, idEspecialidad, fecha)
 
                 if (response.isSuccessful) {
                     val datos = response.body()?.datos

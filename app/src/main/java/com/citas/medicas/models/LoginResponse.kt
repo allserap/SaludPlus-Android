@@ -3,22 +3,26 @@ import com.google.gson.annotations.SerializedName
 
 //objt a recibir
 data class LoginResponse(
-    @SerializedName("succes") val success: Boolean,
+    @SerializedName("success") val success: Boolean,
     @SerializedName("message") val message: String,
     @SerializedName("data") val data: UserProfile? = null,
-    @SerializedName("token_jwt") val token: String? = null
 )
 
 //info real
 data class UserProfile(
-    //val id: String,
-    @SerializedName("usuarioId") val id: String,
+    @SerializedName("usuarioid")
+    val id: String,
     val nombre: String,
     val apellido: String,
     val email: String,
-    @SerializedName("rolId") val rolId: Int,
+    @SerializedName("rolid")
+    val rolId: Int,
     // Datos adicionales del SELECT de Node.js
-    val numafiliado: String? = null,
+    @SerializedName("numafiliado")
+    val numAfiliado: String? = null,
+    @SerializedName("numjvpm")
     val numJvpm: String? = null,
-    val especialidadId: Int? = null
+    @SerializedName("especialidadid")
+    val especialidadId: Int? = null,
+    val token: String? = null
 )

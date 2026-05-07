@@ -1,5 +1,6 @@
 package com.citas.medicas.data
 
+import com.citas.medicas.models.ApiResponse
 import com.citas.medicas.models.ApiResponseEspecialidades
 import com.citas.medicas.models.ApiResponseHistorial
 import com.citas.medicas.models.ApiResponseHorarios
@@ -7,27 +8,60 @@ import com.citas.medicas.models.ApiResponseMapa
 import com.citas.medicas.models.ApiResponsePerfil
 import com.citas.medicas.models.ApiResponseProximasCitas
 import com.citas.medicas.models.ApiResponseUnidades
+import com.citas.medicas.models.CatalogosResponse
+import com.citas.medicas.models.EspecialidadResponse
 import com.citas.medicas.models.LoginRequest
 import com.citas.medicas.models.LoginResponse
+import com.citas.medicas.models.MedicoResponse
+import com.citas.medicas.models.MedicoUpdateRequest
 import com.citas.medicas.models.RegistroRequest
 import com.citas.medicas.models.RegistroResponse
+import com.citas.medicas.models.RolResponse
+import com.citas.medicas.models.UnidadMedicaResponse
+import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface ApiService {
+    //auth
     @POST("auth/login")
-    suspend fun loginUsuario(@Body request: LoginRequest) : Response<LoginResponse>
+    suspend fun loginUsuario(@Body request: LoginRequest): Response<LoginResponse>
 
-    @POST("auth/register/paciente")
-    suspend fun registrarPaciente(@Body request: RegistroRequest): Response<RegistroResponse>
+    //Globales
+    @GET("global/roles/catalogos")
+    suspend fun obtenerRoles(): Response<CatalogosResponse<List<RolResponse>>>
 
-    @POST("auth/register/medico")
+    @GET("global/especialidades/catalogos")
+    suspend fun obtenerEspecialidades(): Response<CatalogosResponse<List<EspecialidadResponse>>>
+
+    @GET("global/unidades_medicas/catalogos")
+    suspend fun obtenerUnidadesMedicas(): Response<CatalogosResponse<List<UnidadMedicaResponse>>>
+
+    //Médicos (CRUD admin)
+    @POST("admin/medicos/create")
     suspend fun registrarMedico(@Body request: RegistroRequest): Response<LoginResponse>
 
+    @GET("admin/medicos/read")
+    suspend fun obtenerMedicos(): Response<ApiResponse<List<MedicoResponse>>>
+
+    @PUT("admin/medicos/update/{id}")
+    suspend fun actualizarMedico(
+        @Path("id") id: String,
+        @Body medico: MedicoUpdateRequest
+    ): Response<ResponseBody>
+
+    @DELETE("admin/medicos/delete/{id}")
+    suspend fun eliminarMedico(@Path("id") id: String): Response<Unit>
+
+    //Pacientes
+    @POST("auth/register/paciente")
+    suspend fun registrarPaciente(@Body request: RegistroRequest): Response<RegistroResponse>
     @GET("api/citas/proximas/{pacienteId}")
     suspend fun getProximasCitas(
         @Path("pacienteId") pacienteId: Int

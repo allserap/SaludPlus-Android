@@ -93,7 +93,8 @@ class HomePacienteActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             try {
-                val response = RetrofitClient.apiService.getProximasCitas(pacienteIdId)
+                val apiService = RetrofitClient.getApiService(this@HomePacienteActivity)
+                val response = apiService.getProximasCitas(pacienteIdId)
 
                 if (response.isSuccessful) {
                     val body = response.body()

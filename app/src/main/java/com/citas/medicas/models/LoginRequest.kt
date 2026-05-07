@@ -4,11 +4,10 @@ import com.google.gson.annotations.SerializedName
 
 //objt enviado
 data class LoginRequest(
-    @SerializedName("numAfiliado")
-    val numAfiliado: String,
-    @SerializedName("password")
+    val numAfiliado: String? = null,
+    val numJvpm: String? = null,
+    val email: String? = null,
     val password: String,
-    @SerializedName("rol")
-    val rol: Int
+    val rolId: Int
 )
 

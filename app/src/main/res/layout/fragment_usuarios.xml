@@ -55,9 +55,10 @@
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="16dp"
                 android:layout_marginTop="4dp"
+                android:backgroundTint="@color/citas_white"
                 android:visibility="gone"
                 app:cardCornerRadius="16dp"
-                app:cardElevation="2dp"
+                app:cardElevation="4dp"
                 app:strokeWidth="1dp"
                 app:strokeColor="#ECECF3">
 
@@ -67,114 +68,217 @@
                     android:orientation="vertical"
                     android:padding="20dp">
 
-                    <EditText
-                        android:id="@+id/etNombres"
-                        android:layout_width="match_parent"
-                        android:layout_height="50dp"
-                        android:hint="Nombres"
-                        android:background="@drawable/bg_input"
-                        android:paddingHorizontal="16dp"
-                        android:textSize="14sp"
-                        android:layout_marginBottom="12dp"/>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Datos del Médico"
+                        android:textColor="@color/citas_primary"
+                        android:textStyle="bold"
+                        android:textSize="16sp"
+                        android:layout_marginBottom="16dp"/>
 
-                    <EditText
-                        android:id="@+id/etApellidos"
+                    <LinearLayout
                         android:layout_width="match_parent"
-                        android:layout_height="50dp"
-                        android:hint="Apellidos"
-                        android:background="@drawable/bg_input"
-                        android:paddingHorizontal="16dp"
-                        android:textSize="14sp"
-                        android:layout_marginBottom="12dp"/>
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
 
-                    <Spinner
-                        android:id="@+id/spGenero"
-                        android:layout_width="match_parent"
-                        android:layout_height="50dp"
-                        android:background="@drawable/bg_input"
-                        android:paddingHorizontal="16dp"
-                        android:layout_marginBottom="12dp"/>
+                        <com.google.android.material.textfield.TextInputLayout
+                            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginEnd="6dp"
+                            android:hint="Nombres">
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/etNombres"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:inputType="textPersonName" />
+                        </com.google.android.material.textfield.TextInputLayout>
 
-                    <EditText
-                        android:id="@+id/etFechaNac"
+                        <com.google.android.material.textfield.TextInputLayout
+                            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:hint="Apellidos">
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/etApellidos"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:inputType="textPersonName" />
+                        </com.google.android.material.textfield.TextInputLayout>
+                    </LinearLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
-                        android:layout_height="50dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
                         android:hint="Fecha de Nacimiento"
-                        android:textSize="14sp"
-                        android:background="@drawable/bg_input"
-                        android:drawableEnd="@android:drawable/ic_menu_my_calendar"
-                        android:paddingHorizontal="16dp"
-                        android:layout_marginBottom="12dp"/>
+                        app:endIconMode="custom"
+                        app:endIconDrawable="@android:drawable/ic_menu_my_calendar">
 
-                    <EditText
-                        android:id="@+id/etDui"
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etFechaNac"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:focusable="false"
+                            android:clickable="true"
+                            android:inputType="none" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Género"
+                        android:textSize="12sp"
+                        android:layout_marginStart="4dp"
+                        android:layout_marginTop="4dp"/>
+                    <Spinner
+                        android:id="@+id/spnGenero"
                         android:layout_width="match_parent"
                         android:layout_height="50dp"
-                        android:hint="00000000-0"
-                        android:textSize="14sp"
-                        android:background="@drawable/bg_input"
-                        android:paddingHorizontal="16dp"
-                        android:layout_marginBottom="12dp"/>
+                        android:layout_marginTop="4dp"
+                        android:background="@drawable/bg_input_border"
+                        android:paddingHorizontal="12dp"/>
 
-                    <EditText
-                        android:id="@+id/etCorreo"
+                    <LinearLayout
                         android:layout_width="match_parent"
-                        android:layout_height="50dp"
-                        android:hint="Correo electrónico"
-                        android:inputType="textEmailAddress"
-                        android:background="@drawable/bg_input"
-                        android:paddingHorizontal="16dp"
-                        android:textSize="14sp"
-                        android:layout_marginBottom="12dp"/>
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginTop="12dp">
 
-                    <EditText
-                        android:id="@+id/etTelefono"
+                        <com.google.android.material.textfield.TextInputLayout
+                            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginEnd="6dp"
+                            android:hint="DUI">
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/etDui"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content" />
+                        </com.google.android.material.textfield.TextInputLayout>
+
+                        <com.google.android.material.textfield.TextInputLayout
+                            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:hint="Teléfono">
+                            <com.google.android.material.textfield.TextInputEditText
+                                android:id="@+id/etTelefono"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:inputType="phone" />
+                        </com.google.android.material.textfield.TextInputLayout>
+                    </LinearLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
-                        android:layout_height="50dp"
-                        android:hint="Teléfono"
-                        android:inputType="textEmailAddress"
-                        android:background="@drawable/bg_input"
-                        android:paddingHorizontal="16dp"
-                        android:textSize="14sp"
-                        android:layout_marginBottom="12dp"/>
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:hint="Correo electrónico">
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etCorreo"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="textEmailAddress" />
+                    </com.google.android.material.textfield.TextInputLayout>
 
-                    <EditText
-                        android:id="@+id/etPassword"
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
-                        android:layout_height="50dp"
-                        android:inputType="textPassword"
-                        android:hint="Contraseña"
-                        android:background="@drawable/bg_input"
-                        android:paddingHorizontal="16dp"
-                        android:textSize="14sp"
-                        android:layout_marginBottom="12dp"/>
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        app:passwordToggleEnabled="true"
+                        android:hint="Contraseña">
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etPassword"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="textPassword" />
+                    </com.google.android.material.textfield.TextInputLayout>
 
-                    <EditText
-                        android:id="@+id/etJvpm"
+                    <View
                         android:layout_width="match_parent"
-                        android:layout_height="50dp"
-                        android:hint="Número de JVPM"
-                        android:background="@drawable/bg_input"
-                        android:paddingHorizontal="16dp"
-                        android:textSize="14sp"
+                        android:layout_height="1dp"
+                        android:background="#ECECF3"
+                        android:layout_marginVertical="16dp"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Información Médica"
+                        android:textColor="@color/citas_primary"
+                        android:textStyle="bold"
+                        android:textSize="16sp"
                         android:layout_marginBottom="12dp"/>
 
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Número de JVPM">
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etJvpm"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="number" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Especialidad"
+                        android:textSize="12sp"
+                        android:layout_marginStart="4dp"
+                        android:layout_marginTop="4dp"/>
                     <Spinner
                         android:id="@+id/spnEspecialidad"
                         android:layout_width="match_parent"
                         android:layout_height="50dp"
-                        android:background="@drawable/bg_input"
-                        android:paddingHorizontal="16dp"
-                        android:layout_marginBottom="12dp"/>
+                        android:background="@drawable/bg_input_border"
+                        android:paddingHorizontal="12dp"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Unidad Médica"
+                        android:textSize="12sp"
+                        android:layout_marginStart="4dp"
+                        android:layout_marginTop="4dp"
+                        android:textColor="@color/citas_primary" />
+                    <Spinner
+                        android:id="@+id/spnUnidad"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:background="@drawable/bg_input_border" />
+
+                    <ProgressBar
+                        android:id="@+id/progressBar"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:visibility="gone"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnCrear"
-                        android:layout_width="match_parent"
-                        android:layout_height="55dp"
-                        android:text="Crear Usuario"
-                        android:textAllCaps="false"
-                        android:backgroundTint="#2FA4B7"
-                        app:cornerRadius="8dp"/>
+                        android:layout_width="wrap_content"
+                        android:layout_height="56dp"
+                        android:layout_marginTop="16dp"
+                        android:layout_gravity="center_horizontal"
+                        android:text="Registrar Médico"
+                        android:textAllCaps="true"
+                        android:textStyle="bold"
+                        android:backgroundTint="@color/citas_secondary"
+                        app:cornerRadius="12dp"/>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 

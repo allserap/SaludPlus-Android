@@ -32,6 +32,14 @@ class RegistroActivity : AppCompatActivity() {
         // Uso de binding.root en lugar de R.layout
         setContentView(binding.root)
 
+        //feedback durante el registro
+        authViewModel.isLoading.observe(this) { isLoading ->
+            binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+            binding.btnCrearCuenta.isEnabled = !isLoading
+
+            binding.btnCrearCuenta.text = if (isLoading) "Procesando..." else "Crear Cuenta"
+        }
+
         setupObservers()
         setupListeners()
         configurarSpinners()
@@ -56,6 +64,11 @@ class RegistroActivity : AppCompatActivity() {
 
     private fun enviarRegistroAlServidor() {
         //recuperar inicial del género
+        if (binding.spGeneroR.selectedItemPosition == 0 || binding.spEstadoFamiliarR.selectedItemPosition == 0) {
+            Toast.makeText(this, "Por favor seleccione todas las opciones", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         val generoSeleccionado = binding.spGeneroR.selectedItem.toString()
         val generoFinal = when(generoSeleccionado) {
             "Masculino" -> "M"
@@ -159,7 +172,8 @@ class RegistroActivity : AppCompatActivity() {
     }
 
     fun isValidPassword(password: String): Boolean {
-        val passwordRegex = Regex("^(?=.*[A-Z])(?=.*[!@#\$%^&*(),.?\":{}|<>]).{8,}$")
+        // 6 caracteres, una mayúscula y un símbolo
+        val passwordRegex = Regex("^(?=.*[A-Z])(?=.*[!@#\$%^&*(),.?\":{}|<>]).{6,}$")
         return password.matches(passwordRegex)
     }
 
@@ -229,11 +243,10 @@ class RegistroActivity : AppCompatActivity() {
         val datePicker = DatePickerDialog(this, { _, selectedYear, selectedMonth, selectedDay ->
             val realMonth = selectedMonth + 1
             val formattedDate = String.format(Locale.US, "%04d-%02d-%02d", selectedYear, realMonth, selectedDay)
-
             editText.setText(formattedDate)
+            // Limpiar el error si ya seleccionó fecha
+            editText.error = null
         }, year, month, day)
-
-        datePicker.show()
 
         datePicker.show()
     }

@@ -12,6 +12,8 @@ import com.citas.medicas.R
 import com.citas.medicas.databinding.ActivityDashboardMedicoBinding
 import com.citas.medicas.databinding.ActivityRegistroBinding
 import com.citas.medicas.ui.auth.LoginActivity
+import com.citas.medicas.utils.SessionManager
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 class DashboardMedicoActivity : AppCompatActivity() {
 
@@ -46,14 +48,14 @@ class DashboardMedicoActivity : AppCompatActivity() {
                         replaceFragment(PerfilMedicoFragment())
                     }
                     btnSalir.setOnClickListener {
-                        Toast.makeText(
-                            this@DashboardMedicoActivity,
-                            "Cerrando sesión...",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                        val intent = Intent(this@DashboardMedicoActivity, LoginActivity::class.java)
-                        startActivity(intent)
-                        finishAffinity()
+                        MaterialAlertDialogBuilder(this@DashboardMedicoActivity)
+                            .setTitle("Cerrar Sesión")
+                            .setMessage("¿Está seguro de que desea salir del sistema?")
+                            .setNegativeButton("Cancelar", null)
+                            .setPositiveButton("Salir") { _, _ ->
+                                SessionManager.logout(this@DashboardMedicoActivity)
+                            }
+                            .show()
                     }
                 }
             }
