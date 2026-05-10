@@ -78,45 +78,46 @@ class PerfilActivity : AppCompatActivity() {
     }
 
     private fun cargarPerfil() {
-        // En el futuro, sacar esto de SharedPreferences
-        val pacienteId = 1
+        val prefs = getSharedPreferences("CitasMedicasPrefs", MODE_PRIVATE)
 
-        lifecycleScope.launch {
-            try {
-                val apiService = RetrofitClient.getApiService(this@PerfilActivity)
-                val response = apiService.getPerfilPaciente(pacienteId)
+        val nombre = prefs.getString("user_nombre", "")
+        val apellido = prefs.getString("user_apellido", "")
+        val afiliado = prefs.getString("user_afiliado", "No disponible")
+        val dui = prefs.getString("user_dui", "No disponible")
+        val email = prefs.getString("user_email", "No disponible")
+        val cronicas = prefs.getString("user_cronicas", "Ninguna registrada")
+        val alergias = prefs.getString("user_alergias", "Ninguna registrada")
+        val telefono = prefs.getString("user_telefono", "")
+        val sangre = prefs.getString("user_sangre", "No especificado")
 
-                if (response.isSuccessful && response.body()?.exito == true) {
-                    val datos = response.body()?.datos
-                    if (datos != null) {
-                        perfilActual = datos
+        // 1. Pintamos los datos en la pantalla
+        val iniciales = "${nombre?.firstOrNull() ?: ""}${apellido?.firstOrNull() ?: ""}"
+        findViewById<TextView>(R.id.tvAvatarInitials).text = iniciales.uppercase()
+        findViewById<TextView>(R.id.tvPerfilNombre).text = "$nombre $apellido"
 
-                        val iniciales = "${datos.nombre?.firstOrNull() ?: ""}${datos.apellido?.firstOrNull() ?: ""}"
-                        findViewById<TextView>(R.id.tvAvatarInitials).text = iniciales.uppercase()
-                        findViewById<TextView>(R.id.tvPerfilNombre).text = "${datos.nombre} ${datos.apellido}"
+        findViewById<TextView>(R.id.tvPerfilAfiliado).text = afiliado
+        findViewById<TextView>(R.id.tvPerfilDUI).text = dui
+        findViewById<TextView>(R.id.tvPerfilCorreo).text = email
 
-                        findViewById<TextView>(R.id.tvPerfilAfiliado).text = datos.num_afiliado ?: "No disponible"
-                        findViewById<TextView>(R.id.tvPerfilDUI).text = datos.dui ?: "No disponible"
-                        findViewById<TextView>(R.id.tvPerfilCorreo).text = datos.email ?: "No disponible"
+        findViewById<TextView>(R.id.tvSaludCronicas).text = cronicas
+        findViewById<TextView>(R.id.tvSaludAlergias).text = alergias
 
-                        // La API actual no trae dirección
-                        // findViewById<TextView>(R.id.tvPerfilDireccion).text = datos.direccion
-
-                        // Llenar Información de Salud
-                        findViewById<TextView>(R.id.tvSaludCronicas).text = datos.condiciones_cronicas ?: "Ninguna registrada"
-                        findViewById<TextView>(R.id.tvSaludAlergias).text = datos.alergias ?: "Ninguna registrada"
-
-                    // La API actual no trae medicinas actuales
-                        // findViewById<TextView>(R.id.tvSaludMedicinas).text = "..."
-
-                    }
-                } else {
-                    Toast.makeText(this@PerfilActivity, "Error al cargar el perfil", Toast.LENGTH_SHORT).show()
-                }
-            } catch (e: Exception) {
-                Log.e("API_ERROR", "Error de conexión", e)
-                Toast.makeText(this@PerfilActivity, "Error de red", Toast.LENGTH_SHORT).show()
-            }
-        }
+        perfilActual = DatosPerfil(
+            nombre = nombre,
+            apellido = apellido,
+            num_afiliado = afiliado,
+            dui = dui,
+            email = email,
+            condiciones_cronicas = cronicas,
+            alergias = alergias,
+            telefono = telefono,
+            tipo_sangre = sangre
+        )
     }
+
+    override fun onResume() {
+        super.onResume()
+        cargarPerfil()
+    }
+
 }
