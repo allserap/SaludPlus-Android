@@ -1,6 +1,8 @@
 package com.citas.medicas.data
 
 import com.citas.medicas.models.ApiResponse
+import com.citas.medicas.models.ApiResponseCrearCita
+import com.citas.medicas.models.ApiResponseEditarPerfil
 import com.citas.medicas.models.ApiResponseEspecialidades
 import com.citas.medicas.models.ApiResponseHistorial
 import com.citas.medicas.models.ApiResponseHorarios
@@ -9,6 +11,8 @@ import com.citas.medicas.models.ApiResponsePerfil
 import com.citas.medicas.models.ApiResponseProximasCitas
 import com.citas.medicas.models.ApiResponseUnidades
 import com.citas.medicas.models.CatalogosResponse
+import com.citas.medicas.models.CrearCitaRequest
+import com.citas.medicas.models.EditarPerfilRequest
 import com.citas.medicas.models.EspecialidadResponse
 import com.citas.medicas.models.LoginRequest
 import com.citas.medicas.models.LoginResponse
@@ -62,37 +66,51 @@ interface ApiService {
     //Pacientes
     @POST("auth/register/paciente")
     suspend fun registrarPaciente(@Body request: RegistroRequest): Response<RegistroResponse>
-    @GET("api/citas/proximas/{pacienteId}")
+
+    @GET("paciente/proximas/{pacienteId}")
     suspend fun getProximasCitas(
         @Path("pacienteId") pacienteId: Int
     ): Response<ApiResponseProximasCitas>
 
-    @GET("api/citas/historial/{pacienteId}")
+    @GET("paciente/historial/{pacienteId}")
     suspend fun getHistorialCitas(
         @Path("pacienteId") pacienteId: Int
     ): Response<ApiResponseHistorial>
 
-    @GET("api/citas/perfil/{pacienteId}")
+    @GET("paciente/perfil/{pacienteId}")
     suspend fun getPerfilPaciente(
         @Path("pacienteId") pacienteId: Int
     ): Response<ApiResponsePerfil>
 
-    @GET("api/citas/unidades-mapa")
+    @GET("paciente/unidades-mapa")
     suspend fun getUnidadesMapa(): Response<ApiResponseMapa>
 
-    // Paso 1
-    @GET("api/citas/especialidades")
+    // Paso 1 (Solicitar Cita)
+    @GET("paciente/especialidades")
     suspend fun getEspecialidades(): Response<ApiResponseEspecialidades>
 
-    @GET("api/citas/unidades-medicas/{idEspecialidad}")
+    // Paso 2 (Solicitar Cita)
+    @GET("paciente/unidades-medicas/{idEspecialidad}")
     suspend fun getUnidadesFiltradas(
         @Path("idEspecialidad") idEspecialidad: Int
     ): Response<ApiResponseUnidades>
 
-    @GET("api/citas/horarios-disponibles")
+    // Paso 3 (Solicitar Cita)
+    @GET("paciente/horarios-disponibles")
     suspend fun getHorariosDisponibles(
         @Query("unidadId") unidadId: Int,
         @Query("especialidadId") especialidadId: Int,
         @Query("fecha") fecha: String
     ): Response<ApiResponseHorarios>
+
+    // POST para crear la cita
+    @POST("paciente/agendar")
+    suspend fun agendarCita(@Body request: CrearCitaRequest): Response<ApiResponseCrearCita>
+
+
+    @PUT("paciente/perfil/{pacienteId}")
+    suspend fun actualizarPerfilPaciente(
+        @Path("pacienteId") pacienteId: Int,
+        @Body request: EditarPerfilRequest
+    ): Response<ApiResponseEditarPerfil>
 }

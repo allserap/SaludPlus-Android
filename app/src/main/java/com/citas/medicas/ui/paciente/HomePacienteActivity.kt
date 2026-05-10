@@ -84,13 +84,17 @@ class HomePacienteActivity : AppCompatActivity() {
         // datos guardados  en el LoginActivity
         val prefs = getSharedPreferences("CitasMedicasPrefs", MODE_PRIVATE)
         val nombreUsuario = prefs.getString("user_nombre", "Paciente")
+        val apellidoUsuario = prefs.getString("user_apellido", "")
         val numAfiliado = prefs.getString("user_afiliado", "No disponible")
 
-        findViewById<TextView>(R.id.tvUserName).text = nombreUsuario
+
+        val pacienteIdStr = prefs.getString("user_usuarioid", "1")
+        val pacienteIdReal = pacienteIdStr?.toIntOrNull() ?: 1
+
+        findViewById<TextView>(R.id.tvUserName).text = "$nombreUsuario $apellidoUsuario"
         findViewById<TextView>(R.id.tvUserAffiliate).text = "Afiliado: $numAfiliado"
 
-        val pacienteIdId = 1 // Cámbialo por prefs.getInt("paciente_id", 1) cuando lo guardes en Login
-
+        val pacienteIdId = 1
         lifecycleScope.launch {
             try {
                 val apiService = RetrofitClient.getApiService(this@HomePacienteActivity)
@@ -104,7 +108,9 @@ class HomePacienteActivity : AppCompatActivity() {
                         val container = findViewById<LinearLayout>(R.id.llUpcomingAppointmentsContainer)
                         container.removeAllViews()
 
-                        for (cita in body.datos) {
+                        val citasLimitadas = body.datos.take(3)
+
+                        for (cita in citasLimitadas) {
                             val view = layoutInflater.inflate(R.layout.item_cita_home, container, false)
 
                             view.findViewById<TextView>(R.id.tvApptType).text = cita.especialidades
