@@ -84,6 +84,8 @@ class LoginActivity : AppCompatActivity() {
                     with(prefs.edit()) {
                         putString("user_usuarioid", user?.id)
                         putString("user_nombre", user?.nombre)
+                        putString("user_apellido", user?.apellido)
+                        putString("user_afiliado", user?.numAfiliado)
                         putInt("user_id_rol",  idRol)
                         putString("token_jwt", tokenExtraido)
                         apply()

@@ -95,3 +95,29 @@ data class ApiResponseHorarios(
     val exito: Boolean,
     val datos: List<String>
 )
+
+data class CrearCitaRequest(
+    val paciente_id: Int,
+    val especialidad_id: Int,
+    val unidad_medica_id: Int,
+    val fecha_solicitada: String,
+    val hora_asignada: String,
+    val motivo_consulta: String
+)
+
+data class ApiResponseCrearCita(
+    val exito: Boolean,
+    val mensaje: String
+)
+
+data class EditarPerfilRequest(
+    val telefono: String,
+    val alergias: String,
+    val condiciones_cronicas: String
+    // direccion  backend aún no la soporta en su UPDATE
+)
+
+data class ApiResponseEditarPerfil(
+    val exito: Boolean,
+    val mensaje: String
+)

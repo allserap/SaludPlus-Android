@@ -19,6 +19,7 @@ import com.citas.medicas.adapter.EspecialidadAdapter
 import com.citas.medicas.adapter.HoraAdapter
 import com.citas.medicas.adapter.UnidadMedicaAdapter
 import com.citas.medicas.data.RetrofitClient
+import com.citas.medicas.models.CrearCitaRequest
 import com.citas.medicas.models.Especialidad
 import com.citas.medicas.models.UnidadMedicaFiltro
 import com.google.android.material.button.MaterialButton
@@ -55,7 +56,7 @@ class SolicitarCitaActivity : AppCompatActivity() {
 
         adapterEspecialidad = EspecialidadAdapter(emptyList()) { especialidad ->
             especialidadSeleccionada = especialidad
-            btnSiguiente.isEnabled = true
+            cambiarEstadoBotonSiguiente(true)
 
         }
         rvEspecialidades.adapter = adapterEspecialidad
@@ -66,7 +67,7 @@ class SolicitarCitaActivity : AppCompatActivity() {
 
         adapterUnidades = UnidadMedicaAdapter(emptyList()) { unidad ->
             unidadSeleccionadaReal = unidad
-            btnSiguiente.isEnabled = true
+            cambiarEstadoBotonSiguiente(true)
         }
         rvUnidadesMedicas.adapter = adapterUnidades
 
@@ -77,11 +78,10 @@ class SolicitarCitaActivity : AppCompatActivity() {
 
         adapterHoras = HoraAdapter(emptyList()) { hora ->
             horaSeleccionadaReal = hora
-            btnSiguiente.isEnabled = true
+            cambiarEstadoBotonSiguiente(true)
         }
         rvHoras.adapter = adapterHoras
 
-        // --- CALENDARIO ---
         tvSelectDate.setOnClickListener {
             val picker = com.google.android.material.datepicker.MaterialDatePicker.Builder.datePicker()
                 .setTitleText("Seleccione la fecha")
@@ -114,7 +114,6 @@ class SolicitarCitaActivity : AppCompatActivity() {
         btnSiguiente.setOnClickListener {
             when (pasoActual) {
                 1 -> {
-
                     if (especialidadSeleccionada != null) {
                         pasoActual = 2
                         unidadSeleccionadaReal = null
@@ -133,9 +132,9 @@ class SolicitarCitaActivity : AppCompatActivity() {
                 }
                 3 -> {
                     if (horaSeleccionadaReal != null && fechaSeleccionadaReal != null) {
-                        pasoActual = 4
-                        actualizarVista()
-
+                        guardarCitaEnBD()
+                    } else {
+                        Toast.makeText(this, "Seleccione una hora disponible", Toast.LENGTH_SHORT).show()
                     }
                 }
                 4 -> {
@@ -177,28 +176,40 @@ class SolicitarCitaActivity : AppCompatActivity() {
                 btnAnterior.visibility = View.VISIBLE
                 tvStepCounter.text = "Paso 1 de 3"
                 btnSiguiente.text = "Siguiente"
+                val estaActivo = especialidadSeleccionada != null
 
-                btnSiguiente.isEnabled = (especialidadSeleccionada != null)
+
+                cambiarEstadoBotonSiguiente(especialidadSeleccionada != null)
+
             }
             2 -> {
                 layoutStep2.visibility = View.VISIBLE
                 btnAnterior.visibility = View.VISIBLE
                 tvStepCounter.text = "Paso 2 de 3"
                 btnSiguiente.text = "Siguiente"
-                btnSiguiente.isEnabled = (unidadSeleccionadaReal != null)
+                val estaActivo = unidadSeleccionadaReal != null
+
+                cambiarEstadoBotonSiguiente(unidadSeleccionadaReal != null)
+
+
             }
             3 -> {
                 layoutStep3.visibility = View.VISIBLE
                 btnAnterior.visibility = View.VISIBLE
                 tvStepCounter.text = "Paso 3 de 3"
                 btnSiguiente.text = "Confirmar Cita"
-                btnSiguiente.isEnabled = (horaSeleccionadaReal != null && fechaSeleccionadaReal != null)
+                cambiarEstadoBotonSiguiente(horaSeleccionadaReal != null && fechaSeleccionadaReal != null)
+
+                val estaActivo = (horaSeleccionadaReal != null && fechaSeleccionadaReal != null)
+                btnSiguiente.isEnabled = estaActivo
+                btnSiguiente.alpha = if (estaActivo) 1.0f else 0.5f
             }
             4 -> {
                 layoutSuccess.visibility = View.VISIBLE
                 btnAnterior.visibility = View.GONE
                 btnSiguiente.text = "Volver al Inicio"
                 btnSiguiente.isEnabled = true
+                cambiarEstadoBotonSiguiente(true)
                 tvStepCounter.text = "¡Cita Confirmada!"
 
                 val nombreEspecialidad = especialidadSeleccionada?.nombre ?: "No especificada"
@@ -236,6 +247,52 @@ class SolicitarCitaActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 Log.e("API_ERROR", "Excepción de red", e)
                 Toast.makeText(this@SolicitarCitaActivity, "Error de red", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun guardarCitaEnBD() {
+        val btnSiguiente = findViewById<MaterialButton>(R.id.btnSiguiente)
+
+        val prefs = getSharedPreferences("CitasMedicasPrefs", MODE_PRIVATE)
+        val pacienteIdStr = prefs.getString("user_usuarioid", "1")
+        val pacienteIdReal = pacienteIdStr?.toIntOrNull() ?: 1
+
+
+        val request = CrearCitaRequest(
+            paciente_id = pacienteIdReal,
+            especialidad_id = especialidadSeleccionada!!.id,
+            unidad_medica_id = unidadSeleccionadaReal!!.id,
+            fecha_solicitada = fechaSeleccionadaReal!!,
+            hora_asignada = horaSeleccionadaReal!!,
+            motivo_consulta = "Consulta general programada desde la app"
+        )
+
+        btnSiguiente.isEnabled = false
+        btnSiguiente.text = "Guardando..."
+
+        lifecycleScope.launch {
+            try {
+                val response = RetrofitClient.getApiService(this@SolicitarCitaActivity).agendarCita(request)
+
+                if (response.isSuccessful && response.body()?.exito == true) {
+                    // ¡ÉXITO TOTAL! Pasamos a la pantalla de resumen
+                    pasoActual = 4
+                    actualizarVista()
+                } else if (response.code() == 409) {
+                    Toast.makeText(this@SolicitarCitaActivity, "Ya tienes una cita a esa hora. Elige otra.", Toast.LENGTH_LONG).show()
+                    btnSiguiente.isEnabled = true
+                    btnSiguiente.text = "Confirmar Cita"
+                } else {
+                    Toast.makeText(this@SolicitarCitaActivity, "Error al agendar cita", Toast.LENGTH_SHORT).show()
+                    btnSiguiente.isEnabled = true
+                    btnSiguiente.text = "Confirmar Cita"
+                }
+            } catch (e: Exception) {
+                Log.e("API_ERROR", "Excepción al guardar cita", e)
+                Toast.makeText(this@SolicitarCitaActivity, "Error de red. Verifica tu conexión.", Toast.LENGTH_SHORT).show()
+                btnSiguiente.isEnabled = true
+                btnSiguiente.text = "Confirmar Cita"
             }
         }
     }
@@ -291,6 +348,23 @@ class SolicitarCitaActivity : AppCompatActivity() {
                 Log.e("API_ERROR", "Excepción de red en horarios", e)
                 Toast.makeText(this@SolicitarCitaActivity, "Error de red", Toast.LENGTH_SHORT).show()
             }
+        }
+    }
+
+    private fun cambiarEstadoBotonSiguiente(activo: Boolean) {
+        val btnSiguiente = findViewById<MaterialButton>(R.id.btnSiguiente)
+        btnSiguiente.isEnabled = activo
+
+        if (activo) {
+            btnSiguiente.backgroundTintList = android.content.res.ColorStateList.valueOf(
+                androidx.core.content.ContextCompat.getColor(this, R.color.citas_primary)
+            )
+            btnSiguiente.alpha = 1.0f
+        } else {
+            btnSiguiente.backgroundTintList = android.content.res.ColorStateList.valueOf(
+                androidx.core.content.ContextCompat.getColor(this, R.color.citas_secondary)
+            )
+            btnSiguiente.alpha = 0.5f
         }
     }
 }

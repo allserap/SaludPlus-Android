@@ -8,6 +8,6 @@ data class LoginRequest(
     val numJvpm: String? = null,
     val email: String? = null,
     val password: String,
-    val rolId: Int
+    //val rolId: Int
 )
 
