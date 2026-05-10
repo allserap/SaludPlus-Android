@@ -45,7 +45,7 @@ class AuthRepository(private val context: Context) {
         return try {
             val response = apiService.actualizarMedico(datos.id, datos)
             if (response.isSuccessful) {
-                Result.success("Médico actualizado exitosamente")
+                Result.success("Actualización exitosa")
             } else {
                 val errorServidor = response.errorBody()?.string()
                 Log.e("API_DEBUG", "Error en transacción: $errorServidor")

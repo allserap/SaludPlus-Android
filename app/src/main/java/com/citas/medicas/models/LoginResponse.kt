@@ -15,7 +15,7 @@ data class UserProfile(
     val nombre: String,
     val apellido: String,
     val email: String,
-    @SerializedName("rolid")
+    @SerializedName("rol")
     val rolId: Int,
     // Datos adicionales del SELECT de Node.js
     @SerializedName("numafiliado")

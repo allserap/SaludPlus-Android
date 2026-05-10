@@ -53,7 +53,7 @@ class GestionesFragment : Fragment(R.layout.fragment_gestiones) {
                     .commit()
             }
             cardMedicamentos.setOnClickListener {
-                val nuevoFragment = GestionMedicosFragment()
+                val nuevoFragment = GestionMedicamentosFragment()
                 parentFragmentManager.beginTransaction()
                     .setCustomAnimations(
                         android.R.anim.fade_in,

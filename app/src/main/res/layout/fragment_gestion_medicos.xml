@@ -73,13 +73,15 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal">
+
                     <com.google.android.material.textfield.TextInputLayout
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
                         android:layout_marginEnd="8dp"
+                        android:layout_weight="1"
                         android:hint="Nombres">
+
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/etNombreMedico"
                             android:layout_width="match_parent"
@@ -92,6 +94,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:hint="Apellidos">
+
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/etApellidoMedico"
                             android:layout_width="match_parent"
@@ -103,21 +106,21 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginTop="12dp">
+                    android:layout_marginTop="12dp"
+                    android:orientation="horizontal">
 
                     <com.google.android.material.textfield.TextInputLayout
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
                         android:layout_marginEnd="8dp"
+                        android:layout_weight="1"
                         android:hint="DUI">
+
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/etDui"
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:inputType="number" />
+                            android:layout_height="wrap_content"/>
                     </com.google.android.material.textfield.TextInputLayout>
 
                     <com.google.android.material.textfield.TextInputLayout
@@ -126,6 +129,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:hint="Teléfono">
+
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/etTelefono"
                             android:layout_width="match_parent"
@@ -140,6 +144,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
                     android:hint="Correo Electrónico">
+
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etEmail"
                         android:layout_width="match_parent"
@@ -153,15 +158,15 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
                     android:hint="Fecha de Nacimiento"
-                    app:endIconMode="custom"
-                    app:endIconDrawable="@android:drawable/ic_menu_my_calendar">
+                    app:endIconDrawable="@android:drawable/ic_menu_my_calendar"
+                    app:endIconMode="custom">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etFechaNac"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:focusable="false"
                         android:clickable="true"
+                        android:focusable="false"
                         android:inputType="none" />
                 </com.google.android.material.textfield.TextInputLayout>
 
@@ -170,8 +175,9 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
                     android:text="Género"
-                    android:textSize="12sp"
-                    android:textColor="@color/citas_primary" />
+                    android:textColor="@color/citas_primary"
+                    android:textSize="12sp" />
+
                 <Spinner
                     android:id="@+id/spnGenero"
                     android:layout_width="match_parent"
@@ -183,8 +189,9 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
                     android:text="Rol de Usuario"
-                    android:textSize="12sp"
-                    android:textColor="@color/citas_primary" />
+                    android:textColor="@color/citas_primary"
+                    android:textSize="12sp" />
+
                 <Spinner
                     android:id="@+id/spnRol"
                     android:layout_width="match_parent"
@@ -198,6 +205,7 @@
                     android:layout_marginTop="12dp"
                     android:hint="Nueva Contraseña"
                     app:passwordToggleEnabled="true">
+
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etPassword"
                         android:layout_width="match_parent"
@@ -210,8 +218,9 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
                     android:text="Especialidad"
-                    android:textSize="12sp"
-                    android:textColor="@color/citas_primary" />
+                    android:textColor="@color/citas_primary"
+                    android:textSize="12sp" />
+
                 <Spinner
                     android:id="@+id/spnEspecialidad"
                     android:layout_width="match_parent"
@@ -223,8 +232,9 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
                     android:text="Unidad Médica"
-                    android:textSize="12sp"
-                    android:textColor="@color/citas_primary" />
+                    android:textColor="@color/citas_primary"
+                    android:textSize="12sp" />
+
                 <Spinner
                     android:id="@+id/spnUnidad"
                     android:layout_width="match_parent"
@@ -236,8 +246,9 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
                     android:text="Estado"
-                    android:textSize="12sp"
-                    android:textColor="@color/citas_primary" />
+                    android:textColor="@color/citas_primary"
+                    android:textSize="12sp" />
+
                 <Spinner
                     android:id="@+id/spnEstado"
                     android:layout_width="match_parent"
@@ -249,37 +260,39 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:visibility="gone"
-                    app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent" />
+                    app:layout_constraintTop_toTopOf="parent" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center_horizontal"
-                    android:padding="8dp"
-                    android:orientation="horizontal">
-                <Button
-                    android:id="@+id/btnCancelarMedico"
-                    android:layout_width="wrap_content"
-                    android:layout_height="40dp"
-                    android:layout_marginEnd="10dp"
-                    android:text="Cancelar"
-                    android:textAllCaps="false"
-                    android:textColor="@color/citas_primary"
-                    android:backgroundTint="@color/citas_secondary"
-                    android:layout_gravity="end"/>
-                <Button
-                    android:id="@+id/btnGuardarMedico"
-                    android:layout_width="wrap_content"
-                    android:layout_height="40dp"
-                    android:layout_marginStart="10dp"
-                    android:text="Guardar"
-                    android:textAllCaps="false"
-                    android:textColor="@color/citas_white"
-                    android:backgroundTint="@color/citas_primary"
-                    android:layout_gravity="end"/>
+                    android:orientation="horizontal"
+                    android:padding="8dp">
+
+                    <Button
+                        android:id="@+id/btnCancelarMedico"
+                        android:layout_width="wrap_content"
+                        android:layout_height="40dp"
+                        android:layout_gravity="end"
+                        android:layout_marginEnd="10dp"
+                        android:backgroundTint="@color/citas_secondary"
+                        android:text="Cancelar"
+                        android:textAllCaps="false"
+                        android:textColor="@color/citas_primary" />
+
+                    <Button
+                        android:id="@+id/btnGuardarMedico"
+                        android:layout_width="wrap_content"
+                        android:layout_height="40dp"
+                        android:layout_gravity="end"
+                        android:layout_marginStart="10dp"
+                        android:backgroundTint="@color/citas_primary"
+                        android:text="Actualizar"
+                        android:textAllCaps="false"
+                        android:textColor="@color/citas_white" />
                 </LinearLayout>
 
             </LinearLayout>

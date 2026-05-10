@@ -28,7 +28,13 @@ class LoginActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         //Recuperar rol del splash
-        idRol = intent.getIntExtra("rol", RolesUsuario.PACIENTE)
+        idRol = intent.getIntExtra("rol", -1)
+        Log.d("LOGIN_DEBUG", "Rol recibido del Splash: $idRol")
+
+        if (idRol == -1) {
+            Toast.makeText(this, "Error al recuperar el rol", Toast.LENGTH_SHORT).show()
+            finish() // Regresa al Splash si no hay rol
+        }
 
         interfazPorRol()
         setupListeners()
@@ -56,17 +62,17 @@ class LoginActivity : AppCompatActivity() {
     //Login segun rol
     private fun interfazPorRol(){
         when(idRol){
-            RolesUsuario.PACIENTE -> binding.tvIdentificador.text = "Número de Afiliado"
-            RolesUsuario.MEDICO -> binding.tvIdentificador.text = "JVPM"
+            RolesUsuario.ID_PACIENTE -> binding.tvIdentificador.text = "Número de Afiliado"
+            RolesUsuario.ID_MEDICO -> binding.tvIdentificador.text = "JVPM"
             else -> binding.tvIdentificador.text = "Identificador"
         }
     }
 
     private fun ejecutarLogin(usuario: String, clave: String) {
         val request = when (idRol) {
-            RolesUsuario.PACIENTE -> LoginRequest(numAfiliado = usuario, password = clave, rolId = idRol)
-            RolesUsuario.MEDICO -> LoginRequest(numJvpm = usuario, password = clave, rolId = idRol)
-            RolesUsuario.ADMIN -> LoginRequest(email = usuario, password = clave, rolId = idRol)
+            RolesUsuario.ID_PACIENTE -> LoginRequest(numAfiliado = usuario, password = clave, rolId = idRol)
+            RolesUsuario.ID_MEDICO -> LoginRequest(numJvpm = usuario, password = clave, rolId = idRol)
+            RolesUsuario.ID_ADMIN -> LoginRequest(email = usuario, password = clave, rolId = idRol)
             else -> LoginRequest(password = clave, rolId = idRol)
         }
 
@@ -92,9 +98,9 @@ class LoginActivity : AppCompatActivity() {
                     val nombreUsuario = user?.nombre ?: "Usuario"
 
                         when (idRol) {
-                            RolesUsuario.PACIENTE -> navegarA(HomePacienteActivity::class.java, "Bienvenido $nombreUsuario")
-                            RolesUsuario.MEDICO -> navegarA(DashboardMedicoActivity::class.java, "Bienvenido Dr. $nombreUsuario")
-                            RolesUsuario.ADMIN -> navegarA(DashboardAdminActivity::class.java, "Panel Administración")
+                            RolesUsuario.ID_PACIENTE -> navegarA(HomePacienteActivity::class.java, "Bienvenido $nombreUsuario")
+                            RolesUsuario.ID_MEDICO -> navegarA(DashboardMedicoActivity::class.java, "Bienvenido Dr. $nombreUsuario")
+                            RolesUsuario.ID_ADMIN -> navegarA(DashboardAdminActivity::class.java, "Panel Administración")
                             else -> Toast.makeText(this@LoginActivity, "Rol no reconocido", Toast.LENGTH_SHORT).show()
                         }
                     finish()

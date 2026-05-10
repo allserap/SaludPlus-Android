@@ -35,7 +35,24 @@ class UsuariosAdapter(private var medicos: List<MedicoResponse>) :
             tvEspecialidad.text = "Especialidad ID: ${medico.especialidadId}"
             tvUnidadMedica.text = "Unidad ID: ${medico.unidadMedicaId}"
             tvRolBadge.text = if (medico.rolId == 2) "Médico" else "Usuario"
-            tvEstado.text = if (medico.activo) "Activo" else "Inactivo"
+
+            // --- LÓGICA DE ESTADO (ELIMINACIÓN LÓGICA) ---
+            if (medico.activo) {
+                tvEstado.text = "Activo"
+                tvEstado.setTextColor(ContextCompat.getColor(context, R.color.status_completed))
+                root.alpha = 1.0f // card visible
+            } else {
+                tvEstado.text = "Inactivo"
+                // Texto Rojo Fuerte
+                tvEstado.setTextColor(ContextCompat.getColor(context, R.color.status_canceled))
+                // Fondo Rojo Claro
+                tvEstado.backgroundTintList = ContextCompat.getColorStateList(context, R.color.status_canceled_light)
+                tvIniciales.setTextColor(ContextCompat.getColor(context, R.color.status_canceled))
+                tvIniciales.backgroundTintList = ContextCompat.getColorStateList(context, R.color.status_canceled_light)
+
+                // card atenuado
+                root.alpha = 0.6f
+            }
 
             // Lógica de iniciales
             val iniciales = "${medico.nombre.take(1)}${medico.apellido.take(1)}".uppercase()

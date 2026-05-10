@@ -30,9 +30,9 @@ object RetrofitClient {
                 prefs.edit().remove("token_jwt").apply()
 
                 val intent = when (lastRole) {
-                    RolesUsuario.ADMIN -> Intent(context, LoginActivity::class.java)
-                    RolesUsuario.MEDICO -> Intent(context, LoginActivity::class.java)
-                    RolesUsuario.PACIENTE -> Intent(context, LoginActivity::class.java)
+                    RolesUsuario.ID_ADMIN -> Intent(context, LoginActivity::class.java)
+                    RolesUsuario.ID_MEDICO -> Intent(context, LoginActivity::class.java)
+                    RolesUsuario.ID_PACIENTE -> Intent(context, LoginActivity::class.java)
                     else -> Intent(context, LoginActivity::class.java)
                 }
 

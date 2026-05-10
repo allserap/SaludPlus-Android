@@ -57,7 +57,7 @@ interface ApiService {
     ): Response<ResponseBody>
 
     @DELETE("admin/medicos/delete/{id}")
-    suspend fun eliminarMedico(@Path("id") id: String): Response<Unit>
+    suspend fun eliminarMedico(@Path("id") id: Int): Response<Unit>
 
     //Pacientes
     @POST("auth/register/paciente")

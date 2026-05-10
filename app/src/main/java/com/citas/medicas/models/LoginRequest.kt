@@ -8,6 +8,7 @@ data class LoginRequest(
     val numJvpm: String? = null,
     val email: String? = null,
     val password: String,
+    @SerializedName("rol")
     val rolId: Int
 )
 

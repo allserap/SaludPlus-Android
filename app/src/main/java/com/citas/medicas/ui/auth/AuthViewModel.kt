@@ -15,9 +15,23 @@ import com.citas.medicas.models.RegistroRequest
 import com.citas.medicas.models.RolResponse
 import com.citas.medicas.models.UnidadMedicaResponse
 import com.citas.medicas.utils.RolesUsuario
+import com.citas.medicas.utils.Validation
 import kotlinx.coroutines.launch
 
-class AuthViewModel(application: Application) : AndroidViewModel(application){
+data class FormularioState(
+    val nombreError: String? = null,
+    val apellidoError: String? = null,
+    val duiError: String? = null,
+    val correoError: String? = null,
+    val telefonoError: String? = null,
+    val passwordError: String? = null,
+    val jvpmError: String? = null,
+    val afiliadoError: String? = null,
+    val especialidadError: String? = null,
+    val unidadError: String? = null,
+    val isValid: Boolean = false
+)
+class AuthViewModel(application: Application) : AndroidViewModel(application) {
     //region inicializaciones
     // permitir que el RetrofitClient acceda a "CitasMedicasPrefs"
     private val repository = AuthRepository(application.applicationContext)
@@ -64,17 +78,22 @@ class AuthViewModel(application: Application) : AndroidViewModel(application){
         }
     }
 
-    fun ejecutarActualizacion(datos: MedicoUpdateRequest){
+    fun ejecutarActualizacion(datos: MedicoUpdateRequest) {
         viewModelScope.launch {
-            viewModelScope.launch {
-                _isLoading.value = true
+            _isLoading.value = true
+
+            try {
                 val resultado = repository.actualizarMedico(datos)
 
                 resultado.onSuccess { mensaje ->
                     _registroExitoso.value = mensaje
+                    cargarMedicos()
                 }.onFailure { excepcion ->
-                    _error.value = excepcion.message
+                    _error.value = excepcion.message ?: "Error desconocido al actualizar"
                 }
+            } catch (e: Exception) {
+                _error.value = "Error de conexión: ${e.message}"
+            } finally {
                 _isLoading.value = false
             }
         }
@@ -120,12 +139,14 @@ class AuthViewModel(application: Application) : AndroidViewModel(application){
                     Log.d("DEBUG_API", "Unidades cargadas: ${listaReal.size}")
                 }
 
-                // 3. Obtener roles
+                // obtener roles
                 val resRol = repository.obtenerRoles()
                 if (resRol.isSuccessful) {
                     val listaReal = resRol.body()?.data ?: emptyList()
+                    RolesUsuario.inicializar(listaReal)
                     _roles.postValue(listaReal)
                     Log.d("DEBUG_API", "Roles cargados: ${listaReal.size}")
+                    Log.d("DEBUG_API", "ID Paciente asignado: ${RolesUsuario.ID_PACIENTE}")
                 }
             } catch (e: Exception) {
                 Log.e("DEBUG_API", "Error de red: ${e.message}")
@@ -133,9 +154,65 @@ class AuthViewModel(application: Application) : AndroidViewModel(application){
             }
         }
     }
-
-
     //endregion
 
+    // region Validacion
+    private val _formState = MutableLiveData<FormularioState>()
+    val formState: LiveData<FormularioState> get() = _formState
 
+    fun validarFormulario(
+        rolId: Int,
+        nombres: String,
+        apellidos: String,
+        dui: String,
+        correo: String,
+        telefono: String,
+        password: String,
+        extraCampo: String,
+        especialidadPos: Int,
+        unidadPos: Int
+    ) {
+        var estado = FormularioState()
+        var hayError = false
+
+        if (nombres.isBlank()) {
+            estado = estado.copy(nombreError = "Nombre requerido"); hayError = true
+        }
+        if (apellidos.isBlank()) {
+            estado = estado.copy(apellidoError = "Apellido requerido"); hayError = true
+        }
+        if (!Validation.isValidDUI(dui)) {
+            estado = estado.copy(duiError = "Formato de DUI incorrecto (00000000-0)"); hayError =
+                true
+        }
+        if (!Validation.isValidEmail(correo)) {
+            estado = estado.copy(correoError = "Correo inválido"); hayError = true
+        }
+        if (!Validation.isValidPassword(password)) {
+            estado =
+                estado.copy(passwordError = "Mínimo 8 caracteres, 1 mayúscula y 1 símbolo"); hayError =
+                true
+        }
+        if (!Validation.isValidPhone(telefono)) {
+            estado = estado.copy(telefonoError = "Formato inválido (0000-0000)")
+        }
+        if (especialidadPos <= 0) {
+            estado = estado.copy(especialidadError = "Especialidad requerida"); hayError = true
+        }
+        if (unidadPos <= 0) {
+
+        }
+
+        when (rolId) {
+            RolesUsuario.ID_MEDICO -> if (extraCampo.length < 4) {
+                estado = estado.copy(jvpmError = "JVPM inválido"); hayError = true
+            }
+
+            RolesUsuario.ID_PACIENTE -> if (extraCampo.isEmpty()) {
+                estado = estado.copy(afiliadoError = "Requerido"); hayError = true
+            }
+        }
+        _formState.value = estado.copy(isValid = !hayError)
+    }
+// endregion
 }

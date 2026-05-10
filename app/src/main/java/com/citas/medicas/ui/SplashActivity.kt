@@ -2,6 +2,7 @@ package com.citas.medicas.ui
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -28,9 +29,9 @@ class SplashActivity : AppCompatActivity() {
 
         if (token != null && rolGuardado != -1) {
             val intent = when (rolGuardado) {
-                RolesUsuario.PACIENTE -> Intent(this, HomePacienteActivity::class.java)
-                RolesUsuario.MEDICO -> Intent(this, DashboardMedicoActivity::class.java)
-                RolesUsuario.ADMIN -> Intent(this, DashboardAdminActivity::class.java)
+                RolesUsuario.ID_PACIENTE -> Intent(this, HomePacienteActivity::class.java)
+                RolesUsuario.ID_MEDICO -> Intent(this, DashboardMedicoActivity::class.java)
+                RolesUsuario.ID_ADMIN -> Intent(this, DashboardAdminActivity::class.java)
                 else -> Intent(this, LoginActivity::class.java)
             }
             startActivity(intent)
@@ -56,9 +57,11 @@ class SplashActivity : AppCompatActivity() {
                 .setTitle("Ingresar como: ")
                 .setItems(roles){ _, which ->
                     //Map de la seleccion
-                    val rolSeleccionado = if (which == 0) RolesUsuario.PACIENTE else RolesUsuario.MEDICO
+                    val rolSeleccionado = if (which == 0) RolesUsuario.ID_PACIENTE else RolesUsuario.ID_MEDICO
 
-                    val intent = Intent(this, LoginActivity::class.java)
+                    Log.d("SPLASH_DEBUG", "Rol seleccionado: $rolSeleccionado")
+
+                    val intent = Intent(this@SplashActivity, LoginActivity::class.java)
                     intent.putExtra("rol", rolSeleccionado)
                     startActivity(intent)
                 }

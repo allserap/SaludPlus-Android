@@ -1,5 +1,7 @@
 package com.citas.medicas.models
 
+import com.google.gson.annotations.SerializedName
+
 data class MedicoUpdateRequest (
     val id: String,
     val nombre: String,
@@ -7,12 +9,15 @@ data class MedicoUpdateRequest (
     val dui: String,
     val email: String,
     val telefono: String,
-    val fechaNacimiento: String,
-    val genero: Int,
+    @SerializedName("fechaNacimiento")
+    val fechaNacimiento: String?,
+    val genero: String,
+    @SerializedName("rol")
     val rol: Int,
+    @SerializedName("activo")
     val activo: Boolean,
     val numJvpm: String,
     val especialidad: Int,
     val unidadMedica: Int,
-    val password: String? = null
+    val password: String?
 )

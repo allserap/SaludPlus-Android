@@ -3,6 +3,7 @@ package com.citas.medicas.ui.admin
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.view.inputmethod.EditorInfo
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.viewModels
@@ -21,8 +22,12 @@ import com.citas.medicas.utils.Validation.isValidDUI
 import com.citas.medicas.utils.Validation.isValidEmail
 import com.citas.medicas.utils.Validation.isValidPassword
 import com.citas.medicas.utils.Validation.isValidPhone
+import com.citas.medicas.utils.aplicarMascaraDUI
+import com.citas.medicas.utils.aplicarMascaraTelefono
 import com.citas.medicas.utils.cambiarColor
 import com.citas.medicas.utils.configurarConHint
+import com.citas.medicas.utils.limpiarCampos
+import com.citas.medicas.utils.showDatePickerDialog
 
 class UsuariosFragment : BaseFragment(R.layout.fragment_usuarios) {
 
@@ -57,7 +62,7 @@ class UsuariosFragment : BaseFragment(R.layout.fragment_usuarios) {
 
     //regionSetups
     private fun setupRecyclerView() {
-        // Inicializar el adaptador vacío al principio
+        // Inicializar el adaptador vacío
         usuarioAdapter = UsuariosAdapter(emptyList())
         binding.rvUsuarios.apply {
             // Obligatorio para que se vea algo
@@ -75,9 +80,33 @@ class UsuariosFragment : BaseFragment(R.layout.fragment_usuarios) {
             binding.btnCrear.text = if (isLoading) "Procesando..." else "Crear Cuenta"
         }
 
+        authViewModel.formState.observe(viewLifecycleOwner) { estado ->
+            with(binding) {
+                etNombres.error = estado.nombreError
+                etApellidos.error = estado.apellidoError
+                etDui.error = estado.duiError
+                etCorreo.error = estado.correoError
+                etTelefono.error = estado.telefonoError
+                etPassword.error = estado.passwordError
+                etJvpm.error = estado.jvpmError
+                estado.especialidadError?.let {
+                    Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
+                }
+                estado.unidadError?.let {
+                    Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
+                }
+
+                if (estado.isValid) {
+                    enviarRegistroMedicoAlServidor()
+                }
+            }
+        }
+
         authViewModel.registroExitoso.observe(viewLifecycleOwner) { mensaje ->
-            Toast.makeText(requireContext(), "Médico creado: $mensaje", Toast.LENGTH_SHORT).show()
-            toggleFormulario()
+            if (mensaje != null) {
+                Toast.makeText(requireContext(), "Médico creado exitosamente", Toast.LENGTH_SHORT).show()
+                toggleFormulario()
+            }
         }
 
         authViewModel.error.observe(viewLifecycleOwner) { errorMsg ->
@@ -122,10 +151,10 @@ class UsuariosFragment : BaseFragment(R.layout.fragment_usuarios) {
     }
 
     private fun setupListeners() {
-        aplicarMascaraTelefono(binding.etTelefono)
-        aplicarMascaraDUI(binding.etDui)
+        binding.etTelefono.aplicarMascaraTelefono()
+        binding.etDui.aplicarMascaraDUI()
         binding.etFechaNac.setOnClickListener {
-            showDatePickerDialog(binding.etFechaNac)
+            showDatePickerDialog(requireContext(),binding.etFechaNac)
         }
         // Botón superior: Nuevo / Cancelar
         binding.btnNuevoUsuario.setOnClickListener {
@@ -134,14 +163,32 @@ class UsuariosFragment : BaseFragment(R.layout.fragment_usuarios) {
         }
         // Botón Crear Usuario
         binding.btnCrear.setOnClickListener {
-            if (validarForm()) {
-                enviarRegistroMedicoAlServidor()
-            }
+            ocultarTeclado()
+            authViewModel.validarFormulario(
+                rolId = RolesUsuario.ID_MEDICO,
+                nombres = binding.etNombres.text.toString(),
+                apellidos = binding.etApellidos.text.toString(),
+                dui = binding.etDui.text.toString(),
+                correo = binding.etCorreo.text.toString(),
+                telefono = binding.etTelefono.text.toString(),
+                password = binding.etPassword.text.toString(),
+                extraCampo = binding.etJvpm.text.toString(),
+                especialidadPos = binding.spnEspecialidad.selectedItemPosition,
+                unidadPos = binding.spnUnidad.selectedItemPosition
+            )
+        }
+
+        binding.etJvpm.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                ocultarTeclado()
+                true
+            } else false
         }
     }
 
     //endregion
     private fun toggleFormulario() {
+        ocultarTeclado()
         isFormVisible = !isFormVisible
         setVisibilidad(binding.cardFormulario, isFormVisible)
 
@@ -170,23 +217,16 @@ class UsuariosFragment : BaseFragment(R.layout.fragment_usuarios) {
     }
 
     private fun enviarRegistroMedicoAlServidor() {
-
-
         with(binding) {
             // Obtener las posiciones de spinners
             val posEsp = spnEspecialidad.selectedItemPosition - 1
             val posUni = spnUnidad.selectedItemPosition - 1
-            val idRolMedico = listaRoles.find { it.nombre.equals("Medico", ignoreCase = true) }?.id ?: 0
-
             val generoSeleccionado = binding.spnGenero.selectedItem.toString()
             val generoFinal = when(generoSeleccionado) {
                 "Masculino" -> "M"
                 "Femenino" -> "F"
                 else -> "O"
             }
-
-            val especialidadId = listaEspecialidades.getOrNull(posEsp)?.id ?: 0
-            val unidadId = listaUnidades.getOrNull(posUni)?.id ?: 0
 
             val nuevoUsuario = RegistroRequest(
                 nombre = etNombres.text.toString().trim(),
@@ -200,64 +240,13 @@ class UsuariosFragment : BaseFragment(R.layout.fragment_usuarios) {
                 genero = generoFinal,
 
                 // posiciones reales de los spinners para los IDs
-                especialidad = especialidadId,
-                unidadMedica = unidadId,
+                especialidad = listaEspecialidades.getOrNull(posEsp)?.id ?: 0,
+                unidadMedica = listaUnidades.getOrNull(posUni)?.id ?: 0,
 
-                rol = idRolMedico
+                rol = RolesUsuario.ID_MEDICO
             )
 
             authViewModel.ejecutarRegistro(nuevoUsuario)
-        }
-    }
-
-    private fun validarForm(): Boolean {
-        with(binding) {
-            // Validaciones de Campos Requeridos
-            val vNombre = validarRequerido(etNombres, "Ingrese los nombres")
-            val vApellido = validarRequerido(etApellidos, "Ingrese los apellidos")
-            val vFecha = validarRequerido(etFechaNac, "Seleccione fecha de nacimiento")
-
-            // Validaciones con Lógica Especial (Regex y Longitud)
-            val vDui = if (!isValidDUI(etDui.text.toString().trim())) {
-                etDui.error = "Formato inválido (00000000-0)"
-                false
-            } else true
-
-            val vJvpm = if (etJvpm.text.toString().trim().length < 4) {
-                etJvpm.error = "JVPM inválido (Mínimo 4 dígitos)"
-                false
-            } else true
-
-            val vCorreo = if (!isValidEmail(etCorreo.text.toString().trim())) {
-                etCorreo.error = "Correo electrónico inválido"
-                false
-            } else true
-
-            val vTelefono = if (!isValidPhone(etTelefono.text.toString().trim())) {
-                etTelefono.error = "Formato inválido (0000-0000)"
-                false
-            } else true
-
-            val vPass = if (!isValidPassword(etPassword.text.toString())) {
-                etPassword.error = "Mínimo 8 caracteres, 1 mayúscula y 1 símbolo"
-                false
-            } else true
-
-            // Validaciones de Spinners
-            var vSpinners = true
-            if (spnGenero.selectedItemPosition == 0) {
-                Toast.makeText(requireContext(), "Seleccione el género", Toast.LENGTH_SHORT).show()
-                vSpinners = false
-            } else if (spnEspecialidad.selectedItemPosition == 0) {
-                Toast.makeText(requireContext(), "Seleccione la especialidad", Toast.LENGTH_SHORT).show()
-                vSpinners = false
-            }else if (spnUnidad.selectedItemPosition == 0) {
-                Toast.makeText(requireContext(), "Seleccione la unidad médica", Toast.LENGTH_SHORT).show()
-                vSpinners = false
-            }
-
-            // Retorna True solo si todas las variables son True
-            return vNombre && vApellido && vFecha && vDui && vJvpm && vCorreo && vTelefono && vPass && vSpinners
         }
     }
 

@@ -2,8 +2,8 @@ package com.citas.medicas.utils
 
 object Validation {
     fun isValidPassword(password: String): Boolean {
-        // 6 caracteres, una mayúscula y un símbolo
-        val passwordRegex = Regex("^(?=.*[A-Z])(?=.*[!@#\$%^&*(),.?\":{}|<>]).{6,}$")
+        // 8 caracteres, una mayúscula y un símbolo
+        val passwordRegex = Regex("^(?=.*[A-Z])(?=.*[!@#\$%^&*(),.?\":{}|<>]).{8,}$")
         return password.matches(passwordRegex)
     }
 
