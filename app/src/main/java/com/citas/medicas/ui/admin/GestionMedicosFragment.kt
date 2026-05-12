@@ -149,7 +149,7 @@ class GestionMedicosFragment : BaseFragment(R.layout.fragment_gestion_medicos) {
                     )
             }
 
-            // LÓGICA DE ELIMINACIÓN LÓGICA
+            // ELIMINACIÓN LÓGICA
             if (estadoOriginal && !estadoSeleccionado) {
                 // Si antes era Activo y ahora es Inactivo, advertimos
                 com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
@@ -240,7 +240,6 @@ class GestionMedicosFragment : BaseFragment(R.layout.fragment_gestion_medicos) {
                 if (index != -1) spnUnidad.setSelection(index + 1)
             }
 
-            btnGuardarMedico.text = "Actualizar Datos"
         }
     }
 

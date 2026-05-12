@@ -18,6 +18,8 @@ import com.citas.medicas.models.LoginRequest
 import com.citas.medicas.models.LoginResponse
 import com.citas.medicas.models.MedicoResponse
 import com.citas.medicas.models.MedicoUpdateRequest
+import com.citas.medicas.models.PacienteResponse
+import com.citas.medicas.models.PacienteUpdateRequest
 import com.citas.medicas.models.RegistroRequest
 import com.citas.medicas.models.RegistroResponse
 import com.citas.medicas.models.RolResponse
@@ -66,6 +68,23 @@ interface ApiService {
     //Pacientes
     @POST("auth/register/paciente")
     suspend fun registrarPaciente(@Body request: RegistroRequest): Response<RegistroResponse>
+
+    // Obtener todos los pacientes
+    @GET("admin/pacientes/read")
+    suspend fun getPacientes(): ApiResponse<List<PacienteResponse>>
+
+    // Actualizar paciente por ID
+    @POST("admin/pacientes/update/{id}")
+    suspend fun actualizarPaciente(
+        @Path("id") id: String,
+        @Body request: PacienteUpdateRequest
+    ): Response<PacienteResponse>
+
+    // Eliminación lógica (Desactivar)
+    @DELETE("admin/pacientes/delete/{id}")
+    suspend fun desactivarPaciente(
+        @Path("id") id: String
+    ): Response<PacienteResponse>
 
     @GET("paciente/proximas/{pacienteId}")
     suspend fun getProximasCitas(

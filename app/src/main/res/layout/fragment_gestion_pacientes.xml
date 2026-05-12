@@ -16,7 +16,9 @@
             android:layout_height="wrap_content"
             android:backgroundTint="@color/citas_white"
             app:cardCornerRadius="16dp"
-            app:cardElevation="2dp">
+            app:cardElevation="2dp"
+            app:strokeColor="#ECECF3"
+            app:strokeWidth="1dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -27,28 +29,115 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
                     android:text="Seleccionar Paciente"
                     android:textColor="@color/citas_primary"
                     android:textSize="16sp"
                     android:textStyle="bold" />
 
-                <Spinner
-                    android:id="@+id/spPacientes"
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilBuscarPaciente"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                     android:layout_width="match_parent"
-                    android:layout_height="48dp"
+                    android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
                     android:layout_marginBottom="8dp"
-                    android:background="@drawable/bg_input"
-                    android:padding="8dp"
-                    android:popupBackground="@color/citas_background" />
+                    android:hint="Buscar por Nombre o DUI"
+                    app:boxStrokeColor="@color/citas_primary"
+                    app:hintTextColor="@color/citas_primary">
 
-                <!-- Datos Médicos del Paciente -->
+                    <AutoCompleteTextView
+                        android:id="@+id/autoCompletePacientes"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="text"
+                        android:padding="16dp" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginVertical="16dp"
+                    android:background="#E0E0E0" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:text="Información Personal (Identificación)"
+                    android:textColor="@color/citas_primary"
+                    android:textSize="14sp" />
+
                 <com.google.android.material.textfield.TextInputLayout
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Alergias">
+                    android:enabled="false"
+                    android:hint="Nombre Completo"
+                    app:boxBackgroundColor="#F1F3F4">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etNombreIdentificacion"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textColor="#5F6368" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:baselineAligned="false"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="4dp"
+                        android:layout_weight="1"
+                        android:enabled="false"
+                        android:hint="Dui"
+                        app:boxBackgroundColor="#F1F3F4">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etDuiPaciente"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="4dp"
+                        android:layout_weight="1"
+                        android:enabled="false"
+                        android:hint="N° Afiliado"
+                        app:boxBackgroundColor="#F1F3F4">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etNumAfiliado"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:baselineAligned="false"
+                android:orientation="horizontal">
+                <com.google.android.material.textfield.TextInputLayout
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="4dp"
+                    android:layout_weight="1"
+                    android:enabled="false"
+                    android:hint="Alergias"
+                    app:boxBackgroundColor="#F1F3F4">
+
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etAlergias"
                         android:layout_width="match_parent"
@@ -57,55 +146,116 @@
 
                 <com.google.android.material.textfield.TextInputLayout
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                    android:layout_width="match_parent"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:hint="Condiciones Crónicas">
+                    android:layout_marginStart="4dp"
+                    android:layout_weight="1"
+                    android:enabled="false"
+                    android:hint="Tipo Sangre"
+                    app:boxBackgroundColor="#F1F3F4">
+
                     <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/etCondiciones"
+                        android:id="@+id/etTipoSangre"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content" />
                 </com.google.android.material.textfield.TextInputLayout>
+            </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginVertical="16dp"
+                    android:background="#E0E0E0" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:text="Gestión de Cuenta y Contacto"
+                    android:textColor="@color/citas_primary"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <com.google.android.material.textfield.TextInputLayout
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Teléfono de Contacto">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etTelefonoContacto"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="phone" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <com.google.android.material.textfield.TextInputLayout
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:hint="Correo de Contacto">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etCorreoContacto"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"/>
+                </com.google.android.material.textfield.TextInputLayout>
+
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
-                    android:text="Estado Activo"
-                    android:textSize="12sp"
-                    android:textColor="@color/citas_primary" />
+                    android:text="Estado del Usuario"
+                    android:textColor="@color/citas_primary"
+                    android:textSize="14sp" />
+
                 <Spinner
                     android:id="@+id/spnActivoPaciente"
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
+                    android:layout_marginTop="4dp"
                     android:background="@drawable/bg_input_border" />
+
+                <ProgressBar
+                    android:id="@+id/progressBar"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:visibility="gone"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center_horizontal"
-                    android:padding="8dp"
-                    android:orientation="horizontal">
+                    android:orientation="horizontal"
+                    android:padding="8dp">
+
                     <Button
                         android:id="@+id/btnCancelarPaciente"
                         android:layout_width="wrap_content"
                         android:layout_height="40dp"
+                        android:layout_gravity="end"
                         android:layout_marginEnd="10dp"
+                        android:backgroundTint="@color/citas_secondary"
                         android:text="Cancelar"
                         android:textAllCaps="false"
-                        android:textColor="@color/citas_primary"
-                        android:backgroundTint="@color/citas_secondary"
-                        android:layout_gravity="end"/>
+                        android:textColor="@color/citas_primary" />
+
                     <Button
                         android:id="@+id/btnGuardarPaciente"
                         android:layout_width="wrap_content"
                         android:layout_height="40dp"
+                        android:layout_gravity="end"
                         android:layout_marginStart="10dp"
-                        android:text="Guardar"
-                        android:textAllCaps="false"
-                        android:textColor="@color/citas_white"
                         android:backgroundTint="@color/citas_primary"
-                        android:layout_gravity="end"/>
+                        android:text="Actualizar"
+                        android:textAllCaps="false"
+                        android:textColor="@color/citas_white" />
                 </LinearLayout>
 
             </LinearLayout>

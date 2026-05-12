@@ -11,6 +11,8 @@ import com.citas.medicas.data.AuthRepository
 import com.citas.medicas.models.EspecialidadResponse
 import com.citas.medicas.models.MedicoResponse
 import com.citas.medicas.models.MedicoUpdateRequest
+import com.citas.medicas.models.PacienteResponse
+import com.citas.medicas.models.PacienteUpdateRequest
 import com.citas.medicas.models.RegistroRequest
 import com.citas.medicas.models.RolResponse
 import com.citas.medicas.models.UnidadMedicaResponse
@@ -47,6 +49,10 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     // --- Mostrar médicos ---
     private val _listaMedicos = MutableLiveData<List<MedicoResponse>>()
     val listaMedicos: LiveData<List<MedicoResponse>> = _listaMedicos
+
+    // --- Mostar pacientes ---
+    private val _listaPacientes = MutableLiveData<List<PacienteResponse>>()
+    val listaPacientes: LiveData<List<PacienteResponse>> = _listaPacientes
 
     // --- Mostrar catálogos ---
     private val _especialidades = MutableLiveData<List<EspecialidadResponse>>()
@@ -99,9 +105,46 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun actualizarPaciente(datos: PacienteUpdateRequest) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                val resultado = repository.actualizarPaciente(datos)
+
+                resultado.onSuccess { mensaje ->
+                    // Notificamos éxito a la UI
+                    _registroExitoso.value = Unit.toString()
+                }.onFailure { error ->
+                    // Notificamos el error
+                    _error.value = error.message ?: "Error desconocido"
+                }
+            } catch (e: Exception) {
+                _error.value = "Error inesperado: ${e.message}"
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
     //endregion
 
     // region Cargar datos
+    fun cargarPacientes() {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                val response = repository.obtenerPacientes()
+                if (response.success) {
+                    _listaPacientes.value = response.data
+                }
+            } catch (e: Exception) {
+                _error.value = e.message
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
     fun cargarMedicos() {
         viewModelScope.launch {
             try {
@@ -133,7 +176,6 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 // obtener unidades médicas
                 val resUni = repository.obtenerUnidadesMedicas()
                 if (resUni.isSuccessful) {
-                    // CAMBIO AQUÍ: Usamos resUni.body()
                     val listaReal = resUni.body()?.data ?: emptyList()
                     _unidadesMedicas.postValue(listaReal)
                     Log.d("DEBUG_API", "Unidades cargadas: ${listaReal.size}")

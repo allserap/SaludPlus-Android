@@ -32,9 +32,9 @@ class UsuariosAdapter(private var medicos: List<MedicoResponse>) :
             // Unir nombre y apellido del médico
             val nombreCompleto = "${medico.nombre} ${medico.apellido}"
             tvNombre.text = nombreCompleto
-            tvEspecialidad.text = "Especialidad ID: ${medico.especialidadId}"
-            tvUnidadMedica.text = "Unidad ID: ${medico.unidadMedicaId}"
-            tvRolBadge.text = if (medico.rolId == 2) "Médico" else "Usuario"
+            tvEspecialidad.text = "${medico.especialidadNombre}"
+            tvUnidadMedica.text = "${medico.unidadMedicaNombre}"
+            tvRolBadge.text = "${medico.rolNombre}"
 
             // --- LÓGICA DE ESTADO (ELIMINACIÓN LÓGICA) ---
             if (medico.activo) {

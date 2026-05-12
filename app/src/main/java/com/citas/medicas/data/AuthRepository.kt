@@ -5,7 +5,10 @@ import android.util.Log
 import com.citas.medicas.models.ApiResponse
 import com.citas.medicas.models.MedicoResponse
 import com.citas.medicas.models.MedicoUpdateRequest
+import com.citas.medicas.models.PacienteResponse
+import com.citas.medicas.models.PacienteUpdateRequest
 import com.citas.medicas.models.RegistroRequest
+import kotlinx.coroutines.runBlocking
 import retrofit2.Response
 
 class AuthRepository(private val context: Context) {
@@ -56,9 +59,26 @@ class AuthRepository(private val context: Context) {
         }
     }
 
+    suspend fun actualizarPaciente(datos: PacienteUpdateRequest): Result<String> {
+        return try {
+            val response = apiService.actualizarPaciente(datos.id, datos)
+            if (response.isSuccessful) {
+                Result.success("Actualización exitosa")
+            } else {
+                val errorServidor = response.errorBody()?.string()
+                Log.e("API_DEBUG", "Error en transacción: $errorServidor")
+                Result.failure(Exception(errorServidor ?: "Error al actualizar"))
+            }
+        } catch (e: Exception) {
+            Result.failure(Exception("Error de red: ${e.message}"))
+        }
+    }
+
     suspend fun obtenerMedicos(): Response<ApiResponse<List<MedicoResponse>>> {
         return apiService.obtenerMedicos()
     }
+
+    suspend fun obtenerPacientes() = apiService.getPacientes()
     suspend fun obtenerRoles() = apiService.obtenerRoles()
 
     suspend fun obtenerEspecialidades() = apiService.obtenerEspecialidades()

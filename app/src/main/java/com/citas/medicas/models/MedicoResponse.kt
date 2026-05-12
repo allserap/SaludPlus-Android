@@ -19,6 +19,8 @@ data class MedicoResponse (
     val genero: String,
     @SerializedName("rolid")
     val rolId: Int,
+    @SerializedName("rolnombre")
+    val rolNombre : String,
     @SerializedName("activo")
     val activo: Boolean,
     @SerializedName("numjvpm")
@@ -26,7 +28,11 @@ data class MedicoResponse (
     @SerializedName("especialidadid")
     val especialidadId: Int,
     @SerializedName("unidadmedicaid")
-    val unidadMedicaId: Int
+    val unidadMedicaId: Int,
+    @SerializedName("especialidadnombre")
+    val especialidadNombre: String?,
+    @SerializedName("unidadmedicanombre")
+    val unidadMedicaNombre: String?
 )
 
 data class ApiResponse<T>(
