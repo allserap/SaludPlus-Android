@@ -7,10 +7,7 @@ import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -21,12 +18,14 @@ import com.citas.medicas.adapter.UnidadMedicaAdapter
 import com.citas.medicas.data.RetrofitClient
 import com.citas.medicas.models.CrearCitaRequest
 import com.citas.medicas.models.Especialidad
-import com.citas.medicas.models.UnidadMedicaFiltro
+import com.citas.medicas.models.EspecialidadResponse
+import com.citas.medicas.models.UnidadMedica
 import com.google.android.material.button.MaterialButton
 import kotlinx.coroutines.launch
+import kotlin.collections.emptyList
 
 class SolicitarCitaActivity : AppCompatActivity() {
-    val apiService = RetrofitClient.getApiService(this@SolicitarCitaActivity)
+    private val apiService by lazy { RetrofitClient.getApiService(this) }
     private var pasoActual = 1
 
     private var fechaSeleccionadaReal: String? = null
@@ -34,8 +33,8 @@ class SolicitarCitaActivity : AppCompatActivity() {
     private lateinit var adapterHoras: HoraAdapter
 
     // 1. VARIABLE REAL DE LA API
-    private var especialidadSeleccionada: Especialidad? = null
-    private var unidadSeleccionadaReal: UnidadMedicaFiltro? = null
+    private var especialidadSeleccionada: EspecialidadResponse? = null
+    private var unidadSeleccionadaReal: UnidadMedica? = null
     private lateinit var adapterUnidades: UnidadMedicaAdapter
 
     private lateinit var adapterEspecialidad: EspecialidadAdapter
@@ -199,10 +198,6 @@ class SolicitarCitaActivity : AppCompatActivity() {
                 tvStepCounter.text = "Paso 3 de 3"
                 btnSiguiente.text = "Confirmar Cita"
                 cambiarEstadoBotonSiguiente(horaSeleccionadaReal != null && fechaSeleccionadaReal != null)
-
-                val estaActivo = (horaSeleccionadaReal != null && fechaSeleccionadaReal != null)
-                btnSiguiente.isEnabled = estaActivo
-                btnSiguiente.alpha = if (estaActivo) 1.0f else 0.5f
             }
             4 -> {
                 layoutSuccess.visibility = View.VISIBLE
@@ -232,9 +227,9 @@ class SolicitarCitaActivity : AppCompatActivity() {
         lifecycleScope.launch {
             try {
 
-                val response = apiService.getEspecialidades()
+                val response = apiService.obtenerEspecialidades()
                 if (response.isSuccessful) {
-                    val datos = response.body()?.datos
+                    val datos = response.body()?.data
                     if (datos != null && datos.isNotEmpty()) {
                         Log.d("API_DEBUG", "Especialidades cargadas: ${datos.size}")
                         adapterEspecialidad.actualizarDatos(datos)
@@ -255,18 +250,18 @@ class SolicitarCitaActivity : AppCompatActivity() {
         val btnSiguiente = findViewById<MaterialButton>(R.id.btnSiguiente)
 
         val prefs = getSharedPreferences("CitasMedicasPrefs", MODE_PRIVATE)
-        val pacienteIdStr = prefs.getString("user_usuarioid", "1")
-        val pacienteIdReal = pacienteIdStr?.toIntOrNull() ?: 1
+        val usuarioIdReal = prefs.getInt("user_usuarioid", -1)
 
 
         val request = CrearCitaRequest(
-            paciente_id = pacienteIdReal,
+            paciente_id = usuarioIdReal,
             especialidad_id = especialidadSeleccionada!!.id,
             unidad_medica_id = unidadSeleccionadaReal!!.id,
             fecha_solicitada = fechaSeleccionadaReal!!,
             hora_asignada = horaSeleccionadaReal!!,
             motivo_consulta = "Consulta general programada desde la app"
         )
+        // ... (el resto queda igual)
 
         btnSiguiente.isEnabled = false
         btnSiguiente.text = "Guardando..."

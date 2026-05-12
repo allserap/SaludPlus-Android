@@ -81,24 +81,22 @@ class HomePacienteActivity : AppCompatActivity() {
 
 
     private fun cargarCitasDesdeApi() {
-        // datos guardados  en el LoginActivity
         val prefs = getSharedPreferences("CitasMedicasPrefs", MODE_PRIVATE)
         val nombreUsuario = prefs.getString("user_nombre", "Paciente")
         val apellidoUsuario = prefs.getString("user_apellido", "")
         val numAfiliado = prefs.getString("user_afiliado", "No disponible")
 
-
-        val pacienteIdStr = prefs.getString("user_usuarioid", "1")
-        val pacienteIdReal = pacienteIdStr?.toIntOrNull() ?: 1
+        // 1. Extraemos el ID real como número entero (Int)
+        val usuarioId = prefs.getString("user_usuarioid", "") ?: ""
 
         findViewById<TextView>(R.id.tvUserName).text = "$nombreUsuario $apellidoUsuario"
         findViewById<TextView>(R.id.tvUserAffiliate).text = "Afiliado: $numAfiliado"
 
-        val pacienteIdId = 1
         lifecycleScope.launch {
             try {
                 val apiService = RetrofitClient.getApiService(this@HomePacienteActivity)
-                val response = apiService.getProximasCitas(pacienteIdId)
+
+                val response = apiService.getProximasCitas(usuarioId)
 
                 if (response.isSuccessful) {
                     val body = response.body()
@@ -131,14 +129,13 @@ class HomePacienteActivity : AppCompatActivity() {
                         }
 
                     } else {
-                        Toast.makeText(this@HomePacienteActivity, "No tienes citas próximas", Toast.LENGTH_SHORT).show()
+                        Log.d("API_DEBUG", "Citas vacías o exito = false")
                     }
                 } else {
-                    Toast.makeText(this@HomePacienteActivity, "Error del servidor: ${response.code()}", Toast.LENGTH_SHORT).show()
+                    Log.e("API_DEBUG", "Error servidor: ${response.code()}")
                 }
             } catch (e: Exception) {
-                Log.e("API_ERROR", "Error de conexión", e)
-                Toast.makeText(this@HomePacienteActivity, "Error al conectar con la API", Toast.LENGTH_SHORT).show()
+                Log.e("API_DEBUG", "Error de red: ${e.message}")
             }
         }
     }

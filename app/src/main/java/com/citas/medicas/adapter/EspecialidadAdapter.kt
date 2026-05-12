@@ -1,33 +1,32 @@
 package com.citas.medicas.adapter
 
-
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.citas.medicas.R
-import com.citas.medicas.models.Especialidad
+import com.citas.medicas.models.EspecialidadResponse
 import com.google.android.material.card.MaterialCardView
 
 class EspecialidadAdapter(
-    private var lista: List<Especialidad>,
-    private val alSeleccionar: (Especialidad) -> Unit
-) : RecyclerView.Adapter<EspecialidadAdapter.ViewHolder>() {
+    private var lista: List<EspecialidadResponse>,
+    private val onItemClick: (EspecialidadResponse) -> Unit
+) : RecyclerView.Adapter<EspecialidadAdapter.EspecialidadViewHolder>() {
 
     private var indexSeleccionado = -1
 
-    class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+    class EspecialidadViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val tvNombre: TextView = view.findViewById(R.id.tvItemName)
         val card: MaterialCardView = view as MaterialCardView
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): EspecialidadViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.item_simple_button, parent, false)
-        return ViewHolder(view)
+        return EspecialidadViewHolder(view)
     }
 
-    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+    override fun onBindViewHolder(holder: EspecialidadViewHolder, position: Int) {
         val item = lista[position]
         holder.tvNombre.text = item.nombre
 
@@ -45,15 +44,16 @@ class EspecialidadAdapter(
             if (posicionActual != RecyclerView.NO_POSITION) {
                 indexSeleccionado = posicionActual
                 notifyDataSetChanged()
-                alSeleccionar(item)
+                onItemClick(item) // Usamos el nombre correcto del parámetro
             }
         }
     }
 
     override fun getItemCount() = lista.size
 
-    fun actualizarDatos(nuevaLista: List<Especialidad>) {
+    fun actualizarDatos(nuevaLista: List<EspecialidadResponse>) {
         lista = nuevaLista
+        indexSeleccionado = -1 // Reseteamos la selección cuando cambian los datos
         notifyDataSetChanged()
     }
 }

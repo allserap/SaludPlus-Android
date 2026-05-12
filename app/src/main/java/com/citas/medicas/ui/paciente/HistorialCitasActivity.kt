@@ -91,12 +91,14 @@ class HistorialCitasActivity : AppCompatActivity() {
 
     private fun cargarHistorial() {
         val prefs = getSharedPreferences("CitasMedicasPrefs", MODE_PRIVATE)
-        val pacienteIdId = 1 // Reemplazar por: prefs.getInt("user_id_numerico", 1)
+
+        val usuarioId = prefs.getString("user_usuarioid", "") ?: ""
 
         lifecycleScope.launch {
             try {
                 val apiService = RetrofitClient.getApiService(this@HistorialCitasActivity)
-                val response = apiService.getHistorialCitas(pacienteIdId)
+
+                val response = apiService.getHistorialCitas(usuarioId)
 
                 if (response.isSuccessful && response.body()?.exito == true) {
                     val datos = response.body()?.datos

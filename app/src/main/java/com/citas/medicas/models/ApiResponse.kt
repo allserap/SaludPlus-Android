@@ -4,17 +4,16 @@ import com.google.gson.annotations.SerializedName
 
 data class ApiResponseProximasCitas(
     val exito: Boolean,
-    val datos: List<ProximaCita>,
-    val mensaje: String?
+    val datos: List<CitaHome>
 )
 
-data class ProximaCita(
+data class CitaHome(
     val id: String,
-    val especialidades: String?,
-    val fecha_solicitada: String?,
-    val hora_asignada: String?,
-    val unidades_medicas: String?,
-    val doctor: String?
+    val especialidades: String,
+    val fecha_solicitada: String,
+    val hora_asignada: String,
+    val unidades_medicas: String,
+    val doctor: String
 )
 
 data class ApiResponseHistorial(
@@ -70,10 +69,10 @@ data class UnidadMedicaMapa(
 )
 
 data class ApiResponseEspecialidades(
-    val exito: Boolean,
-    val datos: List<Especialidad>
+    val success: Boolean,
+    val data: List<Especialidad>,
+    val message: String
 )
-
 data class Especialidad(
     val id: Int,
     val nombre: String?,
@@ -82,15 +81,14 @@ data class Especialidad(
 
 data class ApiResponseUnidades(
     val exito: Boolean,
-    val datos: List<UnidadMedicaFiltro>
+    val datos: List<UnidadMedica>
 )
 
-data class UnidadMedicaFiltro(
+data class UnidadMedica(
     val id: Int,
-    val nombre: String?,
-    val direccion: String?
+    val nombre: String,
+    val direccion: String? = null
 )
-
 data class ApiResponseHorarios(
     val exito: Boolean,
     val datos: List<String>

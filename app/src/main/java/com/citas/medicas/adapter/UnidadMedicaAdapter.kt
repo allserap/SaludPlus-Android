@@ -7,12 +7,12 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.citas.medicas.R
-import com.citas.medicas.models.UnidadMedicaFiltro
+import com.citas.medicas.models.UnidadMedica
 import com.google.android.material.card.MaterialCardView
 
 class UnidadMedicaAdapter(
-    private var lista: List<UnidadMedicaFiltro>,
-    private val alSeleccionar: (UnidadMedicaFiltro) -> Unit
+    private var lista: List<UnidadMedica>,
+    private val alSeleccionar: (UnidadMedica) -> Unit
 ) : RecyclerView.Adapter<UnidadMedicaAdapter.ViewHolder>() {
 
     private var indexSeleccionado = -1
@@ -55,7 +55,7 @@ class UnidadMedicaAdapter(
 
     override fun getItemCount() = lista.size
 
-    fun actualizarDatos(nuevaLista: List<UnidadMedicaFiltro>) {
+    fun actualizarDatos(nuevaLista: List<UnidadMedica>) {
         lista = nuevaLista
         indexSeleccionado = -1
         notifyDataSetChanged()

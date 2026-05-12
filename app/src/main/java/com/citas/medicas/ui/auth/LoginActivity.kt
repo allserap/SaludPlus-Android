@@ -88,15 +88,19 @@ class LoginActivity : AppCompatActivity() {
                     // --- PERSISTENCIA DE DATOS ---
                     val prefs = getSharedPreferences("CitasMedicasPrefs", MODE_PRIVATE)
                     with(prefs.edit()) {
-                        putString("user_usuarioid", user?.id)
+                        putString("user_usuarioid", user?.id ?: "")
                         putString("user_nombre", user?.nombre)
                         putString("user_apellido", user?.apellido)
                         putString("user_afiliado", user?.numAfiliado)
-                        putInt("user_id_rol",  idRol)
+                        putString("user_dui", user?.dui)
+                        putString("user_email", user?.email)
+                        putString("user_telefono", user?.telefono)
+                        putString("user_alergias", user?.alergias)
+                        putString("user_cronicas", user?.condicionesCronicas)
+                        putString("user_sangre", user?.tipoSangre)
                         putString("token_jwt", tokenExtraido)
                         apply()
                     }
-
                     val nombreUsuario = user?.nombre ?: "Usuario"
 
                         when (idRol) {

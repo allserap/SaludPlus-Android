@@ -10,20 +10,18 @@ data class LoginResponse(
 
 //info real
 data class UserProfile(
-
     @SerializedName("usuarioId") val id: String,
-
+    val pacienteId: String?,
     val nombre: String,
     val apellido: String,
     val email: String,
-    @SerializedName("rol")
-    val rolId: Int,
-    // Datos adicionales del SELECT de Node.js
-    @SerializedName("numafiliado")
-    val numAfiliado: String? = null,
-    @SerializedName("numjvpm")
-    val numJvpm: String? = null,
-    @SerializedName("especialidadid")
-    val especialidadId: Int? = null,
+    val telefono: String?,
+    val dui: String?,
+    @SerializedName("rolId") val rolId: Int,
+    val numAfiliado: String?,
+    val tipoSangre: String?,
+    val alergias: String?,
+    @SerializedName("condicionesCronicas") val condicionesCronicas: String?,
+    val estadoFamiliar: String?,
     val token: String? = null
 )
