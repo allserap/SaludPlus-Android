@@ -88,12 +88,12 @@ interface ApiService {
 
     @GET("paciente/proximas/{pacienteId}")
     suspend fun getProximasCitas(
-        @Path("pacienteId") pacienteId: Int
+        @Path("pacienteId") pacienteId: String
     ): Response<ApiResponseProximasCitas>
 
     @GET("paciente/historial/{pacienteId}")
     suspend fun getHistorialCitas(
-        @Path("pacienteId") pacienteId: Int
+        @Path("pacienteId") pacienteId: String
     ): Response<ApiResponseHistorial>
 
     @GET("paciente/perfil/{pacienteId}")

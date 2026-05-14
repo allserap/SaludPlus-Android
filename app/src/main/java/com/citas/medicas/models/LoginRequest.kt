@@ -9,6 +9,8 @@ data class LoginRequest(
     val email: String? = null,
     val password: String,
     @SerializedName("rol")
-    val rolId: Int
+    val rolId: Int,
+    @SerializedName("superAdmin")
+    val superAdmin: String? = null
 )
 

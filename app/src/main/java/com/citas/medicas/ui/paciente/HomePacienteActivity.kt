@@ -7,11 +7,9 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import com.citas.medicas.R
 import com.google.android.material.bottomnavigation.BottomNavigationView
-import com.google.android.material.card.MaterialCardView
 
 import android.util.Log
 import android.widget.LinearLayout
-import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
 import com.citas.medicas.data.RetrofitClient
 import kotlinx.coroutines.launch

@@ -3,9 +3,12 @@ package com.citas.medicas.ui.auth
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.View
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.citas.medicas.R
 import com.citas.medicas.data.RetrofitClient
 import com.citas.medicas.databinding.ActivityLoginBinding
 import com.citas.medicas.models.ErrorResponse
@@ -26,17 +29,33 @@ class LoginActivity : AppCompatActivity() {
         //inicializar binding
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        val rol = intent.getIntExtra("rol", -1)
+        val tvIrARegistro = findViewById<TextView>(R.id.tvIrARegistro)
+
+        if (rol == RolesUsuario.ID_MEDICO || rol == RolesUsuario.ID_ADMIN) {
+            // Ocultar el enlace completamente para estos roles
+            tvIrARegistro.visibility = View.GONE
+        } else {
+            // Solo se muestra para pacientes
+            tvIrARegistro.visibility = View.VISIBLE
+            tvIrARegistro.setOnClickListener {
+                val intent = Intent(this, RegistroActivity::class.java)
+                startActivity(intent)
+            }
+        }
 
         //Recuperar rol del splash
         idRol = intent.getIntExtra("rol", -1)
         Log.d("LOGIN_DEBUG", "Rol recibido del Splash: $idRol")
+
+        val isAdminFlow = intent.getBooleanExtra("is_admin_flow", false)
 
         if (idRol == -1) {
             Toast.makeText(this, "Error al recuperar el rol", Toast.LENGTH_SHORT).show()
             finish() // Regresa al Splash si no hay rol
         }
 
-        interfazPorRol()
+        interfazPorRol(isAdminFlow)
         setupListeners()
 
     }
@@ -60,19 +79,35 @@ class LoginActivity : AppCompatActivity() {
     }
 
     //Login segun rol
-    private fun interfazPorRol(){
+    private fun interfazPorRol(isAdminFlow: Boolean){
         when(idRol){
             RolesUsuario.ID_PACIENTE -> binding.tvIdentificador.text = "Número de Afiliado"
             RolesUsuario.ID_MEDICO -> binding.tvIdentificador.text = "JVPM"
+            RolesUsuario.ID_ADMIN -> {
+                binding.tvIdentificador.text = "Correo Electrónico"
+                // Luego del gesto oculto, mostramos el campo secreto
+                if (isAdminFlow) {
+                    binding.tvLabelSecreto.visibility = android.view.View.VISIBLE
+                    binding.etFraseSecreta.visibility = android.view.View.VISIBLE
+                }
+            }
             else -> binding.tvIdentificador.text = "Identificador"
         }
     }
 
     private fun ejecutarLogin(usuario: String, clave: String) {
+        // Capturar frase secreta
+        val fraseSecreta = binding.etFraseSecreta.text.toString().takeIf { it.isNotEmpty() }
+
         val request = when (idRol) {
             RolesUsuario.ID_PACIENTE -> LoginRequest(numAfiliado = usuario, password = clave, rolId = idRol)
             RolesUsuario.ID_MEDICO -> LoginRequest(numJvpm = usuario, password = clave, rolId = idRol)
-            RolesUsuario.ID_ADMIN -> LoginRequest(email = usuario, password = clave, rolId = idRol)
+            RolesUsuario.ID_ADMIN -> LoginRequest(
+                email = usuario,
+                password = clave,
+                rolId = idRol,
+                superAdmin = fraseSecreta
+            )
             else -> LoginRequest(password = clave, rolId = idRol)
         }
 

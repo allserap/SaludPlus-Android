@@ -82,6 +82,25 @@
             android:padding="12dp"
             android:layout_marginBottom="20dp"/>
 
+        <TextView
+            android:id="@+id/tvLabelSecreto"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Frase de Seguridad"
+            android:visibility="gone"
+            android:textColor="@color/citas_primary"/>
+
+        <EditText
+            android:id="@+id/etFraseSecreta"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:hint="Frase secreta de administrador"
+            android:inputType="textPassword"
+            android:visibility="gone"
+            android:background="@drawable/bg_input"
+            android:padding="12dp"
+            android:layout_marginBottom="20dp"/>
+
         <Button
             android:id="@+id/btnLogin"
             android:layout_width="match_parent"

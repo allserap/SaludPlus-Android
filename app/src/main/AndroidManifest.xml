@@ -4,6 +4,8 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <uses-permission android:name="android.permission.VIBRATE" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -34,7 +36,7 @@
             android:name=".ui.admin.DashboardAdminActivity"
                 android:exported="false" >
 
-            </activity>
+        </activity>
 
         <activity
             android:name=".ui.paciente.EditarPerfilActivity"

@@ -1,9 +1,11 @@
 package com.citas.medicas.ui
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
+import android.widget.ImageView
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -49,6 +51,7 @@ class SplashActivity : AppCompatActivity() {
 
         val btnLogin = findViewById<Button>(R.id.btnLogin)
         val btnRegister = findViewById<Button>(R.id.btnRegister)
+        val ivLogo = findViewById<ImageView>(R.id.ivLogo)
 
         btnLogin.setOnClickListener {
             val roles = arrayOf("Paciente", "Medico")
@@ -68,6 +71,22 @@ class SplashActivity : AppCompatActivity() {
                 .show()
         }
 
+        ivLogo.setOnLongClickListener {
+            val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as android.os.Vibrator
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                vibrator.vibrate(android.os.VibrationEffect.createOneShot(100, android.os.VibrationEffect.DEFAULT_AMPLITUDE))
+            } else {
+                vibrator.vibrate(100)
+            }
+
+            // Redireccionamiento discreto
+            val intent = Intent(this, LoginActivity::class.java).apply {
+                putExtra("rol", RolesUsuario.ID_ADMIN)
+                putExtra("is_admin_flow", true)
+            }
+            startActivity(intent)
+            true // Indica que el evento fue consumido
+        }
 
         btnRegister.setOnClickListener {
             val intent = Intent(this, RegistroActivity::class.java)
