@@ -95,7 +95,7 @@ data class ApiResponseHorarios(
 )
 
 data class CrearCitaRequest(
-    val paciente_id: Int,
+    val usuario_id: String,
     val especialidad_id: Int,
     val unidad_medica_id: Int,
     val fecha_solicitada: String,

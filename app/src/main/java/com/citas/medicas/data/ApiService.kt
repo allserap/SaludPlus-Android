@@ -86,14 +86,14 @@ interface ApiService {
         @Path("id") id: String
     ): Response<PacienteResponse>
 
-    @GET("paciente/proximas/{pacienteId}")
+    @GET("paciente/proximas/{usuarioId}")
     suspend fun getProximasCitas(
-        @Path("pacienteId") pacienteId: String
+        @Path("usuarioId") usuarioId: String
     ): Response<ApiResponseProximasCitas>
 
-    @GET("paciente/historial/{pacienteId}")
+    @GET("paciente/historial/{usuarioId}")
     suspend fun getHistorialCitas(
-        @Path("pacienteId") pacienteId: String
+        @Path("usuarioId") usuarioId: String
     ): Response<ApiResponseHistorial>
 
     @GET("paciente/perfil/{pacienteId}")
@@ -109,7 +109,12 @@ interface ApiService {
     suspend fun getEspecialidades(): Response<ApiResponseEspecialidades>
 
     // Paso 2 (Solicitar Cita)
-    @GET("paciente/unidades-medicas/{idEspecialidad}")
+//    @GET("paciente/unidades-medicas/{idEspecialidad}")
+//    suspend fun getUnidadesFiltradas(
+//        @Path("idEspecialidad") idEspecialidad: Int
+//    ): Response<ApiResponseUnidades>
+
+    @GET("global/unidades-medicas/{idEspecialidad}")
     suspend fun getUnidadesFiltradas(
         @Path("idEspecialidad") idEspecialidad: Int
     ): Response<ApiResponseUnidades>

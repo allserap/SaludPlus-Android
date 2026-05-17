@@ -10,6 +10,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 
 import android.util.Log
 import android.widget.LinearLayout
+import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
 import com.citas.medicas.data.RetrofitClient
 import kotlinx.coroutines.launch
@@ -84,11 +85,16 @@ class HomePacienteActivity : AppCompatActivity() {
         val apellidoUsuario = prefs.getString("user_apellido", "")
         val numAfiliado = prefs.getString("user_afiliado", "No disponible")
 
-        // 1. Extraemos el ID real como número entero (Int)
         val usuarioId = prefs.getString("user_usuarioid", "") ?: ""
 
         findViewById<TextView>(R.id.tvUserName).text = "$nombreUsuario $apellidoUsuario"
         findViewById<TextView>(R.id.tvUserAffiliate).text = "Afiliado: $numAfiliado"
+
+        if (usuarioId.isEmpty()) {
+            Log.e("API_DEBUG", "¡ALERTA! El usuarioId está vacío. Retrofit no hará la petición.")
+            Toast.makeText(this, "Por favor, cierra sesión y vuelve a entrar.", Toast.LENGTH_LONG).show()
+            return
+        }
 
         lifecycleScope.launch {
             try {

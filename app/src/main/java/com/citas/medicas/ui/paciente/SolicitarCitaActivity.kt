@@ -250,18 +250,22 @@ class SolicitarCitaActivity : AppCompatActivity() {
         val btnSiguiente = findViewById<MaterialButton>(R.id.btnSiguiente)
 
         val prefs = getSharedPreferences("CitasMedicasPrefs", MODE_PRIVATE)
-        val usuarioIdReal = prefs.getInt("user_usuarioid", -1)
 
+        val usuarioIdReal = prefs.getString("user_usuarioid", "") ?: ""
+
+        if (usuarioIdReal.isEmpty()) {
+            Toast.makeText(this, "Error de sesión. Vuelve a ingresar.", Toast.LENGTH_SHORT).show()
+            return
+        }
 
         val request = CrearCitaRequest(
-            paciente_id = usuarioIdReal,
+            usuario_id = usuarioIdReal,
             especialidad_id = especialidadSeleccionada!!.id,
             unidad_medica_id = unidadSeleccionadaReal!!.id,
             fecha_solicitada = fechaSeleccionadaReal!!,
             hora_asignada = horaSeleccionadaReal!!,
             motivo_consulta = "Consulta general programada desde la app"
         )
-        // ... (el resto queda igual)
 
         btnSiguiente.isEnabled = false
         btnSiguiente.text = "Guardando..."
@@ -271,7 +275,6 @@ class SolicitarCitaActivity : AppCompatActivity() {
                 val response = RetrofitClient.getApiService(this@SolicitarCitaActivity).agendarCita(request)
 
                 if (response.isSuccessful && response.body()?.exito == true) {
-                    // ¡ÉXITO TOTAL! Pasamos a la pantalla de resumen
                     pasoActual = 4
                     actualizarVista()
                 } else if (response.code() == 409) {
@@ -291,7 +294,6 @@ class SolicitarCitaActivity : AppCompatActivity() {
             }
         }
     }
-
     private fun cargarUnidades(idEspecialidad: Int) {
         lifecycleScope.launch {
             try {

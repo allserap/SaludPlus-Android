@@ -10,7 +10,7 @@ data class LoginResponse(
 
 //info real
 data class UserProfile(
-    @SerializedName("usuarioId") val id: String,
+    @SerializedName("usuarioid") val id: String,
     val pacienteId: String?,
     val nombre: String,
     val apellido: String,
