@@ -1,117 +1,124 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Item reutilizable para RecyclerView / ListView -->
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="12dp"
+    android:layout_marginBottom="16dp"
     app:cardBackgroundColor="@color/citas_white"
-    app:cardCornerRadius="12dp"
+    app:cardCornerRadius="16dp"
     app:cardElevation="2dp"
-    app:strokeColor="@color/citas_secondary"
+    app:strokeColor="#E8E8E8"
     app:strokeWidth="1dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="16dp">
+        android:padding="20dp">
 
-        <!-- Tipo de cita -->
         <TextView
             android:id="@+id/tvApptType"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:text="Consulta General"
             android:textColor="@color/citas_primary"
-            android:textSize="16sp"
+            android:textSize="18sp"
             android:textStyle="bold"
+            android:layout_marginEnd="16dp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintEnd_toStartOf="@id/tvApptTime" />
 
-        <!-- Hora -->
         <TextView
             android:id="@+id/tvApptTime"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="09:30 AM"
-            android:textColor="@color/citas_secondary"
-            android:textSize="14sp"
+            android:textColor="@color/citas_primary"
+            android:textSize="16sp"
             android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <!-- Doctor -->
         <TextView
             android:id="@+id/tvApptDoctor"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="Dr. Roberto Flores"
-            android:textColor="@color/citas_secondary"
-            android:textSize="12sp"
+            android:layout_marginTop="8dp"
+            android:text="👨‍⚕️ Dr. Roberto Flores"
+            android:textColor="#546E7A"
+            android:textSize="14sp"
+            android:layout_marginEnd="16dp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/tvApptType"
             app:layout_constraintEnd_toStartOf="@id/tvApptDate" />
 
-        <!-- Fecha -->
         <TextView
             android:id="@+id/tvApptDate"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="25 Ago"
-            android:textColor="@color/citas_secondary"
-            android:textSize="12sp"
+            android:layout_marginTop="8dp"
+            android:text="📅 25 Ago"
+            android:textColor="#546E7A"
+            android:textSize="14sp"
+            android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@id/tvApptTime" />
 
-        <!-- Ubicación -->
         <TextView
             android:id="@+id/tvApptLocation"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="Centro San Salvador"
-            android:textColor="@color/citas_secondary"
-            android:textSize="12sp"
+            android:layout_marginTop="6dp"
+            android:text="🏥 Centro San Salvador"
+            android:textColor="#546E7A"
+            android:textSize="14sp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/tvApptDoctor"
             app:layout_constraintEnd_toEndOf="parent" />
 
-        <!-- Botones -->
+        <View
+            android:id="@+id/dividerButtons"
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:background="#EEEEEE"
+            android:layout_marginTop="16dp"
+            app:layout_constraintTop_toBottomOf="@id/tvApptLocation"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
+
         <LinearLayout
             android:id="@+id/layoutButtons"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="12dp"
             android:orientation="horizontal"
             android:weightSum="2"
-            app:layout_constraintTop_toBottomOf="@id/tvApptLocation"
+            app:layout_constraintTop_toBottomOf="@id/dividerButtons"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent">
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnChangeAppt"
-                style="@style/Widget.Material3.Button.TonalButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginEnd="8dp"
+                android:layout_marginEnd="6dp"
                 android:text="Reprogramar"
-                android:textColor="@color/citas_primary"
-                app:backgroundTint="#E0F2F1" />
+                android:textColor="@color/citas_white"
+                app:backgroundTint="@color/citas_primary"
+                app:cornerRadius="10dp" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnCancelAppt"
-                style="@style/Widget.Material3.Button.TonalButton"
+                style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginStart="8dp"
+                android:layout_marginStart="6dp"
                 android:text="Cancelar"
-                android:textColor="@color/citas_primary"
-                app:backgroundTint="#F5F5F5" />
+                android:textColor="#D32F2F"
+                app:strokeColor="#FFCDD2"
+                app:cornerRadius="10dp" />
         </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>

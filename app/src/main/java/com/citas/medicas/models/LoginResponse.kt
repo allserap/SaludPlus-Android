@@ -23,5 +23,9 @@ data class UserProfile(
     val alergias: String?,
     @SerializedName("condicionesCronicas") val condicionesCronicas: String?,
     val estadoFamiliar: String?,
+    @SerializedName("medicamentosrecurrente") val medicamentosRecurrentes: String?,
+    val genero: String?,
+    @SerializedName("fechanacimiento") val fechaNacimiento: String?,
+
     val token: String? = null
 )

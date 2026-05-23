@@ -50,7 +50,8 @@ data class DatosPerfil(
     val num_afiliado: String?,
     val tipo_sangre: String?,
     val alergias: String?,
-    val condiciones_cronicas: String?
+    val condiciones_cronicas: String?,
+    val medicinas: String?
 )
 
 data class ApiResponseMapa(

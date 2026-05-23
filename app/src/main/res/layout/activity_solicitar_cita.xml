@@ -177,43 +177,124 @@
                 android:layout_height="match_parent"
                 android:orientation="vertical"
                 android:gravity="center"
+                android:padding="24dp"
                 android:visibility="gone">
 
-                <ImageView
-                    android:layout_width="64dp"
-                    android:layout_height="64dp"
-                    android:src="@android:drawable/ic_dialog_info"
-                    app:tint="@color/status_completed" />
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="90dp"
+                    android:layout_height="90dp"
+                    app:cardBackgroundColor="#E8F5E9"
+                    app:cardCornerRadius="45dp"
+                    app:cardElevation="0dp"
+                    app:strokeWidth="0dp"
+                    android:layout_marginBottom="24dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:text="✅"
+                        android:textSize="44sp" />
+                </com.google.android.material.card.MaterialCardView>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Cita Agendada"
+                    android:text="¡Cita Agendada!"
                     android:textColor="@color/citas_primary"
-                    android:textSize="20sp"
+                    android:textSize="28sp"
                     android:textStyle="bold"
-                    android:layout_marginTop="16dp"/>
+                    android:layout_marginBottom="8dp"/>
 
                 <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Su cita ha sido programada exitosamente"
-                    android:textColor="@color/citas_secondary"
-                    android:textSize="14sp"
-                    android:layout_marginTop="8dp"/>
-
-                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:background="#E8EDF2"
-                    android:padding="16dp"
-                    android:layout_marginTop="24dp">
-                    <TextView android:id="@+id/tvResumenEspecialidad" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="@color/citas_primary" android:text="Especialidad: -"/>
-                    <TextView android:id="@+id/tvResumenMedico" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="@color/citas_primary" android:text="Médico: -"/>
-                    <TextView android:id="@+id/tvResumenFecha" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="@color/citas_primary" android:text="Fecha: -"/>
-                    <TextView android:id="@+id/tvResumenHora" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="@color/citas_primary" android:text="Hora: -"/>
-                </LinearLayout>
+                    android:text="Su cita ha sido programada exitosamente.\nAquí están los detalles:"
+                    android:textColor="@color/citas_secondary"
+                    android:textSize="15sp"
+                    android:textAlignment="center"
+                    android:layout_marginBottom="32dp"/>
+
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:cardBackgroundColor="@color/citas_white"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="4dp"
+                    app:strokeColor="#E0E0E0"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="24dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Resumen de su cita"
+                            android:textColor="@color/citas_primary"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:layout_marginBottom="16dp"/>
+
+                        <TextView
+                            android:id="@+id/tvResumenEspecialidad"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:textColor="#546E7A"
+                            android:textSize="15sp"
+                            android:layout_marginBottom="12dp"
+                            android:text="🩺 Especialidad: -"/>
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:background="#F0F0F0"
+                            android:layout_marginBottom="12dp"/>
+
+                        <TextView
+                            android:id="@+id/tvResumenMedico"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:textColor="#546E7A"
+                            android:textSize="15sp"
+                            android:layout_marginBottom="12dp"
+                            android:text="👨‍⚕️ Médico: -"/>
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:background="#F0F0F0"
+                            android:layout_marginBottom="12dp"/>
+
+                        <TextView
+                            android:id="@+id/tvResumenFecha"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:textColor="#546E7A"
+                            android:textSize="15sp"
+                            android:layout_marginBottom="12dp"
+                            android:text="📅 Fecha: -"/>
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:background="#F0F0F0"
+                            android:layout_marginBottom="12dp"/>
+
+                        <TextView
+                            android:id="@+id/tvResumenHora"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:textColor="#546E7A"
+                            android:textSize="15sp"
+                            android:text="⏰ Hora: -"/>
+
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
             </LinearLayout>
 
         </FrameLayout>

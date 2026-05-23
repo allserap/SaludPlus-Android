@@ -35,7 +35,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Información personal y configuración"
+                android:text="Información personal y médica"
                 android:textColor="@color/citas_secondary"
                 android:textSize="14sp"
                 android:layout_marginBottom="24dp" />
@@ -73,66 +73,46 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="match_parent"
                                 android:gravity="center"
-                                android:text="AL"
+                                android:text="--"
                                 android:textColor="@color/citas_white"
                                 android:textSize="20sp"
                                 android:textStyle="bold" />
                         </com.google.android.material.card.MaterialCardView>
 
                         <LinearLayout
-                            android:layout_width="wrap_content"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
+                            android:layout_weight="1"
                             android:orientation="vertical"
                             android:layout_marginStart="16dp">
                             <TextView
                                 android:id="@+id/tvPerfilNombre"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Alex"
+                                android:text="Cargando..."
                                 android:textColor="@color/citas_primary"
                                 android:textSize="18sp"
                                 android:textStyle="bold" />
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="○ Afiliado ISSS"
+                                android:text="Paciente ISSS"
                                 android:textColor="@color/citas_secondary"
                                 android:textSize="14sp" />
                         </LinearLayout>
                     </LinearLayout>
 
-                    <LinearLayout
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnEditarPerfil"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:layout_marginTop="20dp">
-
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:orientation="vertical"
-                            android:gravity="center"
-                            android:background="@drawable/bg_tabs"
-                            android:padding="12dp"
-                            android:layout_marginEnd="8dp">
-                            <TextView android:id="@+id/tvCitasPendientes" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="2" android:textColor="@color/citas_primary" android:textSize="18sp" android:textStyle="bold"/>
-                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Citas Pendientes" android:textColor="@color/citas_secondary" android:textSize="10sp"/>
-                        </LinearLayout>
-
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:orientation="vertical"
-                            android:gravity="center"
-                            android:background="@drawable/bg_tabs"
-                            android:padding="12dp"
-                            android:layout_marginStart="8dp">
-                            <TextView android:id="@+id/tvCitasCompletadas" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0" android:textColor="@color/citas_primary" android:textSize="18sp" android:textStyle="bold"/>
-                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Citas Completadas" android:textColor="@color/citas_secondary" android:textSize="10sp"/>
-                        </LinearLayout>
-                    </LinearLayout>
+                        android:layout_marginTop="16dp"
+                        android:padding="12dp"
+                        android:text="Editar Perfil"
+                        android:textColor="@color/citas_primary"
+                        app:cornerRadius="8dp"
+                        app:strokeColor="@color/citas_primary" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -162,19 +142,19 @@
                         android:layout_marginBottom="16dp"/>
 
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Número de Afiliado" android:textColor="@color/citas_secondary" android:textSize="12sp"/>
-                    <TextView android:id="@+id/tvPerfilAfiliado" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="066599114" android:textColor="@color/citas_primary" android:textSize="14sp" android:layout_marginBottom="8dp"/>
+                    <TextView android:id="@+id/tvPerfilAfiliado" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="--" android:textColor="@color/citas_primary" android:textSize="14sp" android:layout_marginBottom="8dp"/>
                     <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#EEEEEE" android:layout_marginBottom="8dp"/>
 
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="DUI" android:textColor="@color/citas_secondary" android:textSize="12sp"/>
-                    <TextView android:id="@+id/tvPerfilDUI" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="06659911-4" android:textColor="@color/citas_primary" android:textSize="14sp" android:layout_marginBottom="8dp"/>
+                    <TextView android:id="@+id/tvPerfilDUI" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="--" android:textColor="@color/citas_primary" android:textSize="14sp" android:layout_marginBottom="8dp"/>
                     <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#EEEEEE" android:layout_marginBottom="8dp"/>
 
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Correo Electrónico" android:textColor="@color/citas_secondary" android:textSize="12sp"/>
-                    <TextView android:id="@+id/tvPerfilCorreo" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="alexmenivar2018@gmail.com" android:textColor="@color/citas_primary" android:textSize="14sp" android:layout_marginBottom="8dp"/>
+                    <TextView android:id="@+id/tvPerfilCorreo" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="--" android:textColor="@color/citas_primary" android:textSize="14sp" android:layout_marginBottom="8dp"/>
                     <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#EEEEEE" android:layout_marginBottom="8dp"/>
 
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Dirección" android:textColor="@color/citas_secondary" android:textSize="12sp"/>
-                    <TextView android:id="@+id/tvPerfilDireccion" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Quezaltepeque, El Salvador" android:textColor="@color/citas_primary" android:textSize="14sp" android:layout_marginBottom="8dp"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Teléfono" android:textColor="@color/citas_secondary" android:textSize="12sp"/>
+                    <TextView android:id="@+id/tvPerfilTelefono" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="--" android:textColor="@color/citas_primary" android:textSize="14sp"/>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -203,29 +183,16 @@
                         android:textStyle="bold"
                         android:layout_marginBottom="16dp"/>
 
-                    <!-- Botón de Editar Perfil -->
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnEditarPerfil"
-                        style="@style/Widget.Material3.Button.OutlinedButton"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="16dp"
-                        android:padding="12dp"
-                        android:text="Editar Perfil"
-                        android:textColor="@color/citas_primary"
-                        app:cornerRadius="8dp"
-                        app:strokeColor="@color/citas_primary" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Alergias" android:textColor="@color/citas_secondary" android:textSize="12sp"/>
+                    <TextView android:id="@+id/tvSaludAlergias" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="--" android:textColor="@color/citas_primary" android:textSize="14sp" android:layout_marginBottom="8dp"/>
+                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#EEEEEE" android:layout_marginBottom="8dp"/>
 
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Condiciones Crónicas" android:textColor="@color/citas_secondary" android:textSize="12sp"/>
-                    <TextView android:id="@+id/tvSaludCronicas" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Ninguna registrada" android:textColor="@color/citas_primary" android:textSize="14sp" android:layout_marginBottom="8dp"/>
+                    <TextView android:id="@+id/tvSaludCronicas" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="--" android:textColor="@color/citas_primary" android:textSize="14sp" android:layout_marginBottom="8dp"/>
                     <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#EEEEEE" android:layout_marginBottom="8dp"/>
 
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Medicinas Actuales" android:textColor="@color/citas_secondary" android:textSize="12sp"/>
-                    <TextView android:id="@+id/tvSaludMedicinas" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Ninguna" android:textColor="@color/citas_primary" android:textSize="14sp" android:layout_marginBottom="8dp"/>
-                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#EEEEEE" android:layout_marginBottom="8dp"/>
-
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Alergias" android:textColor="@color/citas_secondary" android:textSize="12sp"/>
-                    <TextView android:id="@+id/tvSaludAlergias" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Polvo" android:textColor="@color/citas_primary" android:textSize="14sp" android:layout_marginBottom="8dp"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Medicamentos Recurrentes" android:textColor="@color/citas_secondary" android:textSize="12sp"/>
+                    <TextView android:id="@+id/tvSaludMedicinas" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="--" android:textColor="@color/citas_primary" android:textSize="14sp"/>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -244,7 +211,7 @@
                     android:orientation="vertical">
 
                     <LinearLayout
-                        android:id="@+id/btnNotificaciones"
+                        android:id="@+id/btnCerrarSesion"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
@@ -252,23 +219,8 @@
                         android:clickable="true"
                         android:focusable="true"
                         android:background="?attr/selectableItemBackground">
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Notificaciones" android:textColor="@color/citas_primary" android:textSize="14sp" android:textStyle="bold"/>
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Recordatorios de citas" android:textColor="@color/citas_secondary" android:textSize="12sp"/>
-                    </LinearLayout>
-
-                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#EEEEEE" />
-
-                    <LinearLayout
-                        android:id="@+id/btnHistorialMedico"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="20dp"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:background="?attr/selectableItemBackground">
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Historial Médico" android:textColor="@color/citas_primary" android:textSize="14sp" android:textStyle="bold"/>
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Ver expediente completo" android:textColor="@color/citas_secondary" android:textSize="12sp"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Cerrar Sesión" android:textColor="#D32F2F" android:textSize="14sp" android:textStyle="bold"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Salir de la aplicación" android:textColor="@color/citas_secondary" android:textSize="12sp"/>
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -281,12 +233,14 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/citas_white"
-        app:itemIconTint="@color/citas_primary"
-        app:itemTextColor="@color/citas_primary"
+        app:itemIconTint="@color/selector_nav_color"
+        app:itemTextColor="@color/selector_nav_color"
+        app:labelVisibilityMode="labeled"
+        app:itemActiveIndicatorStyle="@style/Widget.Material3.BottomNavigationView.ActiveIndicator"
         app:menu="@menu/bottom_nav_menu"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:elevation="8dp" />
+        app:elevation="16dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

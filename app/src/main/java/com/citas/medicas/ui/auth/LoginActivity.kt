@@ -124,15 +124,22 @@ class LoginActivity : AppCompatActivity() {
                     val prefs = getSharedPreferences("CitasMedicasPrefs", MODE_PRIVATE)
                     with(prefs.edit()) {
                         putString("user_usuarioid", user?.id ?: "")
-                        putString("user_nombre", user?.nombre)
-                        putString("user_apellido", user?.apellido)
-                        putString("user_afiliado", user?.numAfiliado)
-                        putString("user_dui", user?.dui)
-                        putString("user_email", user?.email)
-                        putString("user_telefono", user?.telefono)
-                        putString("user_alergias", user?.alergias)
-                        putString("user_cronicas", user?.condicionesCronicas)
-                        putString("user_sangre", user?.tipoSangre)
+                        putString("user_nombre", user?.nombre ?: "")
+                        putString("user_apellido", user?.apellido ?: "")
+                        putString("user_afiliado", user?.numAfiliado ?: binding.etAfiliado.text.toString())
+                        putString("user_dui", user?.dui ?: "")
+                        putString("user_email", user?.email ?: "")
+                        putString("user_telefono", user?.telefono ?: "")
+
+                        putString("user_alergias", user?.alergias ?: "Ninguna registrada")
+                        putString("user_cronicas", user?.condicionesCronicas ?: "Ninguna registrada")
+                        putString("user_medicinas", user?.medicamentosRecurrentes ?: "Ninguna")
+                        putString("user_sangre", user?.tipoSangre ?: "No especificado")
+
+                        putString("user_genero", user?.genero ?: "M")
+                        putString("user_fechanacimiento", user?.fechaNacimiento ?: "")
+                        putString("user_estadofamiliar", user?.estadoFamiliar ?: "No especificado")
+
                         putString("token_jwt", tokenExtraido)
                         apply()
                     }

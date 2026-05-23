@@ -145,17 +145,20 @@
         </LinearLayout>
     </ScrollView>
 
+
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNavigationMapa"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/citas_white"
-        app:itemIconTint="@color/citas_primary"
-        app:itemTextColor="@color/citas_primary"
+        app:itemIconTint="@color/selector_nav_color"
+        app:itemTextColor="@color/selector_nav_color"
+        app:labelVisibilityMode="labeled"
+        app:itemActiveIndicatorStyle="@style/Widget.Material3.BottomNavigationView.ActiveIndicator"
         app:menu="@menu/bottom_nav_menu"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:elevation="8dp" />
+        app:elevation="16dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -23,75 +23,101 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:padding="20dp">
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cvHeaderWelcome"
-                android:layout_marginTop="30dp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="32dp"
                 app:cardBackgroundColor="@color/citas_primary"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="4dp"
-                android:layout_marginBottom="24dp">
+                app:cardCornerRadius="24dp"
+                app:cardElevation="8dp">
 
-                <LinearLayout
+                <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="20dp">
+                    android:padding="28dp">
 
-                    <TextView
+                    <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Bienvenido"
-                        android:textColor="@color/citas_secondary"
-                        android:textSize="14sp" />
+                        android:orientation="vertical"
+                        android:layout_alignParentStart="true"
+                        android:layout_toStartOf="@+id/ivHeaderIcon">
 
-                    <TextView
-                        android:id="@+id/tvUserName"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Carlos López"
-                        android:textColor="@color/citas_white"
-                        android:textSize="24sp"
-                        android:textStyle="bold"
-                        android:layout_marginTop="4dp" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="¡Qué gusto verte!"
+                            android:textColor="#E0E0E0"
+                            android:textSize="16sp" />
 
-                    <TextView
-                        android:id="@+id/tvUserAffiliate"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Afiliado: 066599114"
-                        android:textColor="@color/citas_secondary"
-                        android:textSize="14sp"
-                        android:layout_marginTop="8dp" />
-                </LinearLayout>
+                        <TextView
+                            android:id="@+id/tvUserName"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Cargando..."
+                            android:textColor="@color/citas_white"
+                            android:textSize="28sp"
+                            android:textStyle="bold"
+                            android:layout_marginTop="4dp"
+                            android:layout_marginBottom="12dp"/>
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/bg_tabs"
+                            android:backgroundTint="#33FFFFFF"
+                            android:paddingHorizontal="12dp"
+                            android:paddingVertical="6dp"
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
+
+                            <TextView
+                                android:layout_width="8dp"
+                                android:layout_height="8dp"
+                                android:background="@drawable/bg_tabs"
+                                android:backgroundTint="#4CAF50"
+                                android:layout_marginEnd="8dp"/>
+
+                            <TextView
+                                android:id="@+id/tvUserAffiliate"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Afiliado: --"
+                                android:textColor="@color/citas_white"
+                                android:textSize="13sp"
+                                android:textStyle="bold"/>
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <ImageView
+                        android:id="@+id/ivHeaderIcon"
+                        android:layout_width="70dp"
+                        android:layout_height="70dp"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:src="@android:drawable/ic_menu_myplaces"
+                        app:tint="@color/citas_white"
+                        android:alpha="0.2"
+                        android:layout_marginStart="16dp"/>
+                </RelativeLayout>
             </com.google.android.material.card.MaterialCardView>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Acciones Rápidas"
-                android:textColor="@color/citas_primary"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:layout_marginBottom="12dp" />
-
-
-
 
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp">
+                android:layout_marginBottom="16dp">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Próximas Citas"
+                    android:text="Tus Próximas Citas"
                     android:textColor="@color/citas_primary"
-                    android:textSize="18sp"
+                    android:textSize="20sp"
                     android:textStyle="bold"
                     android:layout_alignParentStart="true"
                     android:layout_centerVertical="true" />
@@ -106,39 +132,67 @@
                     android:textStyle="bold"
                     android:clickable="true"
                     android:focusable="true"
+                    android:background="?attr/selectableItemBackground"
+                    android:padding="8dp"
                     android:layout_alignParentEnd="true"
                     android:layout_centerVertical="true" />
             </RelativeLayout>
-
 
             <LinearLayout
                 android:id="@+id/llUpcomingAppointmentsContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical">
-
-                <!-- CITA -->
-
-
-
-
+                android:orientation="vertical"
+                android:layout_marginBottom="24dp">
             </LinearLayout>
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                app:cardBackgroundColor="@color/citas_secondary"
-                app:cardCornerRadius="16dp">
+                android:layout_marginBottom="16dp"
+                app:cardBackgroundColor="#F0F4F8"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="0dp"
+                app:strokeColor="#D9E2EC"
+                app:strokeWidth="1dp">
 
-                <TextView
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:orientation="horizontal"
                     android:padding="20dp"
-                    android:text="💡 Tip de Salud:\nMantente hidratado bebiendo al menos 2 litros de agua al día."
-                    android:textColor="@color/citas_primary"
-                    android:textStyle="bold"
-                    android:textSize="14sp"/>
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="💡"
+                        android:textSize="28sp"
+                        android:layout_marginEnd="16dp"/>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Tip de Salud Diario"
+                            android:textColor="@color/citas_primary"
+                            android:textStyle="bold"
+                            android:textSize="15sp"
+                            android:layout_marginBottom="4dp"/>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Mantente hidratado bebiendo al menos 2 litros de agua al día para cuidar tu sistema."
+                            android:textColor="#627D98"
+                            android:textSize="13sp"
+                            android:lineSpacingExtra="2dp"/>
+                    </LinearLayout>
+                </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
         </LinearLayout>
@@ -149,11 +203,14 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/citas_white"
+        app:itemIconTint="@color/selector_nav_color"
+        app:itemTextColor="@color/selector_nav_color"
+        app:labelVisibilityMode="labeled"
+        app:itemActiveIndicatorStyle="@style/Widget.Material3.BottomNavigationView.ActiveIndicator"
         app:menu="@menu/bottom_nav_menu"
-        app:itemIconTint="@color/citas_primary"
-        app:itemTextColor="@color/citas_primary"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:elevation="8dp" />
+        app:elevation="16dp" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

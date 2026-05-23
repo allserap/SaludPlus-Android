@@ -1,5 +1,6 @@
 package com.citas.medicas.ui.paciente
 
+import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import android.widget.TextView
@@ -9,11 +10,10 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.citas.medicas.R
 import com.citas.medicas.data.RetrofitClient
-import com.citas.medicas.models.EditarPerfilRequest
+import com.citas.medicas.models.PacienteUpdateRequest
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import kotlinx.coroutines.launch
-
 
 class EditarPerfilActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -24,67 +24,116 @@ class EditarPerfilActivity : AppCompatActivity() {
         val btnAtras = findViewById<TextView>(R.id.tvBackEdit)
         val btnGuardar = findViewById<MaterialButton>(R.id.btnGuardarPerfil)
 
-        val etDireccion = findViewById<TextInputEditText>(R.id.etEditDireccion)
         val etTelefono = findViewById<TextInputEditText>(R.id.etEditTelefono)
         val etAlergias = findViewById<TextInputEditText>(R.id.etEditAlergias)
         val etCronicas = findViewById<TextInputEditText>(R.id.etEditCronicas)
+        val etMedicinas = findViewById<TextInputEditText>(R.id.etEditMedicinas)
 
-        val telefonoRecibido = intent.getStringExtra("EXTRA_TELEFONO")
-        val alergiasRecibidas = intent.getStringExtra("EXTRA_ALERGIAS")
-        val cronicasRecibidas = intent.getStringExtra("EXTRA_CRONICAS")
-        val direccionRecibida = intent.getStringExtra("EXTRA_DIRECCION")
+        // Recibir los datos enviados desde PerfilActivity
+        val telefonoRecibido = intent.getStringExtra("EXTRA_TELEFONO") ?: ""
+        val alergiasRecibidas = intent.getStringExtra("EXTRA_ALERGIAS") ?: ""
+        val cronicasRecibidas = intent.getStringExtra("EXTRA_CRONICAS") ?: ""
+        val medicinasRecibidas = intent.getStringExtra("EXTRA_MEDICINAS") ?: "" // Asegúrate de enviarlo desde PerfilActivity
 
         etTelefono.setText(telefonoRecibido)
         etAlergias.setText(alergiasRecibidas)
         etCronicas.setText(cronicasRecibidas)
-        etDireccion.setText(direccionRecibida)
+        etMedicinas.setText(medicinasRecibidas)
 
         btnAtras.setOnClickListener {
             finish()
         }
 
         btnGuardar.setOnClickListener {
-            // 1. Extraer los textos
             val tel = etTelefono.text.toString().trim()
             val alg = etAlergias.text.toString().trim()
             val cro = etCronicas.text.toString().trim()
+            val med = etMedicinas.text.toString().trim()
 
-            if (tel.isEmpty() || alg.isEmpty() || cro.isEmpty()) {
-                Toast.makeText(this, "Por favor, no deje campos obligatorios vacíos", Toast.LENGTH_SHORT).show()
+            if (tel.isEmpty()) {
+                Toast.makeText(this, "El teléfono es obligatorio", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            val prefs = getSharedPreferences("CitasMedicasPrefs", MODE_PRIVATE)
-            val pacienteIdStr = prefs.getString("user_usuarioid", "1")
-            val pacienteIdReal = pacienteIdStr?.toIntOrNull() ?: 1
+            guardarPerfilEnServidor(tel, alg, cro, med, btnGuardar)
+        }
+    }
 
-            //  objeto a enviar
-            val request = EditarPerfilRequest(
-                telefono = tel,
-                alergias = alg,
-                condiciones_cronicas = cro
-            )
+    private fun guardarPerfilEnServidor(
+        nuevoTelefono: String,
+        nuevasAlergias: String,
+        nuevasCronicas: String,
+        nuevasMedicinas: String,
+        btnGuardar: MaterialButton
+    ) {
+        val prefs = getSharedPreferences("CitasMedicasPrefs", Context.MODE_PRIVATE)
+        val usuarioId = prefs.getString("user_usuarioid", "") ?: ""
 
-            btnGuardar.isEnabled = false
-            btnGuardar.text = "Guardando..."
+        if (usuarioId.isEmpty()) {
+            Toast.makeText(this, "Error de sesión. Vuelve a ingresar.", Toast.LENGTH_SHORT).show()
+            return
+        }
 
-            lifecycleScope.launch {
-                try {
-                    val response = RetrofitClient.getApiService(this@EditarPerfilActivity).actualizarPerfilPaciente(pacienteIdReal, request)
-                    if (response.isSuccessful && response.body()?.exito == true) {
-                        Toast.makeText(this@EditarPerfilActivity, "¡Perfil actualizado correctamente!", Toast.LENGTH_SHORT).show()
-                        finish()
-                    } else {
-                        Toast.makeText(this@EditarPerfilActivity, "No se pudo actualizar el perfil", Toast.LENGTH_SHORT).show()
-                        btnGuardar.isEnabled = true
-                        btnGuardar.text = "Guardar Cambios"
+        val nombre = prefs.getString("user_nombre", "") ?: ""
+        val apellido = prefs.getString("user_apellido", "") ?: ""
+        val dui = prefs.getString("user_dui", "") ?: ""
+        val email = prefs.getString("user_email", "") ?: ""
+        val afiliado = prefs.getString("user_afiliado", "") ?: ""
+        val sangrePref = prefs.getString("user_sangre", "")
+        val sangre = if (sangrePref == "No especificado" || sangrePref.isNullOrBlank()) null else sangrePref
+        val genero = prefs.getString("user_genero", "M") ?: "M"
+        val fechaNac = prefs.getString("user_fechanacimiento", "1990-01-01") ?: "1990-01-01"
+
+        // Creamos el paquete completo
+        val request = PacienteUpdateRequest(
+            id = usuarioId,
+            nombre = nombre,
+            apellido = apellido,
+            dui = dui,
+            email = email,
+            password = null,
+            telefono = nuevoTelefono, // Editado
+            fechaNacimiento = fechaNac,
+            genero = genero,
+            rol = 1,
+            activo = true,
+            estadoFamiliar = "No especificado",
+            numAfiliado = afiliado,
+            tipoSangre = sangre,
+            alergias = nuevasAlergias, // Editado
+            condicionesCronicas = nuevasCronicas, // Editado
+            notaClinica = "",
+            medicamentosRecurrentes = nuevasMedicinas // Editado
+        )
+
+        btnGuardar.isEnabled = false
+        btnGuardar.text = "Guardando..."
+
+        lifecycleScope.launch {
+            try {
+                val response = RetrofitClient.getApiService(this@EditarPerfilActivity).actualizarPaciente(usuarioId, request)
+
+                if (response.isSuccessful) {
+                    with(prefs.edit()) {
+                        putString("user_telefono", nuevoTelefono)
+                        putString("user_alergias", nuevasAlergias)
+                        putString("user_cronicas", nuevasCronicas)
+                        putString("user_medicinas", nuevasMedicinas)
+                        apply()
                     }
-                } catch (e: Exception) {
-                    Log.e("API_ERROR", "Error al actualizar perfil", e)
-                    Toast.makeText(this@EditarPerfilActivity, "Error de red. Verifique su conexión.", Toast.LENGTH_SHORT).show()
+
+                    Toast.makeText(this@EditarPerfilActivity, "¡Perfil actualizado correctamente!", Toast.LENGTH_SHORT).show()
+                    finish()
+                } else {
+                    Toast.makeText(this@EditarPerfilActivity, "No se pudo actualizar el perfil", Toast.LENGTH_SHORT).show()
                     btnGuardar.isEnabled = true
                     btnGuardar.text = "Guardar Cambios"
                 }
+            } catch (e: Exception) {
+                Log.e("API_ERROR", "Error al actualizar perfil", e)
+                Toast.makeText(this@EditarPerfilActivity, "Error de red. Verifique su conexión.", Toast.LENGTH_SHORT).show()
+                btnGuardar.isEnabled = true
+                btnGuardar.text = "Guardar Cambios"
             }
         }
     }

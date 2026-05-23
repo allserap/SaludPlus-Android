@@ -23,7 +23,8 @@
             android:textColor="@color/citas_primary"
             android:textSize="16sp"
             android:clickable="true"
-            android:focusable="true"/>
+            android:focusable="true"
+            android:padding="8dp"/>
 
         <TextView
             android:layout_width="0dp"
@@ -63,19 +64,6 @@
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:hint="Dirección">
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/etEditDireccion"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Quezaltepeque, El Salvador" />
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <com.google.android.material.textfield.TextInputLayout
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
                 android:layout_marginBottom="24dp"
                 android:hint="Teléfono">
                 <com.google.android.material.textfield.TextInputEditText
@@ -83,7 +71,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="phone"
-                    android:text="7777-7777" />
+                    android:text="--" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <TextView
@@ -105,7 +93,9 @@
                     android:id="@+id/etEditAlergias"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Polvo" />
+                    android:inputType="textMultiLine"
+                    android:minLines="2"
+                    android:text="--" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
@@ -118,7 +108,24 @@
                     android:id="@+id/etEditCronicas"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Ninguna registrada" />
+                    android:inputType="textMultiLine"
+                    android:minLines="2"
+                    android:text="--" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:hint="Medicamentos Recurrentes">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etEditMedicinas"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textMultiLine"
+                    android:minLines="2"
+                    android:text="--" />
             </com.google.android.material.textfield.TextInputLayout>
 
         </LinearLayout>

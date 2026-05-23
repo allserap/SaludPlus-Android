@@ -3,6 +3,8 @@ package com.citas.medicas.ui.paciente
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.widget.Button
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -44,6 +46,14 @@ class HistorialCitasActivity : AppCompatActivity() {
             override fun onTabReselected(tab: TabLayout.Tab?) {}
         })
 
+
+
+        val btnNuevaCita = findViewById<Button>(R.id.btnNuevaCitaFlotante)
+
+
+        btnNuevaCita.setOnClickListener {
+            startActivity(Intent(this, HistorialCitasActivity::class.java))
+        }
 
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavigationHistorial)
         bottomNav.selectedItemId = R.id.nav_historial
