@@ -33,7 +33,9 @@ data class CitaHistorial(
     val fecha_solicitada: String?,
     val hora_asignada: String?,
     val unidad_medica: String?,
-    val doctor: String?
+    val doctor: String?,
+    val especialidad_id: Int? = null,
+    val unidad_medica_id: Int? = null
 )
 
 data class ApiResponsePerfil(
@@ -113,7 +115,17 @@ data class EditarPerfilRequest(
     val telefono: String,
     val alergias: String,
     val condiciones_cronicas: String
-    // direccion  backend aún no la soporta en su UPDATE
+)
+
+data class ActualizarCitaRequest(
+    val estado_id: Int? = null,
+    val fecha_solicitada: String? = null,
+    val hora_asignada: String? = null
+)
+
+data class RespuestaGenerica(
+    val exito: Boolean,
+    val mensaje: String
 )
 
 data class ApiResponseEditarPerfil(

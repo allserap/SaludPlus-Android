@@ -1,4 +1,4 @@
-package com.citas.medicas.adapter
+package com.citas.medicas.ui.paciente.adapter
 
 import android.content.Intent
 import android.net.Uri

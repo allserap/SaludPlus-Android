@@ -1,5 +1,6 @@
 package com.citas.medicas.data
 
+import com.citas.medicas.models.ActualizarCitaRequest
 import com.citas.medicas.models.ApiResponse
 import com.citas.medicas.models.ApiResponseCrearCita
 import com.citas.medicas.models.ApiResponseEditarPerfil
@@ -22,6 +23,7 @@ import com.citas.medicas.models.PacienteResponse
 import com.citas.medicas.models.PacienteUpdateRequest
 import com.citas.medicas.models.RegistroRequest
 import com.citas.medicas.models.RegistroResponse
+import com.citas.medicas.models.RespuestaGenerica
 import com.citas.medicas.models.RolResponse
 import com.citas.medicas.models.UnidadMedicaResponse
 import okhttp3.ResponseBody
@@ -29,6 +31,7 @@ import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Path
@@ -131,6 +134,13 @@ interface ApiService {
     @POST("paciente/agendar")
     suspend fun agendarCita(@Body request: CrearCitaRequest): Response<ApiResponseCrearCita>
 
+
+    //reprogrmar cita
+    @PATCH("paciente/actualizar-cita/{citaId}")
+    suspend fun actualizarCita(
+        @Path("citaId") citaId: String,
+        @Body request: ActualizarCitaRequest
+    ): Response<RespuestaGenerica>
 
     @PUT("paciente/perfil/{pacienteId}")
     suspend fun actualizarPerfilPaciente(

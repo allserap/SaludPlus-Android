@@ -10,12 +10,17 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 
 import android.util.Log
 import android.widget.LinearLayout
+import android.widget.ProgressBar
 import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
 import com.citas.medicas.data.RetrofitClient
+import com.citas.medicas.models.ActualizarCitaRequest
+import com.citas.medicas.models.CitaHistorial
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Locale
+import java.util.TimeZone
 
 class HomePacienteActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -128,7 +133,7 @@ class HomePacienteActivity : AppCompatActivity() {
                             }
 
 
-                            // LÓGICA DEL BOTÓN CANCELAR
+                            //LÓGICA DE CANCELAR
                             val btnCancel = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnCancelAppt)
 
                             btnCancel.setOnClickListener {
@@ -137,36 +142,50 @@ class HomePacienteActivity : AppCompatActivity() {
                                     .setMessage("¿Estás seguro de cancelar tu cita de ${cita.especialidad}?\n\nEsta acción es irreversible y perderás tu espacio reservado.")
                                     .setPositiveButton("Sí, cancelar") { dialog, which ->
 
-                                        // apiService.cancelarCita(cita.id)
+                                        btnCancel.isEnabled = false
+                                        btnCancel.text = "Cancelando..."
 
-                                        Toast.makeText(this@HomePacienteActivity, "Simulando cancelación...", Toast.LENGTH_SHORT).show()
+                                        lifecycleScope.launch {
+                                            try {
+                                                val apiService = RetrofitClient.getApiService(this@HomePacienteActivity)
 
-                                        // quitar la tarjeta de la vista de una vez
-                                        // container.removeView(view)
+                                                val request = ActualizarCitaRequest(estado_id = 3)
+
+                                                val response = apiService.actualizarCita(cita.id, request)
+
+                                                if (response.isSuccessful && response.body()?.exito == true) {
+                                                    Toast.makeText(this@HomePacienteActivity, "¡Cita cancelada con éxito!", Toast.LENGTH_SHORT).show()
+
+                                                    container.removeView(view)
+
+                                                } else {
+                                                    Toast.makeText(this@HomePacienteActivity, "No se pudo cancelar: ${response.body()?.mensaje}", Toast.LENGTH_LONG).show()
+                                                    btnCancel.isEnabled = true
+                                                    btnCancel.text = "Cancelar"
+                                                }
+                                            } catch (e: Exception) {
+                                                Log.e("API_ERROR", "Error al cancelar cita", e)
+                                                Toast.makeText(this@HomePacienteActivity, "Error de red al cancelar", Toast.LENGTH_SHORT).show()
+                                                btnCancel.isEnabled = true
+                                                btnCancel.text = "Cancelar"
+                                            }
+                                        }
                                     }
                                     .setNegativeButton("Mantener", null)
                                     .show()
                             }
 
-                            //  LÓGICA DEL BOTÓN REPROGRAMAR
+                            //  LÓGICA DE REPROGRAMAR
                             val btnChange = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnChangeAppt)
 
                             btnChange.setOnClickListener {
-                                Toast.makeText(this@HomePacienteActivity, "Pronto abriremos el menú para reprogramar", Toast.LENGTH_SHORT).show()
+                                if (cita.especialidad_id != null && cita.unidad_medica_id != null) {
+                                    abrirMenuReprogramar(cita)
+                                } else {
+                                    Toast.makeText(this@HomePacienteActivity, "Ids para citas no encontrados.", Toast.LENGTH_SHORT).show()
+                                }
                             }
-
-//                            val btnChange = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnChangeAppt)
 //
-//                            btnChange.setOnClickListener {
-//                                // cita.especialidad_id y cita.unidad_medica_id
-//
-//                                if (cita.especialidad_id != null && cita.unidad_medica_id != null) {
-//                                    abrirMenuReprogramar(cita)
-//                                } else {
-//                                    // Un pequeño seguro por si acaso el backend falla
-//                                    Toast.makeText(this@HomePacienteActivity, "Faltan datos de la clínica para reprogramar.", Toast.LENGTH_SHORT).show()
-//                                }
-//                            }
 
                             container.addView(view)
                         }
@@ -183,47 +202,115 @@ class HomePacienteActivity : AppCompatActivity() {
     }
 
 
-//    private fun abrirMenuReprogramar(cita: CitaHistorial) {
-//        val bottomSheetDialog = com.google.android.material.bottomsheet.BottomSheetDialog(this)
-//
-//        // val view = layoutInflater.inflate(R.layout.bottom_sheet_reprogramar, null)
-//        // bottomSheetDialog.setContentView(view)
-//
-//        val datePicker = com.google.android.material.datepicker.MaterialDatePicker.Builder.datePicker()
-//            .setTitleText("Selecciona una nueva fecha")
-//            .build()
-//
-//        datePicker.addOnPositiveButtonClickListener { selection ->
-//            val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-//            val nuevaFecha = sdf.format(Date(selection))
-//
-//            Toast.makeText(this, "Buscando horas para el $nuevaFecha...", Toast.LENGTH_SHORT).show()
-//
-//            cargarHorariosReprogramacion(cita.unidad_medica_id!!, cita.especialidad_id!!, nuevaFecha, cita.id)
-//        }
-//
-//        datePicker.show(supportFragmentManager, "DATE_PICKER_REPROGRAMAR")
-//    }
 
-    private fun cargarHorariosReprogramacion(idUnidad: Int, idEspecialidad: Int, nuevaFecha: String, idCitaOriginal: String) {
+    private fun abrirMenuReprogramar(cita: CitaHistorial) {
+        val datePicker = com.google.android.material.datepicker.MaterialDatePicker.Builder.datePicker()
+            .setTitleText("Selecciona una nueva fecha")
+            .build()
+
+        datePicker.addOnPositiveButtonClickListener { selection ->
+            val calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
+            calendar.timeInMillis = selection
+            val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+            sdf.timeZone = TimeZone.getTimeZone("UTC")
+            val nuevaFecha = sdf.format(calendar.time)
+
+            mostrarBottomSheetHoras(cita, nuevaFecha)
+        }
+
+        datePicker.show(supportFragmentManager, "DATE_PICKER_REPROGRAMAR")
+    }
+
+    private fun mostrarBottomSheetHoras(cita: CitaHistorial, nuevaFecha: String) {
+        val bottomSheetDialog = com.google.android.material.bottomsheet.BottomSheetDialog(this)
+        val view = layoutInflater.inflate(R.layout.bottom_sheet_reprogramar, null)
+        bottomSheetDialog.setContentView(view)
+
+        val tvDate = view.findViewById<TextView>(R.id.tvSheetDate)
+        val pbLoading = view.findViewById<ProgressBar>(R.id.pbSheetLoading)
+        val tvEmpty = view.findViewById<TextView>(R.id.tvSheetEmpty)
+        val chipGroup = view.findViewById<com.google.android.material.chip.ChipGroup>(R.id.cgHorasDisponibles)
+        val btnConfirmar = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnConfirmarReprogramacion)
+
+        tvDate.text = "📅 Nueva Fecha: $nuevaFecha"
+        var horaSeleccionada: String? = null
+
+        bottomSheetDialog.show()
+
         lifecycleScope.launch {
             try {
                 val apiService = RetrofitClient.getApiService(this@HomePacienteActivity)
-                val response = apiService.getHorariosDisponibles(idUnidad, idEspecialidad, nuevaFecha)
+
+                val response = apiService.getHorariosDisponibles(cita.unidad_medica_id!!, cita.especialidad_id!!, nuevaFecha)
+
+                pbLoading.visibility = android.view.View.GONE
 
                 if (response.isSuccessful) {
                     val horasDisponibles = response.body()?.datos
                     if (horasDisponibles != null && horasDisponibles.isNotEmpty()) {
 
 
+                        for (horaStr in horasDisponibles) {
 
-                        Toast.makeText(this@HomePacienteActivity, "¡Horas encontradas! Falta mostrarlas.", Toast.LENGTH_SHORT).show()
+                            val nuevoChip = com.google.android.material.chip.Chip(this@HomePacienteActivity).apply {
+                                text = horaStr
+                                isCheckable = true
+                                isClickable = true
+
+                                setOnCheckedChangeListener { _, isChecked ->
+                                    if (isChecked) {
+                                        horaSeleccionada = this.text.toString()
+                                        btnConfirmar.isEnabled = true
+                                    }
+                                }
+                            }
+
+                            chipGroup.addView(nuevoChip)
+                        }
                     } else {
-                        Toast.makeText(this@HomePacienteActivity, "No hay cupo para ese día.", Toast.LENGTH_SHORT).show()
+                        tvEmpty.visibility = android.view.View.VISIBLE
                     }
+                } else {
+                    tvEmpty.text = "Error al obtener horarios."
+                    tvEmpty.visibility = android.view.View.VISIBLE
                 }
             } catch (e: Exception) {
-                Toast.makeText(this@HomePacienteActivity, "Error de red al buscar horas.", Toast.LENGTH_SHORT).show()
+                pbLoading.visibility = android.view.View.GONE
+                tvEmpty.text = "Error de red."
+                tvEmpty.visibility = android.view.View.VISIBLE
+            }
+        }
+
+        btnConfirmar.setOnClickListener {
+            if (horaSeleccionada == null) return@setOnClickListener
+
+            btnConfirmar.isEnabled = false
+            btnConfirmar.text = "Reprogramando..."
+
+            lifecycleScope.launch {
+                try {
+                    val apiService = RetrofitClient.getApiService(this@HomePacienteActivity)
+                    val request = ActualizarCitaRequest(
+                        fecha_solicitada = nuevaFecha,
+                        hora_asignada = horaSeleccionada
+                    )
+
+                    val response = apiService.actualizarCita(cita.id, request)
+
+                    if (response.isSuccessful && response.body()?.exito == true) {
+                        Toast.makeText(this@HomePacienteActivity, "¡Cita reprogramada con éxito!", Toast.LENGTH_LONG).show()
+                        bottomSheetDialog.dismiss()
+                        cargarCitasDesdeApi()
+                    } else {
+                        Toast.makeText(this@HomePacienteActivity, "Error: ${response.body()?.mensaje}", Toast.LENGTH_SHORT).show()
+                        btnConfirmar.isEnabled = true
+                        btnConfirmar.text = "Confirmar Nuevo Horario"
+                    }
+                } catch (e: Exception) {
+                    Toast.makeText(this@HomePacienteActivity, "Error de red al reprogramar", Toast.LENGTH_SHORT).show()
+                    btnConfirmar.isEnabled = true
+                    btnConfirmar.text = "Confirmar Nuevo Horario"
+                }
             }
         }
     }

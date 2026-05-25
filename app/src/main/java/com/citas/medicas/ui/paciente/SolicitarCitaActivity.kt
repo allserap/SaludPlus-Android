@@ -12,12 +12,11 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.citas.medicas.R
-import com.citas.medicas.adapter.EspecialidadAdapter
-import com.citas.medicas.adapter.HoraAdapter
-import com.citas.medicas.adapter.UnidadMedicaAdapter
+import com.citas.medicas.ui.paciente.adapter.EspecialidadAdapter
+import com.citas.medicas.ui.paciente.adapter.HoraAdapter
+import com.citas.medicas.ui.paciente.adapter.UnidadMedicaAdapter
 import com.citas.medicas.data.RetrofitClient
 import com.citas.medicas.models.CrearCitaRequest
-import com.citas.medicas.models.Especialidad
 import com.citas.medicas.models.EspecialidadResponse
 import com.citas.medicas.models.UnidadMedica
 import com.google.android.material.button.MaterialButton

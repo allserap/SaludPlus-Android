@@ -4,7 +4,6 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
-import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -52,7 +51,7 @@ class HistorialCitasActivity : AppCompatActivity() {
 
 
         btnNuevaCita.setOnClickListener {
-            startActivity(Intent(this, HistorialCitasActivity::class.java))
+            startActivity(Intent(this, SolicitarCitaActivity::class.java))
         }
 
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavigationHistorial)
