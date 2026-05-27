@@ -9,7 +9,7 @@ import com.citas.medicas.models.ApiResponseHistorial
 import com.citas.medicas.models.ApiResponseHorarios
 import com.citas.medicas.models.ApiResponseMapa
 import com.citas.medicas.models.ApiResponsePerfil
-import com.citas.medicas.models.ApiResponseProximasCitas
+//import com.citas.medicas.models.ApiResponseProximasCitas
 import com.citas.medicas.models.ApiResponseUnidades
 import com.citas.medicas.models.CatalogosResponse
 import com.citas.medicas.models.CrearCitaRequest
@@ -89,10 +89,10 @@ interface ApiService {
         @Path("id") id: String
     ): Response<PacienteResponse>
 
-    @GET("paciente/proximas/{usuarioId}")
-    suspend fun getProximasCitas(
-        @Path("usuarioId") usuarioId: String
-    ): Response<ApiResponseProximasCitas>
+//    @GET("paciente/proximas/{usuarioId}")
+//    suspend fun getProximasCitas(
+//        @Path("usuarioId") usuarioId: String
+//    ): Response<ApiResponseProximasCitas>
 
     @GET("paciente/historial/{usuarioId}")
     suspend fun getHistorialCitas(

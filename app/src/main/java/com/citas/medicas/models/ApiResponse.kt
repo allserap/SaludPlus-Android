@@ -2,19 +2,19 @@ package com.citas.medicas.models
 
 import com.google.gson.annotations.SerializedName
 
-data class ApiResponseProximasCitas(
-    val exito: Boolean,
-    val datos: List<CitaHome>
-)
-
-data class CitaHome(
-    val id: String,
-    val especialidades: String,
-    val fecha_solicitada: String,
-    val hora_asignada: String,
-    val unidades_medicas: String,
-    val doctor: String
-)
+//data class ApiResponseProximasCitas(
+//    val exito: Boolean,
+//    val datos: List<CitaHome>
+//)
+//
+//data class CitaHome(
+//    val id: String,
+//    val especialidades: String,
+//    val fecha_solicitada: String,
+//    val hora_asignada: String,
+//    val unidades_medicas: String,
+//    val doctor: String
+//)
 
 data class ApiResponseHistorial(
     val exito: Boolean,

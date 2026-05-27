@@ -16,6 +16,8 @@ import androidx.lifecycle.lifecycleScope
 import com.citas.medicas.data.RetrofitClient
 import com.citas.medicas.models.ActualizarCitaRequest
 import com.citas.medicas.models.CitaHistorial
+import com.citas.medicas.ui.paciente.local.entities.toEntity
+import com.citas.medicas.ui.paciente.local.entities.toModel
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -101,103 +103,125 @@ class HomePacienteActivity : AppCompatActivity() {
         }
 
         lifecycleScope.launch {
+            val db = com.citas.medicas.ui.paciente.local.AppDatabase.getDatabase(this@HomePacienteActivity)
+            val citasDao = db.citasDao()
+
+            val citasGuardadas = citasDao.obtenerTodasLasCitas()
+            if (citasGuardadas.isNotEmpty()) {
+                val citasParaPantalla = citasGuardadas.map { it.toModel() }
+                pintarCitasEnPantalla(citasParaPantalla, isOffline = true)
+            }
+
             try {
                 val apiService = RetrofitClient.getApiService(this@HomePacienteActivity)
-
                 val response = apiService.getHistorialCitas(usuarioId)
 
                 if (response.isSuccessful && response.body()?.exito == true) {
                     val listaProximas = response.body()?.datos?.proximas ?: emptyList()
 
-                    val container = findViewById<LinearLayout>(R.id.llUpcomingAppointmentsContainer)
-                    container.removeAllViews()
+                    val citasEntities = listaProximas.map { it.toEntity() }
+                    citasDao.limpiarTablaCitas()
+                    citasDao.insertarCitas(citasEntities)
 
-                    if (listaProximas.isNotEmpty()) {
-                        val citasLimitadas = listaProximas.take(3)
-
-                        for (cita in citasLimitadas) {
-                            val view = layoutInflater.inflate(R.layout.item_cita_home, container, false)
-
-                            view.findViewById<TextView>(R.id.tvApptType).text = cita.especialidad
-                            view.findViewById<TextView>(R.id.tvApptTime).text = cita.hora_asignada
-                            view.findViewById<TextView>(R.id.tvApptLocation).text = "🏥 ${cita.unidad_medica}"
-                            view.findViewById<TextView>(R.id.tvApptDoctor).text = "👨‍⚕️ ${cita.doctor ?: "Por asignar"}"
-
-                            try {
-                                val parser = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault())
-                                val formatter = SimpleDateFormat("dd MMM yyyy", Locale("es", "ES"))
-                                val date = parser.parse(cita.fecha_solicitada ?: "")
-                                view.findViewById<TextView>(R.id.tvApptDate).text = "📅 ${formatter.format(date!!)}"
-                            } catch (e: Exception) {
-                                view.findViewById<TextView>(R.id.tvApptDate).text = "📅 ${cita.fecha_solicitada}"
-                            }
-
-
-                            //LÓGICA DE CANCELAR
-                            val btnCancel = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnCancelAppt)
-
-                            btnCancel.setOnClickListener {
-                                com.google.android.material.dialog.MaterialAlertDialogBuilder(this@HomePacienteActivity)
-                                    .setTitle("⚠️ ¿Cancelar Cita?")
-                                    .setMessage("¿Estás seguro de cancelar tu cita de ${cita.especialidad}?\n\nEsta acción es irreversible y perderás tu espacio reservado.")
-                                    .setPositiveButton("Sí, cancelar") { dialog, which ->
-
-                                        btnCancel.isEnabled = false
-                                        btnCancel.text = "Cancelando..."
-
-                                        lifecycleScope.launch {
-                                            try {
-                                                val apiService = RetrofitClient.getApiService(this@HomePacienteActivity)
-
-                                                val request = ActualizarCitaRequest(estado_id = 3)
-
-                                                val response = apiService.actualizarCita(cita.id, request)
-
-                                                if (response.isSuccessful && response.body()?.exito == true) {
-                                                    Toast.makeText(this@HomePacienteActivity, "¡Cita cancelada con éxito!", Toast.LENGTH_SHORT).show()
-
-                                                    container.removeView(view)
-
-                                                } else {
-                                                    Toast.makeText(this@HomePacienteActivity, "No se pudo cancelar: ${response.body()?.mensaje}", Toast.LENGTH_LONG).show()
-                                                    btnCancel.isEnabled = true
-                                                    btnCancel.text = "Cancelar"
-                                                }
-                                            } catch (e: Exception) {
-                                                Log.e("API_ERROR", "Error al cancelar cita", e)
-                                                Toast.makeText(this@HomePacienteActivity, "Error de red al cancelar", Toast.LENGTH_SHORT).show()
-                                                btnCancel.isEnabled = true
-                                                btnCancel.text = "Cancelar"
-                                            }
-                                        }
-                                    }
-                                    .setNegativeButton("Mantener", null)
-                                    .show()
-                            }
-
-                            //  LÓGICA DE REPROGRAMAR
-                            val btnChange = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnChangeAppt)
-
-                            btnChange.setOnClickListener {
-                                if (cita.especialidad_id != null && cita.unidad_medica_id != null) {
-                                    abrirMenuReprogramar(cita)
-                                } else {
-                                    Toast.makeText(this@HomePacienteActivity, "Ids para citas no encontrados.", Toast.LENGTH_SHORT).show()
-                                }
-                            }
-//
-
-                            container.addView(view)
-                        }
-                    } else {
-                        Log.d("API_DEBUG", "El paciente no tiene citas próximas")
-                    }
-                } else {
-                    Log.e("API_DEBUG", "Error servidor: ${response.code()}")
+                    pintarCitasEnPantalla(listaProximas, isOffline = false)
                 }
             } catch (e: Exception) {
-                Log.e("API_DEBUG", "Error de red: ${e.message}")
+                Log.e("API_DEBUG", "Fallo silencioso de red: ${e.message}")
+
+                if (citasGuardadas.isNotEmpty()) {
+                    Toast.makeText(this@HomePacienteActivity, "Sin conexión a internet. Viendo datos offline.", Toast.LENGTH_SHORT).show()
+                }
             }
+        }
+    }
+
+    private fun pintarCitasEnPantalla(listaProximas: List<CitaHistorial>, isOffline: Boolean) {
+        val container = findViewById<LinearLayout>(R.id.llUpcomingAppointmentsContainer)
+        container.removeAllViews()
+
+        if (listaProximas.isNotEmpty()) {
+            val citasLimitadas = listaProximas.take(3)
+
+            for (cita in citasLimitadas) {
+                val view = layoutInflater.inflate(R.layout.item_cita_home, container, false)
+
+                view.findViewById<TextView>(R.id.tvApptType).text = cita.especialidad
+                view.findViewById<TextView>(R.id.tvApptTime).text = cita.hora_asignada
+                view.findViewById<TextView>(R.id.tvApptLocation).text = "🏥 ${cita.unidad_medica}"
+                view.findViewById<TextView>(R.id.tvApptDoctor).text = "👨‍⚕️ ${cita.doctor ?: "Por asignar"}"
+
+                try {
+                    val parser = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault())
+                    val formatter = SimpleDateFormat("dd MMM yyyy", Locale("es", "ES"))
+                    val date = parser.parse(cita.fecha_solicitada ?: "")
+                    view.findViewById<TextView>(R.id.tvApptDate).text = "📅 ${formatter.format(date!!)}"
+                } catch (e: Exception) {
+                    view.findViewById<TextView>(R.id.tvApptDate).text = "📅 ${cita.fecha_solicitada}"
+                }
+
+                // LÓGICA DE CANCELAR
+                val btnCancel = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnCancelAppt)
+
+                btnCancel.setOnClickListener {
+                    if (isOffline) {
+                        Toast.makeText(this@HomePacienteActivity, "Necesitas internet para cancelar citas.", Toast.LENGTH_SHORT).show()
+                        return@setOnClickListener
+                    }
+
+                    com.google.android.material.dialog.MaterialAlertDialogBuilder(this@HomePacienteActivity)
+                        .setTitle("⚠️ ¿Cancelar Cita?")
+                        .setMessage("¿Estás seguro de cancelar tu cita de ${cita.especialidad}?\n\nEsta acción es irreversible y perderás tu espacio reservado.")
+                        .setPositiveButton("Sí, cancelar") { dialog, which ->
+
+                            btnCancel.isEnabled = false
+                            btnCancel.text = "Cancelando..."
+
+                            lifecycleScope.launch {
+                                try {
+                                    val apiService = RetrofitClient.getApiService(this@HomePacienteActivity)
+                                    val request = ActualizarCitaRequest(estado_id = 3)
+                                    val response = apiService.actualizarCita(cita.id, request)
+
+                                    if (response.isSuccessful && response.body()?.exito == true) {
+                                        Toast.makeText(this@HomePacienteActivity, "¡Cita cancelada con éxito!", Toast.LENGTH_SHORT).show()
+                                        container.removeView(view)
+                                    } else {
+                                        Toast.makeText(this@HomePacienteActivity, "No se pudo cancelar: ${response.body()?.mensaje}", Toast.LENGTH_LONG).show()
+                                        btnCancel.isEnabled = true
+                                        btnCancel.text = "Cancelar"
+                                    }
+                                } catch (e: Exception) {
+                                    Log.e("API_ERROR", "Error al cancelar cita", e)
+                                    Toast.makeText(this@HomePacienteActivity, "Error de red al cancelar", Toast.LENGTH_SHORT).show()
+                                    btnCancel.isEnabled = true
+                                    btnCancel.text = "Cancelar"
+                                }
+                            }
+                        }
+                        .setNegativeButton("Mantener", null)
+                        .show()
+                }
+
+                // LÓGICA DE REPROGRAMAR
+                val btnChange = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnChangeAppt)
+
+                btnChange.setOnClickListener {
+                    if (isOffline) {
+                        Toast.makeText(this@HomePacienteActivity, "Necesitas internet para reprogramar citas.", Toast.LENGTH_SHORT).show()
+                        return@setOnClickListener
+                    }
+
+                    if (cita.especialidad_id != null && cita.unidad_medica_id != null) {
+                        abrirMenuReprogramar(cita)
+                    } else {
+                        Toast.makeText(this@HomePacienteActivity, "Ids para citas no encontrados.", Toast.LENGTH_SHORT).show()
+                    }
+                }
+
+                container.addView(view)
+            }
+        } else {
+            Log.d("API_DEBUG", "El paciente no tiene citas próximas")
         }
     }
 
