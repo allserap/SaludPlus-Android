@@ -1,6 +1,7 @@
-package com.citas.medicas.adapter
+package com.citas.medicas.ui.paciente.adapter
 
 
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -34,13 +35,13 @@ class UnidadMedicaAdapter(
         holder.tvDireccion.text = item.direccion
 
         if (indexSeleccionado == position) {
-            holder.card.setCardBackgroundColor(android.graphics.Color.parseColor("#1565C0"))
-            holder.tvNombre.setTextColor(android.graphics.Color.WHITE)
-            holder.tvDireccion.setTextColor(android.graphics.Color.WHITE)
+            holder.card.setCardBackgroundColor(Color.parseColor("#1565C0"))
+            holder.tvNombre.setTextColor(Color.WHITE)
+            holder.tvDireccion.setTextColor(Color.WHITE)
         } else {
-            holder.card.setCardBackgroundColor(android.graphics.Color.WHITE)
-            holder.tvNombre.setTextColor(android.graphics.Color.parseColor("#1565C0"))
-            holder.tvDireccion.setTextColor(android.graphics.Color.GRAY) // Secondary
+            holder.card.setCardBackgroundColor(Color.WHITE)
+            holder.tvNombre.setTextColor(Color.parseColor("#1565C0"))
+            holder.tvDireccion.setTextColor(Color.GRAY) // Secondary
         }
 
         holder.card.setOnClickListener {

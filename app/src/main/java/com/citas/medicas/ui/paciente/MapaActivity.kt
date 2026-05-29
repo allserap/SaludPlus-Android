@@ -12,7 +12,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.citas.medicas.R
-import com.citas.medicas.adapter.MapaAdapter
+import com.citas.medicas.ui.paciente.adapter.MapaAdapter
 import com.citas.medicas.data.RetrofitClient
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.card.MaterialCardView

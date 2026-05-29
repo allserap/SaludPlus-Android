@@ -2,6 +2,32 @@ package com.citas.medicas.data
 
 import com.citas.medicas.models.*
 import okhttp3.Call
+import com.citas.medicas.models.ActualizarCitaRequest
+import com.citas.medicas.models.ApiResponse
+import com.citas.medicas.models.ApiResponseCrearCita
+import com.citas.medicas.models.ApiResponseEditarPerfil
+import com.citas.medicas.models.ApiResponseEspecialidades
+import com.citas.medicas.models.ApiResponseHistorial
+import com.citas.medicas.models.ApiResponseHorarios
+import com.citas.medicas.models.ApiResponseMapa
+import com.citas.medicas.models.ApiResponsePerfil
+//import com.citas.medicas.models.ApiResponseProximasCitas
+import com.citas.medicas.models.ApiResponseUnidades
+import com.citas.medicas.models.CatalogosResponse
+import com.citas.medicas.models.CrearCitaRequest
+import com.citas.medicas.models.EditarPerfilRequest
+import com.citas.medicas.models.EspecialidadResponse
+import com.citas.medicas.models.LoginRequest
+import com.citas.medicas.models.LoginResponse
+import com.citas.medicas.models.MedicoResponse
+import com.citas.medicas.models.MedicoUpdateRequest
+import com.citas.medicas.models.PacienteResponse
+import com.citas.medicas.models.PacienteUpdateRequest
+import com.citas.medicas.models.RegistroRequest
+import com.citas.medicas.models.RegistroResponse
+import com.citas.medicas.models.RespuestaGenerica
+import com.citas.medicas.models.RolResponse
+import com.citas.medicas.models.UnidadMedicaResponse
 import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.*
@@ -85,10 +111,10 @@ interface ApiService {
         @Path("id") id: String
     ): Response<PacienteResponse>
 
-    @GET("paciente/proximas/{usuarioId}")
-    suspend fun getProximasCitas(
-        @Path("usuarioId") usuarioId: String
-    ): Response<ApiResponseProximasCitas>
+//    @GET("paciente/proximas/{usuarioId}")
+//    suspend fun getProximasCitas(
+//        @Path("usuarioId") usuarioId: String
+//    ): Response<ApiResponseProximasCitas>
 
     @GET("paciente/historial/{usuarioId}")
     suspend fun getHistorialCitas(
@@ -130,6 +156,13 @@ interface ApiService {
     @POST("paciente/agendar")
     suspend fun agendarCita(@Body request: CrearCitaRequest): Response<ApiResponseCrearCita>
 
+
+    //reprogrmar cita
+    @PATCH("paciente/actualizar-cita/{citaId}")
+    suspend fun actualizarCita(
+        @Path("citaId") citaId: String,
+        @Body request: ActualizarCitaRequest
+    ): Response<RespuestaGenerica>
 
     @PUT("paciente/perfil/{pacienteId}")
     suspend fun actualizarPerfilPaciente(

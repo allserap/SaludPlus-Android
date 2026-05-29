@@ -1,5 +1,6 @@
-package com.citas.medicas.adapter
+package com.citas.medicas.ui.paciente.adapter
 
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -32,11 +33,11 @@ class EspecialidadAdapter(
 
         // Pintar de color primario si está seleccionado
         if (indexSeleccionado == position) {
-            holder.card.setCardBackgroundColor(android.graphics.Color.parseColor("#1565C0")) // Tu color_primary
-            holder.tvNombre.setTextColor(android.graphics.Color.WHITE)
+            holder.card.setCardBackgroundColor(Color.parseColor("#1565C0")) // Tu color_primary
+            holder.tvNombre.setTextColor(Color.WHITE)
         } else {
-            holder.card.setCardBackgroundColor(android.graphics.Color.WHITE)
-            holder.tvNombre.setTextColor(android.graphics.Color.BLACK)
+            holder.card.setCardBackgroundColor(Color.WHITE)
+            holder.tvNombre.setTextColor(Color.BLACK)
         }
 
         holder.card.setOnClickListener {
