@@ -7,6 +7,7 @@ import android.view.inputmethod.EditorInfo
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.citas.medicas.R
 import com.citas.medicas.databinding.FragmentUsuariosBinding
@@ -28,6 +29,7 @@ import com.citas.medicas.utils.cambiarColor
 import com.citas.medicas.utils.configurarConHint
 import com.citas.medicas.utils.limpiarCampos
 import com.citas.medicas.utils.showDatePickerDialog
+import kotlinx.coroutines.launch
 
 class UsuariosFragment : BaseFragment(R.layout.fragment_usuarios) {
 
@@ -56,8 +58,18 @@ class UsuariosFragment : BaseFragment(R.layout.fragment_usuarios) {
         setupMedicosObserver()
         setupListeners()
 
-        authViewModel.cargarCatalogos()
-        authViewModel.cargarMedicos()
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                // Ejecutamos las peticiones en paralelo para no bloquear el renderizado visual
+                authViewModel.cargarCatalogos()
+                authViewModel.cargarMedicos()
+                authViewModel.cargarPacientes()
+
+                android.util.Log.d("FRAGMENT_DEBUG", "Peticiones de arranque disparadas con éxito")
+            } catch (e: Exception) {
+                android.util.Log.e("FRAGMENT_DEBUG", "Error al inicializar datos: ${e.message}")
+            }
+        }
     }
 
     //regionSetups
@@ -117,7 +129,6 @@ class UsuariosFragment : BaseFragment(R.layout.fragment_usuarios) {
     private fun setupMedicosObserver() {
         authViewModel.listaMedicos.observe(viewLifecycleOwner) { medicos ->
             if (medicos != null && medicos.isNotEmpty()) {
-                // Importante: Usa la variable que declaraste arriba
                 usuarioAdapter.updateList(medicos)
                 Log.d("DEBUG_VIEW", "Lista actualizada en el Adapter con ${medicos.size} médicos")
             } else {
@@ -140,7 +151,7 @@ class UsuariosFragment : BaseFragment(R.layout.fragment_usuarios) {
         // Observar Unidades Médicas
         authViewModel.unidadesMedicas.observe(viewLifecycleOwner) { lista ->
             listaUnidades = lista
-            val nombres = lista.map { it.nombreCompleto }.toTypedArray()
+            val nombres = lista.map { it.unidadMedica }.toTypedArray()
             binding.spnUnidad.configurarConHint(nombres, "Seleccione unidad médica")
         }
 

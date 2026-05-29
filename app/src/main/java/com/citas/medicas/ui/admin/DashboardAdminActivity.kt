@@ -24,7 +24,7 @@ class DashboardAdminActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_dashboard_admin)
+
 
         // Inicializar el binding
         binding = ActivityDashboardAdminBinding.inflate(layoutInflater)
@@ -33,27 +33,46 @@ class DashboardAdminActivity : AppCompatActivity() {
         // Inicializar fragment
         if (savedInstanceState == null) {
             replaceFragment(UsuariosFragment())
-            binding.tabUsuarios.setBackgroundResource(R.drawable.bg_tabs)
+            actualizarEstiloTabs(pestanaActiva = "usuarios")
         }
 
+        cargarDatosHeader()
         setupNavigation()
+    }
+    private fun cargarDatosHeader() {
+        val prefs = getSharedPreferences("CitasMedicasPrefs", MODE_PRIVATE)
+
+        // Recuperar valores reales del Administrador desde las SharedPreferences
+        val nombre = prefs.getString("user_nombre", "") ?: ""
+        val apellido = prefs.getString("user_apellido", "") ?: ""
+        val email = prefs.getString("user_email", "admin@saludplus.com") ?: "admin@saludplus.com"
+
+        // Editar la UI de la cabecera usando View Binding
+        with(binding) {
+            // Asigna directamente los textos correspondientes al rol administrativo
+            tvHeaderRol.text = "Administrador del Sistema"
+            tvHeaderNombre.text = "$nombre $apellido".trim().ifEmpty { "Administrador" }
+        }
     }
     private fun setupNavigation() {
         with(binding) {
             tabUsuarios.setOnClickListener {
                 replaceFragment(UsuariosFragment())
+                actualizarEstiloTabs(pestanaActiva = "usuarios")
             }
             tabEstadisticas.setOnClickListener {
-                replaceFragment(EstadisticasFragment())
-            }
-            tabHorarios.setOnClickListener {
-                replaceFragment(HorariosFragment())
+                replaceFragment(EstadisticasCitasFragment())
+                actualizarEstiloTabs(pestanaActiva = "estadisticas")
             }
             tabGestiones.setOnClickListener {
                 replaceFragment(GestionesFragment())
+                actualizarEstiloTabs(pestanaActiva = "gestiones")
             }
 
             btnSalir.setOnClickListener {
+                // Borrar token al salir
+                val prefs = getSharedPreferences("CitasMedicasPrefs", MODE_PRIVATE)
+                prefs.edit().clear().apply()
                 Toast.makeText(
                     this@DashboardAdminActivity,
                     "Cerrando sesión...",
@@ -71,5 +90,22 @@ class DashboardAdminActivity : AppCompatActivity() {
         supportFragmentManager.beginTransaction()
             .replace(R.id.containerFragment, fragment)
             .commit()
+    }
+
+    // Función auxiliar para que visualmente cambie el diseño del Tab seleccionado
+    private fun actualizarEstiloTabs(pestanaActiva: String) {
+        with(binding) {
+            // Primero removemos el fondo resaltado de todos
+            tabUsuarios.setBackgroundResource(0)
+            tabEstadisticas.setBackgroundResource(0)
+            tabGestiones.setBackgroundResource(0)
+
+            // Se lo aplicamos únicamente al que está activo en el momento
+            when (pestanaActiva) {
+                "usuarios" -> tabUsuarios.setBackgroundResource(R.drawable.bg_tabs)
+                "estadisticas" -> tabEstadisticas.setBackgroundResource(R.drawable.bg_tabs)
+                "gestiones" -> tabGestiones.setBackgroundResource(R.drawable.bg_tabs)
+            }
+        }
     }
 }

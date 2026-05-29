@@ -116,7 +116,7 @@ class GestionMedicosFragment : BaseFragment(R.layout.fragment_gestion_medicos) {
 
         authViewModel.unidadesMedicas.observe(viewLifecycleOwner) { lista ->
             listaUnidades = lista
-            binding.spnUnidad.configurarConHint(lista.map { it.nombreCompleto }.toTypedArray(), "Unidad Médica")
+            binding.spnUnidad.configurarConHint(lista.map { it.unidadMedica }.toTypedArray(), "Unidad Médica")
         }
     }
 

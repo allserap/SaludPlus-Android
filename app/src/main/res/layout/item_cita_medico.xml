@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="16dp"
+    android:layout_marginVertical="8dp"
+    app:cardBackgroundColor="@color/citas_white"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="2dp"
+    app:strokeWidth="1dp"
+    app:strokeColor="#ECECF3">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/tvIniciales"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:background="@drawable/bg_icon_circle"
+            android:gravity="center"
+            android:text="MG"
+            android:textColor="@color/citas_primary"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/tvNombrePaciente"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="12dp"
+            android:text="María García López"
+            android:textColor="@color/citas_primary"
+            android:textStyle="bold"
+            android:textSize="14sp"
+            app:layout_constraintEnd_toStartOf="@+id/tvHoraCita"
+            app:layout_constraintStart_toEndOf="@+id/tvIniciales"
+            app:layout_constraintTop_toTopOf="@+id/tvIniciales" />
+
+        <TextView
+            android:id="@+id/tvTipoCita"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Consulta General"
+            android:textColor="@color/citas_primary"
+            android:textSize="12sp"
+            app:layout_constraintEnd_toEndOf="@+id/tvNombrePaciente"
+            app:layout_constraintStart_toStartOf="@+id/tvNombrePaciente"
+            app:layout_constraintTop_toBottomOf="@+id/tvNombrePaciente" />
+
+        <TextView
+            android:id="@+id/tvHoraCita"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="08:00 AM"
+            android:textColor="@color/citas_primary"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/tvIniciales" />
+
+        <TextView
+            android:id="@+id/tvEstadoCita"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:background="@drawable/bg_tabs"
+            android:backgroundTint="@color/status_canceled"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="4dp"
+            android:text="Confirmada"
+            android:textColor="@color/citas_white"
+            android:textSize="12sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvHoraCita" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</com.google.android.material.card.MaterialCardView>

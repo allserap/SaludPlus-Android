@@ -1,19 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://tools.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".ui.medico.AgendaFragment">
 
-    <ScrollView
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="#F8F9FA"
-        android:fillViewport="true">
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
         android:orientation="vertical"
         android:padding="16dp">
 
@@ -33,83 +29,19 @@
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/tvFechaActual"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="domingo, 19 abr"
                 android:textColor="@color/citas_primary" />
         </LinearLayout>
 
-        <LinearLayout
-            android:id="@+id/lPaciente"
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvCitas"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:layout_marginTop="12dp"
-            android:background="@drawable/bg_tabs"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:padding="16dp">
+            tools:listitem="@layout/item_cita_medico"/>
 
-            <TextView
-                android:id="@+id/tvIniciales"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
-                android:layout_marginEnd="12dp"
-                android:background="@drawable/bg_icon_circle"
-                android:gravity="center"
-                android:text="MG"
-                android:textColor="@color/citas_primary"
-                android:textStyle="bold" />
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical">
-
-                <TextView
-                    android:id="@+id/tvNombrePaciente"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="María García López"
-                    android:textColor="@color/citas_primary"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/tvTipoCita"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Consulta General"
-                    android:textColor="@color/citas_primary"
-                    android:textSize="12sp" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="end"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="08:00 AM"
-                    android:textColor="@color/citas_primary"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/tvEstadoCita"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:backgroundTint="@color/status_completed"
-                    android:background="@drawable/bg_tabs"
-                    android:paddingHorizontal="8dp"
-                    android:paddingVertical="4dp"
-                    android:text="Confirmada"
-                    android:textColor="@color/citas_white"
-                    android:textSize="12sp" />
-            </LinearLayout>
-        </LinearLayout>
     </LinearLayout>
-    </ScrollView>
-
 </FrameLayout>

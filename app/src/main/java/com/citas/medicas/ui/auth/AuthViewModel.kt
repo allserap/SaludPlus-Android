@@ -1,11 +1,11 @@
 package com.citas.medicas.ui.auth
 
 import android.app.Application
+import android.content.Context
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.citas.medicas.data.AuthRepository
 import com.citas.medicas.models.EspecialidadResponse
@@ -16,9 +16,14 @@ import com.citas.medicas.models.PacienteUpdateRequest
 import com.citas.medicas.models.RegistroRequest
 import com.citas.medicas.models.RolResponse
 import com.citas.medicas.models.UnidadMedicaResponse
+import com.citas.medicas.models.UnidadEspecialidadRequest
+import com.citas.medicas.models.UnidadEspecialidadResponse
+import com.citas.medicas.models.ApiResponse
 import com.citas.medicas.utils.RolesUsuario
 import com.citas.medicas.utils.Validation
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 data class FormularioState(
     val nombreError: String? = null,
@@ -31,16 +36,18 @@ data class FormularioState(
     val afiliadoError: String? = null,
     val especialidadError: String? = null,
     val unidadError: String? = null,
+    val cupoDiarioError: String? = null, // Agregado para validación intermedia
     val isValid: Boolean = false
 )
+
 class AuthViewModel(application: Application) : AndroidViewModel(application) {
-    //region inicializaciones
-    // permitir que el RetrofitClient acceda a "CitasMedicasPrefs"
+
+    // region Inicializaciones
     private val repository = AuthRepository(application.applicationContext)
     private val _registroExitoso = MutableLiveData<String?>()
     val registroExitoso: LiveData<String?> get() = _registroExitoso
-    private val _isLoading = MutableLiveData<Boolean>()
 
+    private val _isLoading = MutableLiveData<Boolean>()
     val isLoading: LiveData<Boolean> get() = _isLoading
 
     private val _error = MutableLiveData<String>()
@@ -50,7 +57,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     private val _listaMedicos = MutableLiveData<List<MedicoResponse>>()
     val listaMedicos: LiveData<List<MedicoResponse>> = _listaMedicos
 
-    // --- Mostar pacientes ---
+    // --- Mostrar pacientes ---
     private val _listaPacientes = MutableLiveData<List<PacienteResponse>>()
     val listaPacientes: LiveData<List<PacienteResponse>> = _listaPacientes
 
@@ -64,9 +71,12 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     private val _roles = MutableLiveData<List<RolResponse>>()
     val roles: LiveData<List<RolResponse>> = _roles
 
-    //endregion
+    // --- NUEVO: Estado intermedio para UnidadEspecialidad ---
+    private val _unidadEspecialidadEncontrada = MutableLiveData<ApiResponse<UnidadEspecialidadResponse>?>()
+    val unidadEspecialidadEncontrada: LiveData<ApiResponse<UnidadEspecialidadResponse>?> get() = _unidadEspecialidadEncontrada
+    // endregion
 
-    // regionEjecuciones
+    // region Ejecuciones Médicos y Pacientes
     fun ejecutarRegistro(datos: RegistroRequest) {
         viewModelScope.launch {
             _isLoading.value = true
@@ -87,10 +97,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     fun ejecutarActualizacion(datos: MedicoUpdateRequest) {
         viewModelScope.launch {
             _isLoading.value = true
-
             try {
                 val resultado = repository.actualizarMedico(datos)
-
                 resultado.onSuccess { mensaje ->
                     _registroExitoso.value = mensaje
                     cargarMedicos()
@@ -110,12 +118,9 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             _isLoading.value = true
             try {
                 val resultado = repository.actualizarPaciente(datos)
-
-                resultado.onSuccess { mensaje ->
-                    // Notificamos éxito a la UI
+                resultado.onSuccess {
                     _registroExitoso.value = Unit.toString()
                 }.onFailure { error ->
-                    // Notificamos el error
                     _error.value = error.message ?: "Error desconocido"
                 }
             } catch (e: Exception) {
@@ -125,39 +130,126 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
     }
+    // endregion
 
-    //endregion
+    // region NUEVO: Ejecuciones transaccionales de UnidadEspecialidad
+    fun buscarUnidadEspecialidad(unidadMedicaId: Int, especialidadId: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val response = repository.buscarUnidadEspecialidad(unidadMedicaId, especialidadId)
+                withContext(Dispatchers.Main) {
+                    if (response.isSuccessful && response.body() != null) {
+                        _unidadEspecialidadEncontrada.value = response.body()
+                    } else {
+                        _unidadEspecialidadEncontrada.value = null
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Log.e("API_READ_ERROR", "Error al validar existencia intermedia: ${e.message}")
+                    _unidadEspecialidadEncontrada.value = null
+                }
+            }
+        }
+    }
 
-    // region Cargar datos
-    fun cargarPacientes() {
+    fun ejecutarCreacionUnidadEspecialidad(request: UnidadEspecialidadRequest) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            // Asegúrate de pasar el 'request' que viene del fragmento, NO una variable global
+            val resultado = repository.crearUnidadEspecialidad(request)
+
+            resultado.onSuccess {
+                _registroExitoso.value = Unit.toString()
+            }.onFailure { error ->
+                _error.value = error.message ?: "Error desconocido"
+            }
+            _isLoading.value = false
+        }
+    }
+
+    fun ejecutarActualizacionUnidadEspecialidad(id: Int, datos: UnidadEspecialidadRequest) {
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                val response = repository.obtenerPacientes()
-                if (response.success) {
-                    _listaPacientes.value = response.data
+                val resultado = repository.actualizarUnidadEspecialidad(id, datos)
+                resultado.onSuccess { mensaje ->
+                    _registroExitoso.value = mensaje
+                }.onFailure { excepcion ->
+                    _error.value = excepcion.message ?: "Error al actualizar la asignación"
                 }
             } catch (e: Exception) {
-                _error.value = e.message
+                _error.value = "Fallo crítico en la red remota: ${e.message}"
             } finally {
                 _isLoading.value = false
             }
         }
     }
+    // endregion
 
-    fun cargarMedicos() {
-        viewModelScope.launch {
+    // region Cargar datos
+    fun cargarPacientes() {
+        viewModelScope.launch(Dispatchers.IO) {
+            withContext(Dispatchers.Main) { _isLoading.value = true }
             try {
-                val res = repository.obtenerMedicos()
-                if (res.isSuccessful && res.body() != null) {
-                    val listado = res.body()!!.data
+                val context = getApplication<Application>().applicationContext
+                val prefs = context.getSharedPreferences("CitasMedicasPrefs", Context.MODE_PRIVATE)
+                val tokenDirecto = prefs.getString("token_jwt", "") ?: ""
+                val tokenLimpio = if (tokenDirecto.startsWith("Bearer ", ignoreCase = true)) tokenDirecto.substring(7).trim() else tokenDirecto
+                val authHeader = if (tokenLimpio.isNotEmpty()) tokenLimpio else null
 
-                    _listaMedicos.postValue(listado)
-                    Log.d("DEBUG_VM", "Médicos cargados: ${listado.size}")
+                val response = repository.obtenerPacientes(authHeader)
+
+                if (response.isSuccessful) {
+                    val contenedorBody = response.body()
+                    val listaPacientesReal = contenedorBody?.data ?: emptyList()
+
+                    withContext(Dispatchers.Main) {
+                        _listaPacientes.value = listaPacientesReal
+                        Log.d("API_SUCCESS", "Pacientes cargados en UI: ${listaPacientesReal.size}")
+                    }
+                } else {
+                    withContext(Dispatchers.Main) {
+                        _error.value = "Error al obtener pacientes: ${response.code()}"
+                    }
                 }
             } catch (e: Exception) {
-                Log.e("DEBUG_VM", "Error al cargar", e)
-                _error.postValue("Error: ${e.message}")
+                withContext(Dispatchers.Main) {
+                    _error.value = "Fallo de conexión: ${e.message}"
+                }
+            } finally {
+                withContext(Dispatchers.Main) { _isLoading.value = false }
+            }
+        }
+    }
+
+    fun cargarMedicos() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val context = getApplication<Application>().applicationContext
+                val prefs = context.getSharedPreferences("CitasMedicasPrefs", Context.MODE_PRIVATE)
+                val tokenDirecto = prefs.getString("token_jwt", "")
+                val authHeader = if (!tokenDirecto.isNullOrEmpty()) tokenDirecto else null
+
+                val response = repository.obtenerMedicos(authHeader)
+
+                if (response.isSuccessful) {
+                    val contenedorBody = response.body()
+                    val listaMedicosReal = contenedorBody?.data ?: emptyList()
+
+                    withContext(Dispatchers.Main) {
+                        _listaMedicos.value = listaMedicosReal
+                        Log.d("API_SUCCESS", "Médicos cargados en UI: ${listaMedicosReal.size}")
+                    }
+                } else {
+                    withContext(Dispatchers.Main) {
+                        _error.value = "Error del servidor: ${response.code()}"
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    _error.value = "Fallo de conexión: ${e.message}"
+                }
             }
         }
     }
@@ -165,7 +257,6 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     fun cargarCatalogos() {
         viewModelScope.launch {
             try {
-                // obtener especialidades
                 val resEsp = repository.obtenerEspecialidades()
                 if (resEsp.isSuccessful) {
                     val listaReal = resEsp.body()?.data ?: emptyList()
@@ -173,7 +264,6 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                     Log.d("DEBUG_API", "Especialidades cargadas: ${listaReal.size}")
                 }
 
-                // obtener unidades médicas
                 val resUni = repository.obtenerUnidadesMedicas()
                 if (resUni.isSuccessful) {
                     val listaReal = resUni.body()?.data ?: emptyList()
@@ -181,14 +271,12 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                     Log.d("DEBUG_API", "Unidades cargadas: ${listaReal.size}")
                 }
 
-                // obtener roles
                 val resRol = repository.obtenerRoles()
                 if (resRol.isSuccessful) {
                     val listaReal = resRol.body()?.data ?: emptyList()
                     RolesUsuario.inicializar(listaReal)
                     _roles.postValue(listaReal)
                     Log.d("DEBUG_API", "Roles cargados: ${listaReal.size}")
-                    Log.d("DEBUG_API", "ID Paciente asignado: ${RolesUsuario.ID_PACIENTE}")
                 }
             } catch (e: Exception) {
                 Log.e("DEBUG_API", "Error de red: ${e.message}")
@@ -196,9 +284,9 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
     }
-    //endregion
+    // endregion
 
-    // region Validacion
+    // region Validaciones
     private val _formState = MutableLiveData<FormularioState>()
     val formState: LiveData<FormularioState> get() = _formState
 
@@ -224,37 +312,44 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             estado = estado.copy(apellidoError = "Apellido requerido"); hayError = true
         }
         if (!Validation.isValidDUI(dui)) {
-            estado = estado.copy(duiError = "Formato de DUI incorrecto (00000000-0)"); hayError =
-                true
+            estado = estado.copy(duiError = "Formato de DUI incorrecto (00000000-0)"); hayError = true
         }
         if (!Validation.isValidEmail(correo)) {
             estado = estado.copy(correoError = "Correo inválido"); hayError = true
         }
         if (!Validation.isValidPassword(password)) {
-            estado =
-                estado.copy(passwordError = "Mínimo 8 caracteres, 1 mayúscula y 1 símbolo"); hayError =
-                true
+            estado = estado.copy(passwordError = "Mínimo 8 caracteres, 1 mayúscula y 1 símbolo"); hayError = true
         }
         if (!Validation.isValidPhone(telefono)) {
-            estado = estado.copy(telefonoError = "Formato inválido (0000-0000)")
+            estado = estado.copy(telefonoError = "Formato inválido (0000-0000)"); hayError = true
         }
         if (especialidadPos <= 0) {
             estado = estado.copy(especialidadError = "Especialidad requerida"); hayError = true
-        }
-        if (unidadPos <= 0) {
-
         }
 
         when (rolId) {
             RolesUsuario.ID_MEDICO -> if (extraCampo.length < 4) {
                 estado = estado.copy(jvpmError = "JVPM inválido"); hayError = true
             }
-
             RolesUsuario.ID_PACIENTE -> if (extraCampo.isEmpty()) {
                 estado = estado.copy(afiliadoError = "Requerido"); hayError = true
             }
         }
         _formState.value = estado.copy(isValid = !hayError)
     }
-// endregion
+
+    // NUEVO: Validación del subformulario de UnidadEspecialidad
+    fun validarFormularioUnidadEspecialidad(cupoDiarioStr: String) {
+        var estado = FormularioState()
+        var hayError = false
+
+        val cupoNum = cupoDiarioStr.trim().toIntOrNull()
+        if (cupoNum == null || cupoNum <= 0) {
+            estado = estado.copy(cupoDiarioError = "El cupo diario debe ser un número mayor a 0")
+            hayError = true
+        }
+
+        _formState.value = estado.copy(isValid = !hayError)
+    }
+    // endregion
 }
