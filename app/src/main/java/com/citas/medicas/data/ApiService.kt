@@ -1,5 +1,7 @@
 package com.citas.medicas.data
 
+import com.citas.medicas.models.*
+import okhttp3.Call
 import com.citas.medicas.models.ActualizarCitaRequest
 import com.citas.medicas.models.ApiResponse
 import com.citas.medicas.models.ApiResponseCrearCita
@@ -28,14 +30,7 @@ import com.citas.medicas.models.RolResponse
 import com.citas.medicas.models.UnidadMedicaResponse
 import okhttp3.ResponseBody
 import retrofit2.Response
-import retrofit2.http.Body
-import retrofit2.http.DELETE
-import retrofit2.http.GET
-import retrofit2.http.PATCH
-import retrofit2.http.POST
-import retrofit2.http.PUT
-import retrofit2.http.Path
-import retrofit2.http.Query
+import retrofit2.http.*
 
 interface ApiService {
     //auth
@@ -52,12 +47,16 @@ interface ApiService {
     @GET("global/unidades_medicas/catalogos")
     suspend fun obtenerUnidadesMedicas(): Response<CatalogosResponse<List<UnidadMedicaResponse>>>
 
-    //Médicos (CRUD admin)
+    //-- Médicos --
+    // (CRUD admin)
     @POST("admin/medicos/create")
     suspend fun registrarMedico(@Body request: RegistroRequest): Response<LoginResponse>
 
     @GET("admin/medicos/read")
-    suspend fun obtenerMedicos(): Response<ApiResponse<List<MedicoResponse>>>
+    // suspend fun obtenerMedicos(): Response<ApiResponse<List<MedicoResponse>>>
+    suspend fun obtenerMedicos(
+        @Header("Authorization") token: String? = null
+    ): Response<CatalogosResponse<List<MedicoResponse>>>
 
     @PUT("admin/medicos/update/{id}")
     suspend fun actualizarMedico(
@@ -68,13 +67,36 @@ interface ApiService {
     @DELETE("admin/medicos/delete/{id}")
     suspend fun eliminarMedico(@Path("id") id: Int): Response<Unit>
 
+    @GET("admin/unidad_especialidad/read")
+    suspend fun buscarUnidadEspecialidad(
+        @Query("unidad_medica_id") unidadMedicaId: Int,
+        @Query("especialidad_id") especialidadId: Int
+    ): Response<ApiResponse<UnidadEspecialidadResponse>>
+
+    @POST("admin/unidad_especialidad/create")
+    suspend fun crearUnidadEspecialidad(
+        @Body request: UnidadEspecialidadRequest
+    ): Response<UnidadEspecialidadResponse>
+
+    @PUT("admin/unidad_especialidad/update/{id}")
+    suspend fun actualizarUnidadEspecialidad(
+        @Path("id") id: Int,
+        @Body request: UnidadEspecialidadRequest
+    ): Response<UnidadEspecialidadResponse>
+
+    // funciones de médico
+    @GET("medico/profile")
+    suspend fun obtenerPerfilMedicoLogueado(): Response<ApiResponse<MedicoProfileResponse>>
+
     //Pacientes
     @POST("auth/register/paciente")
     suspend fun registrarPaciente(@Body request: RegistroRequest): Response<RegistroResponse>
 
     // Obtener todos los pacientes
     @GET("admin/pacientes/read")
-    suspend fun getPacientes(): ApiResponse<List<PacienteResponse>>
+    suspend fun obtenerPacientes(
+        @Header("Authorization") token: String? = null
+    ): Response<CatalogosResponse<List<PacienteResponse>>>
 
     // Actualizar paciente por ID
     @POST("admin/pacientes/update/{id}")
@@ -147,4 +169,47 @@ interface ApiService {
         @Path("pacienteId") pacienteId: Int,
         @Body request: EditarPerfilRequest
     ): Response<ApiResponseEditarPerfil>
+
+    // =========================================================================
+    // AGREGADO: NUEVOS ENDPOINTS PARA EL FLUJO OPERATIVO DEL MÉDICO
+    // =========================================================================
+
+    @GET("citas/allAppointments")
+    suspend fun obtenerTodasLasCitas(): Response<ApiResponse<AgendaCitasWrapper>>
+
+    @GET("medico/historialPaciente/information/{id}")
+    suspend fun obtenerInformacionPaciente(
+        @Path("id") pacienteId: Int
+    ): Response<ApiResponse<PacienteResponse>>
+
+    @PATCH("medico/paciente/historial/update/{id}")
+    suspend fun actualizarHistorialPaciente(
+        @Path("id") pacienteId: Int,
+        @Body request: HistorialPacienteRequest
+    ): Response<ApiResponse<HistorialPacienteResponse>>
+
+    @GET("medico/medicina")
+    suspend fun obtenerTodosLosMedicamentos(): Response<ApiResponse<MedicamentoWrapper>>
+
+    @GET("medico/medicina/{id}")
+    suspend fun obtenerMedicamentoPorId(
+        @Path("id") medicamentoId: Int
+    ): Response<ApiResponse<MedicamentoWrapper>>
+
+    @PATCH("medico/asistencia/update/{id}")
+    suspend fun marcarAsistenciaCita(
+        @Path("id") citaUuid: String,
+        @Body request: AsistenciaRequest
+    ): Response<ApiResponse<AsistenciaResponse>>
+
+    @POST("medico/receta/create/{pacienteId}")
+    suspend fun crearRecetaCabecera(
+        @Path("pacienteId") pacienteId: Int,
+        @Body request: RecetaRequest
+    ): Response<ApiResponse<RecetaResponse>>
+
+    @POST("medico/receta/medicamento/create")
+    suspend fun agregarMedicamentosAReceta(
+        @Body request: List<DetalleRecetaItemRequest>
+    ): Response<ApiResponse<List<DetalleRecetaResponse>>>
 }

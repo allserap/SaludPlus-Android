@@ -5,6 +5,7 @@ import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import com.citas.medicas.R
 import com.citas.medicas.databinding.FragmentGestionPacientesBinding
 import com.citas.medicas.models.PacienteResponse
@@ -15,6 +16,7 @@ import com.citas.medicas.utils.aplicarMascaraTelefono
 import com.citas.medicas.utils.configurarConHint
 import com.citas.medicas.utils.limpiarCampos
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import kotlinx.coroutines.launch
 
 class GestionPacientesFragment : BaseFragment(R.layout.fragment_gestion_pacientes) {
 
@@ -33,7 +35,10 @@ class GestionPacientesFragment : BaseFragment(R.layout.fragment_gestion_paciente
         setupObservers()
         setupListeners()
 
-        authViewModel.cargarPacientes()
+        viewLifecycleOwner.lifecycleScope.launch {
+            authViewModel.cargarPacientes()
+            authViewModel.cargarCatalogos()
+        }
     }
 
     private fun setupUI() {

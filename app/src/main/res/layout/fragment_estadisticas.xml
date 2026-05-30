@@ -2,6 +2,7 @@
 <androidx.core.widget.NestedScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#F5F7FA"
@@ -10,7 +11,8 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:paddingBottom="24dp">
 
         <TextView
             android:layout_width="wrap_content"
@@ -20,13 +22,13 @@
             android:textSize="20sp"
             android:textColor="@color/citas_primary"
             android:textStyle="bold"
-            android:layout_marginBottom="20dp"
+            android:layout_marginBottom="12dp"
             android:layout_marginStart="4dp"/>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="8dp"
             android:layout_marginStart="16dp"
             android:text="Seleccionar Unidad"
             android:textColor="@color/citas_primary"
@@ -70,18 +72,19 @@
                     android:layout_height="match_parent">
                     <TextView
                         android:id="@+id/tvCompletadas"
-                        android:layout_width="match_parent"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="939"
                         android:textSize="28sp"
                         android:textStyle="bold"
-                        android:textColor="#2ECC71"/>
+                        android:textColor="#2ECC71"
+                        tools:text="0"/>
                     <TextView
-                        android:layout_width="match_parent"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Completadas"
                         android:textSize="12sp"
-                        android:textColor="#6A6A80"/>
+                        android:textColor="#6A6A80"
+                        android:layout_marginTop="4dp"/>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -102,18 +105,19 @@
                     android:layout_height="match_parent">
                     <TextView
                         android:id="@+id/tvCanceladas"
-                        android:layout_width="match_parent"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="144"
                         android:textSize="28sp"
                         android:textStyle="bold"
-                        android:textColor="#E74C3C"/>
+                        android:textColor="#E74C3C"
+                        tools:text="0"/>
                     <TextView
-                        android:layout_width="match_parent"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Canceladas"
                         android:textSize="12sp"
-                        android:textColor="#6A6A80"/>
+                        android:textColor="#6A6A80"
+                        android:layout_marginTop="4dp"/>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -134,18 +138,19 @@
                     android:layout_height="match_parent">
                     <TextView
                         android:id="@+id/tvReprogramadas"
-                        android:layout_width="match_parent"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="87"
                         android:textSize="28sp"
                         android:textStyle="bold"
-                        android:textColor="#F39C12"/>
+                        android:textColor="#F39C12"
+                        tools:text="0"/>
                     <TextView
-                        android:layout_width="match_parent"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Reprogramadas"
                         android:textSize="12sp"
-                        android:textColor="#6A6A80"/>
+                        android:textColor="#6A6A80"
+                        android:layout_marginTop="4dp"/>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
@@ -154,6 +159,8 @@
             android:layout_width="match_parent"
             android:layout_height="320dp"
             android:layout_marginTop="16dp"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="12dp"
             app:cardCornerRadius="16dp"
             app:cardElevation="0dp"
             app:strokeWidth="1dp"
@@ -183,6 +190,8 @@
             android:layout_width="match_parent"
             android:layout_height="350dp"
             android:layout_marginTop="16dp"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="12dp"
             app:cardCornerRadius="16dp"
             app:cardElevation="0dp"
             app:strokeWidth="1dp"
@@ -212,7 +221,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:layout_marginBottom="24dp"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="12dp"
+            android:layout_marginBottom="16dp"
             app:cardCornerRadius="16dp"
             app:cardElevation="0dp"
             app:cardBackgroundColor="#F0F9FF"
@@ -227,18 +238,18 @@
                     android:id="@+id/tvTotalCitas"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Total de Citas: 1170"
                     android:textColor="#026AA2"
                     android:textStyle="bold"
-                    android:textSize="17sp"/>
+                    android:textSize="17sp"
+                    tools:text="Total de Citas: --"/>
                 <TextView
                     android:id="@+id/tvPorcentajeCompletadas"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Tasa de completitud: 80.3%"
                     android:textColor="#026AA2"
                     android:textSize="14sp"
-                    android:layout_marginTop="4dp"/>
+                    android:layout_marginTop="4dp"
+                    tools:text="Tasa de completitud: --%"/>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 

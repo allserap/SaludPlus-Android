@@ -12,6 +12,7 @@ data class PacienteResponse (
     val telefono: String,
     @SerializedName("fechanacimiento")
     val fechaNacimiento: String?,
+    val edad: Int,
     val genero: String,
     @SerializedName("rolid")
     val rolId: Int,

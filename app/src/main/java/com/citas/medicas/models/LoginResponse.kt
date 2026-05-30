@@ -17,7 +17,7 @@ data class UserProfile(
     val email: String,
     val telefono: String?,
     val dui: String?,
-    @SerializedName("rolId") val rolId: Int,
+    @SerializedName("rolid") val rolId: Int,
     val numAfiliado: String?,
     val tipoSangre: String?,
     val alergias: String?,

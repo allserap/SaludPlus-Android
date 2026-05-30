@@ -52,8 +52,8 @@ class GestionesFragment : Fragment(R.layout.fragment_gestiones) {
                     .addToBackStack(null)
                     .commit()
             }
-            cardMedicamentos.setOnClickListener {
-                val nuevoFragment = GestionMedicamentosFragment()
+            cardUnidadesEspecialidad.setOnClickListener {
+                val nuevoFragment = UnidadEspecialidadFragment()
                 parentFragmentManager.beginTransaction()
                     .setCustomAnimations(
                         android.R.anim.fade_in,

@@ -29,5 +29,5 @@ data class UnidadMedicaResponse(
     @SerializedName("unidadmedicaid")
     val id: Int,
     @SerializedName("unidadmedica")
-    val nombreCompleto: String
+    val unidadMedica: String
 )

@@ -1,314 +1,275 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    tools:context=".ui.medico.HistorialFragment">
-
-    <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="#F8F9FA"
-        android:fillViewport="true">
+    android:background="#F8F9FA">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:background="@color/citas_background"
-            android:gravity="center_vertical"
-            android:orientation="vertical"
-            android:padding="16dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Historial Clínico"
-                android:textColor="@color/citas_primary"
-                android:textSize="20sp"
-                android:textStyle="bold" />
-
-            <Button
-                android:id="@+id/btnEditarHistorial"
-                android:layout_width="match_parent"
-                android:layout_height="55dp"
-                android:layout_marginTop="16dp"
-                android:layout_marginBottom="32dp"
-                android:backgroundTint="@color/citas_primary"
-                android:text="Editar Historial"
-                android:visibility="gone" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="Seleccionar Paciente"
-                android:textColor="@color/citas_primary"
-                android:textSize="14sp"
-                android:textStyle="bold" />
-
-            <Spinner
-                android:id="@+id/spPaciente"
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:layout_marginTop="8dp"
-                android:background="@drawable/bg_input"
-                android:popupBackground="@color/citas_background" />
-        </LinearLayout>
+        android:padding="20dp">
 
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
+            android:backgroundTint="@color/citas_white"
             app:cardCornerRadius="16dp"
             app:cardElevation="2dp"
-            app:strokeWidth="1dp"
-            app:strokeColor="#EAECEE">
+            app:strokeColor="#ECECF3"
+            app:strokeWidth="1dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:background="@drawable/bg_tabs"
-                android:backgroundTint="@color/citas_white"
-                android:padding="20dp">
+                android:padding="16dp">
 
+                <!-- Título y Selector de Paciente -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Datos Generales"
+                    android:text="Seleccionar Paciente para Consulta"
                     android:textColor="@color/citas_primary"
-                    android:textStyle="bold"
-                    android:textSize="16sp" />
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
 
-                <RelativeLayout
+                <!-- Buscador Único (ID emparejado con tu HistorialFragment) -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/tilBuscarPaciente"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="20dp">
-                    <TextView
-                        android:text="Edad:"
-                        android:textColor="#95A5A6"
-                        android:layout_height="wrap_content"
-                        android:layout_width="wrap_content"/>
-                    <TextView
-                        android:id="@+id/tvEdadP"
-                        android:layout_alignParentEnd="true"
-                        android:text="32 años"
-                        android:textColor="#2C3E50"
-                        android:layout_height="wrap_content"
-                        android:layout_width="wrap_content"/>
-                </RelativeLayout>
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="8dp"
+                    android:hint="Buscar por Nombre o DUI"
+                    app:boxStrokeColor="@color/citas_primary"
+                    app:hintTextColor="@color/citas_primary">
 
-                <RelativeLayout
+                    <AutoCompleteTextView
+                        android:id="@+id/autoCompleteConsultar"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="text"
+                        android:padding="16dp" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginVertical="16dp"
+                    android:background="#E0E0E0" />
+
+                <!-- SECCIÓN 1: Identificación y Datos Generales (Solo Lectura) -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:text="Información del Paciente"
+                    android:textColor="@color/citas_primary"
+                    android:textSize="14sp" />
+
+                <com.google.android.material.textfield.TextInputLayout
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp">
-                    <TextView
-                        android:text="Tipo de Sangre:"
-                        android:textColor="#95A5A6"
+                    android:enabled="false"
+                    android:hint="Nombre Completo"
+                    app:boxBackgroundColor="#F1F3F4">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/tvDisplayPacienteNombre"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_width="wrap_content"/>
-                    <TextView
-                        android:id="@+id/tvTipoSangre"
-                        android:layout_alignParentEnd="true"
-                        android:text="A+"
-                        android:textColor="#E74C3C"
-                        android:textStyle="bold"
-                        android:layout_height="wrap_content"
-                        android:layout_width="wrap_content"/>
-                </RelativeLayout>
+                        android:textColor="#5F6368" />
+                </com.google.android.material.textfield.TextInputLayout>
 
-                <RelativeLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp">
-                    <TextView
-                        android:text="Última Visita:"
-                        android:textColor="#95A5A6"
-                        android:layout_height="wrap_content"
-                        android:layout_width="wrap_content"/>
-                    <TextView
-                        android:id="@+id/tvUltimaConsulta"
-                        android:layout_alignParentEnd="true"
-                        android:text="20 Mar 2024"
-                        android:textColor="#2C3E50"
-                        android:layout_height="wrap_content"
-                        android:layout_width="wrap_content"/>
-                </RelativeLayout>
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="2dp"
-            app:strokeWidth="1dp"
-            app:strokeColor="#EAECEE">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_tabs"
-                android:backgroundTint="@color/citas_white"
-                android:orientation="vertical"
-                android:padding="20dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Alergias"
-                    android:textColor="@color/status_canceled"
-                    android:textStyle="bold"
-                    android:textSize="16sp"/>
-
-                <TextView
-                    android:id="@+id/tvAlergias"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="20dp"
-                    android:text="Sin alergias conocidas"
-                    android:textColor="#7F8C8D" />
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="20dp"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="2dp"
-            app:strokeWidth="1dp"
-            app:strokeColor="#EAECEE">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_tabs"
-                android:backgroundTint="@color/citas_white"
-                android:orientation="vertical"
-                android:padding="20dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Condiciones Crónicas"
-                    android:textColor="@color/citas_primary"
-                    android:textStyle="bold"
-                    android:textSize="16sp"/>
-
-                <TextView
-                    android:id="@+id/tvCondiciones"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="20dp"
-                    android:background="#FFF9C4"
-                    android:paddingHorizontal="12dp"
-                    android:paddingVertical="4dp"
-                    android:text="Asma leve"
-                    android:textColor="#F57F17"
-                    android:textSize="12sp" />
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="20dp"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="2dp"
-            app:strokeWidth="1dp"
-            app:strokeColor="#EAECEE">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_tabs"
-                android:backgroundTint="@color/citas_white"
-                android:orientation="vertical"
-                android:padding="20dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Medicamentos Actuales"
-                    android:textColor="@color/citas_primary"
-                    android:textStyle="bold"
-                    android:textSize="16sp" />
-
+                <!-- Fila de DUI y Género -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="20dp"
-                    android:gravity="center_vertical"
+                    android:layout_marginTop="12dp"
+                    android:baselineAligned="false"
                     android:orientation="horizontal">
 
-                    <View
-                        android:layout_width="8dp"
-                        android:layout_height="8dp"
-                        android:background="@drawable/bg_icon_circle"
-                        android:backgroundTint="@color/citas_secondary" />
-
-                    <TextView
-                        android:id="@+id/tvMedicamentos"
-                        android:layout_width="wrap_content"
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="12dp"
-                        android:text="Salbutamol PRN"
-                        android:textColor="#2C3E50"
-                        android:textSize="14sp" />
+                        android:layout_marginEnd="4dp"
+                        android:layout_weight="1"
+                        android:enabled="false"
+                        android:hint="DUI"
+                        app:boxBackgroundColor="#F1F3F4">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/tvDisplayDui"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="4dp"
+                        android:layout_weight="1"
+                        android:enabled="false"
+                        android:hint="Género"
+                        app:boxBackgroundColor="#F1F3F4">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/tvDisplayGenero"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content" />
+                    </com.google.android.material.textfield.TextInputLayout>
                 </LinearLayout>
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
 
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="20dp"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="2dp"
-            app:strokeWidth="1dp"
-            app:strokeColor="#EAECEE">
+                <!-- Fila de Fecha de Nacimiento / Edad -->
+                <com.google.android.material.textfield.TextInputLayout
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:enabled="false"
+                    android:hint="Fecha de Nacimiento / Edad"
+                    app:boxBackgroundColor="#F1F3F4">
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_tabs"
-                android:backgroundTint="@color/citas_white"
-                android:orientation="vertical"
-                android:padding="20dp">
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/tvDisplayEdad"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+                </com.google.android.material.textfield.TextInputLayout>
 
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginVertical="16dp"
+                    android:background="#E0E0E0" />
+
+                <!-- SECCIÓN 2: Gestión Clínica del Médico (Campos Editables) -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Notas Clínicas"
+                    android:layout_marginBottom="8dp"
+                    android:text="Registro Clínico de la Consulta"
                     android:textColor="@color/citas_primary"
-                    android:textStyle="bold"
-                    android:textSize="16sp" />
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
 
-                <TextView
-                    android:id="@+id/tvNotasClinicas"
+                <!-- Campo Editable Alergias -->
+                <com.google.android.material.textfield.TextInputLayout
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="20dp"
-                    android:lineSpacingExtra="4dp"
-                    android:text="Crisis asmáticas esporádicas. Control cada 3 meses."
-                    android:textColor="#7F8C8D"
-                    android:textSize="14sp" />
+                    android:hint="Alergias">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etAlergias"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textMultiLine" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Campo Editable Tipo Sanguíneo -->
+                <com.google.android.material.textfield.TextInputLayout
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Tipo Sanguíneo">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etTipoSangre"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textMultiLine" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Campo Editable Condiciones Cronicas -->
+                <com.google.android.material.textfield.TextInputLayout
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Condiciones Cronicas">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etCondicionesCronicas"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textMultiLine" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Campo Editable Medicamentos Recurrentes -->
+                <com.google.android.material.textfield.TextInputLayout
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Medicamentos Recurrentes">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etMedicamentosRecurrentes"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textMultiLine" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Campo Editable Notas Clínicas -->
+                <com.google.android.material.textfield.TextInputLayout
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:hint="Notas Clínicas">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etNotasClinicas"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="top"
+                        android:inputType="textMultiLine"
+                        android:lines="4" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Feedback Visual / Loader Interno de la Tarjeta -->
+                <ProgressBar
+                    android:id="@+id/progressBar"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginVertical="12dp"
+                    android:visibility="gone" />
+
+                <!-- Botonera de Acción -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_horizontal"
+                    android:orientation="horizontal"
+                    android:paddingTop="16dp">
+
+                    <Button
+                        android:id="@+id/btnCancelarFormulario"
+                        android:layout_width="wrap_content"
+                        android:layout_height="40dp"
+                        android:layout_marginEnd="10dp"
+                        android:backgroundTint="@color/citas_secondary"
+                        android:text="Cancelar"
+                        android:textAllCaps="false"
+                        android:textColor="@color/citas_primary" />
+
+                    <Button
+                        android:id="@+id/btnGuardarExpediente"
+                        android:layout_width="wrap_content"
+                        android:layout_height="40dp"
+                        android:layout_marginStart="10dp"
+                        android:backgroundTint="@color/citas_primary"
+                        android:text="Guardar Consulta"
+                        android:textAllCaps="false"
+                        android:textColor="@color/citas_white" />
+                </LinearLayout>
+
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
     </LinearLayout>
-    </ScrollView>
-
-</FrameLayout>
+</ScrollView>
