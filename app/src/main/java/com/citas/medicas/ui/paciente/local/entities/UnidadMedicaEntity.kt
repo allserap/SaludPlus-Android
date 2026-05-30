@@ -13,3 +13,27 @@ data class UnidadMedicaEntity(
     val longitud: String?,
     val especialidadesConcat: String?
 )
+
+fun com.citas.medicas.models.UnidadMedicaMapa.toEntity(): UnidadMedicaEntity {
+    return UnidadMedicaEntity(
+        id = this.id,
+        nombre = this.nombre,
+        direccion = this.direccion,
+        telefono = this.telefono,
+        latitud = this.latitud,
+        longitud = this.longitud,
+        especialidadesConcat = this.especialidades?.joinToString(",")
+    )
+}
+
+fun UnidadMedicaEntity.toModel(): com.citas.medicas.models.UnidadMedicaMapa {
+    return com.citas.medicas.models.UnidadMedicaMapa(
+        id = this.id,
+        nombre = this.nombre,
+        direccion = this.direccion,
+        telefono = this.telefono,
+        latitud = this.latitud,
+        longitud = this.longitud,
+        especialidades = this.especialidadesConcat?.split(",")?.map { it.trim() } ?: emptyList()
+    )
+}

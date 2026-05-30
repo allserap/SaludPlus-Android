@@ -9,6 +9,7 @@ import com.citas.medicas.R
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
 import android.util.Log
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.Toast
@@ -16,6 +17,7 @@ import androidx.lifecycle.lifecycleScope
 import com.citas.medicas.data.RetrofitClient
 import com.citas.medicas.models.ActualizarCitaRequest
 import com.citas.medicas.models.CitaHistorial
+import com.citas.medicas.ui.auth.LoginActivity
 import com.citas.medicas.ui.paciente.local.entities.toEntity
 import com.citas.medicas.ui.paciente.local.entities.toModel
 import kotlinx.coroutines.launch
@@ -32,6 +34,7 @@ class HomePacienteActivity : AppCompatActivity() {
 
 
 
+        val btnCerrarSesion = findViewById<ImageView>(R.id.btnCerrarSesion)
 
         val tvVerTodasCitas = findViewById<TextView>(R.id.tvVerTodasCitas)
 
@@ -80,6 +83,30 @@ class HomePacienteActivity : AppCompatActivity() {
                 else -> false
             }
         }
+        btnCerrarSesion.setOnClickListener {
+            com.google.android.material.dialog.MaterialAlertDialogBuilder(this@HomePacienteActivity)
+                .setTitle("Cerrar Sesión")
+                .setMessage("¿Estás seguro de que deseas salir de tu cuenta?")
+                .setNegativeButton("Cancelar", null)
+                .setPositiveButton("Salir") { dialog, which ->
+
+                    val prefs = getSharedPreferences("CitasMedicasPrefs", MODE_PRIVATE)
+                    prefs.edit().clear().apply()
+
+                    lifecycleScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                        val db = com.citas.medicas.ui.paciente.local.AppDatabase.getDatabase(this@HomePacienteActivity)
+                        db.clearAllTables()
+                    }
+
+                    val intent = Intent(this@HomePacienteActivity, LoginActivity::class.java)
+                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    startActivity(intent)
+                    finish()
+                }
+                .show()
+        }
+
+
 
         cargarCitasDesdeApi()
 
@@ -108,8 +135,27 @@ class HomePacienteActivity : AppCompatActivity() {
 
             val citasGuardadas = citasDao.obtenerTodasLasCitas()
             if (citasGuardadas.isNotEmpty()) {
-                val citasParaPantalla = citasGuardadas.map { it.toModel() }
-                pintarCitasEnPantalla(citasParaPantalla, isOffline = true)
+                val todasLasCitas = citasGuardadas.map { it.toModel() }
+
+                val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                val hoy = sdf.parse(sdf.format(java.util.Date()))
+                val estadosProximas = listOf("pendiente", "confirmada", "reprogramada")
+
+                val proximasLocal = todasLasCitas.filter { cita ->
+                    var esFutura = false
+                    try {
+                        val fechaStr = cita.fecha_solicitada?.take(10)
+                        if (fechaStr != null) {
+                            val fechaCita = sdf.parse(fechaStr)
+                            esFutura = fechaCita?.before(hoy) == false
+                        }
+                    } catch (e: Exception) {}
+
+                    val esEstadoValido = cita.estado?.lowercase(Locale.getDefault()) in estadosProximas
+                    esEstadoValido && esFutura
+                }
+
+                pintarCitasEnPantalla(proximasLocal, isOffline = true)
             }
 
             try {
@@ -117,9 +163,13 @@ class HomePacienteActivity : AppCompatActivity() {
                 val response = apiService.getHistorialCitas(usuarioId)
 
                 if (response.isSuccessful && response.body()?.exito == true) {
-                    val listaProximas = response.body()?.datos?.proximas ?: emptyList()
 
-                    val citasEntities = listaProximas.map { it.toEntity() }
+                    val listaProximas = response.body()?.datos?.proximas ?: emptyList()
+                    val listaPasadas = response.body()?.datos?.pasadas ?: emptyList()
+
+                    val todasLasCitas = listaProximas + listaPasadas
+                    val citasEntities = todasLasCitas.map { it.toEntity() }
+
                     citasDao.limpiarTablaCitas()
                     citasDao.insertarCitas(citasEntities)
 

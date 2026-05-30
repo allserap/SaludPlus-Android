@@ -12,4 +12,8 @@ interface UnidadMedicaDao {
 
     @Query("SELECT * FROM unidades_medicas")
     suspend fun obtenerTodasLasUnidades(): List<UnidadMedicaEntity>
+
+    @Query("DELETE FROM unidades_medicas")
+    suspend fun limpiarTablaUnidades()
+
 }

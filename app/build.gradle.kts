@@ -75,6 +75,9 @@ dependencies {
     implementation("androidx.room:room-ktx:$roomVersion")
     ksp("androidx.room:room-compiler:$roomVersion")
 
+    //mapas
+    implementation("com.github.bumptech.glide:glide:4.16.0")
+
     // --- LIFECYCLE (ViewModel & LiveData) ---
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.7.0")

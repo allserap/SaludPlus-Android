@@ -12,9 +12,14 @@ import com.citas.medicas.models.UnidadMedica
 import com.google.android.material.card.MaterialCardView
 
 class UnidadMedicaAdapter(
-    private var lista: List<UnidadMedica>,
-    private val alSeleccionar: (UnidadMedica) -> Unit
+    private var lista: List<com.citas.medicas.models.UnidadMedicaMapa> = emptyList()
 ) : RecyclerView.Adapter<UnidadMedicaAdapter.ViewHolder>() {
+
+    private var onItemClickListener: ((com.citas.medicas.models.UnidadMedicaMapa) -> Unit)? = null
+
+    fun setOnItemClickListener(listener: (com.citas.medicas.models.UnidadMedicaMapa) -> Unit) {
+        onItemClickListener = listener
+    }
 
     private var indexSeleccionado = -1
 
@@ -31,17 +36,23 @@ class UnidadMedicaAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = lista[position]
+
         holder.tvNombre.text = item.nombre
-        holder.tvDireccion.text = item.direccion
 
         if (indexSeleccionado == position) {
-            holder.card.setCardBackgroundColor(Color.parseColor("#1565C0"))
-            holder.tvNombre.setTextColor(Color.WHITE)
-            holder.tvDireccion.setTextColor(Color.WHITE)
+            holder.card.setCardBackgroundColor(android.graphics.Color.parseColor("#1565C0"))
+            holder.tvNombre.setTextColor(android.graphics.Color.WHITE)
+            holder.tvDireccion.setTextColor(android.graphics.Color.WHITE)
+
+            val telefonoInfo = if (!item.telefono.isNullOrEmpty()) "📞 Tel: ${item.telefono}" else "📞 Tel: No disponible"
+            holder.tvDireccion.text = "${item.direccion}\n$telefonoInfo"
+
         } else {
-            holder.card.setCardBackgroundColor(Color.WHITE)
-            holder.tvNombre.setTextColor(Color.parseColor("#1565C0"))
-            holder.tvDireccion.setTextColor(Color.GRAY) // Secondary
+            holder.card.setCardBackgroundColor(android.graphics.Color.WHITE)
+            holder.tvNombre.setTextColor(android.graphics.Color.parseColor("#1565C0"))
+            holder.tvDireccion.setTextColor(android.graphics.Color.GRAY)
+
+            holder.tvDireccion.text = item.direccion
         }
 
         holder.card.setOnClickListener {
@@ -49,14 +60,15 @@ class UnidadMedicaAdapter(
             if (pos != RecyclerView.NO_POSITION) {
                 indexSeleccionado = pos
                 notifyDataSetChanged()
-                alSeleccionar(item)
+
+                onItemClickListener?.invoke(item)
             }
         }
     }
 
     override fun getItemCount() = lista.size
 
-    fun actualizarDatos(nuevaLista: List<UnidadMedica>) {
+    fun actualizarDatos(nuevaLista: List<com.citas.medicas.models.UnidadMedicaMapa>) {
         lista = nuevaLista
         indexSeleccionado = -1
         notifyDataSetChanged()

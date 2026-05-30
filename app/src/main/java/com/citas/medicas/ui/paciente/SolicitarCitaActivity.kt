@@ -33,7 +33,7 @@ class SolicitarCitaActivity : AppCompatActivity() {
 
     // 1. VARIABLE REAL DE LA API
     private var especialidadSeleccionada: EspecialidadResponse? = null
-    private var unidadSeleccionadaReal: UnidadMedica? = null
+    private var unidadSeleccionadaReal: com.citas.medicas.models.UnidadMedicaMapa? = null
     private lateinit var adapterUnidades: UnidadMedicaAdapter
 
     private lateinit var adapterEspecialidad: EspecialidadAdapter
@@ -59,18 +59,19 @@ class SolicitarCitaActivity : AppCompatActivity() {
         }
         rvEspecialidades.adapter = adapterEspecialidad
 
-        //  PREPARAR (UNIDADES MÉDICAS)
         val rvUnidadesMedicas = findViewById<RecyclerView>(R.id.rvUnidadesMedicas)
-        rvUnidadesMedicas.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(this) // Esta lista va en 1 columna vertical
+        rvUnidadesMedicas.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(this)
 
-        adapterUnidades = UnidadMedicaAdapter(emptyList()) { unidad ->
+        adapterUnidades = UnidadMedicaAdapter()
+        rvUnidadesMedicas.adapter = adapterUnidades
+
+        adapterUnidades.setOnItemClickListener { unidad ->
             unidadSeleccionadaReal = unidad
             cambiarEstadoBotonSiguiente(true)
         }
         rvUnidadesMedicas.adapter = adapterUnidades
 
 
-        //  PREPARAR (FECHA Y HORA)
         val rvHoras = findViewById<RecyclerView>(R.id.rvHoras)
         rvHoras.layoutManager = GridLayoutManager(this, 4)
 
@@ -301,7 +302,20 @@ class SolicitarCitaActivity : AppCompatActivity() {
                     val datos = response.body()?.datos
                     if (datos != null && datos.isNotEmpty()) {
                         Log.d("API_DEBUG", "Unidades cargadas: ${datos.size}")
-                        adapterUnidades.actualizarDatos(datos)
+
+                        val datosMapeados = datos.map { unidadVieja ->
+                            com.citas.medicas.models.UnidadMedicaMapa(
+                                id = unidadVieja.id,
+                                nombre = unidadVieja.nombre,
+                                direccion = unidadVieja.direccion,
+                                telefono = null,
+                                latitud = null,
+                                longitud = null,
+                                especialidades = null
+                            )
+                        }
+
+                        adapterUnidades.actualizarDatos(datosMapeados)
                     } else {
                         adapterUnidades.actualizarDatos(emptyList())
                         Toast.makeText(this@SolicitarCitaActivity, "No hay unidades para esta especialidad", Toast.LENGTH_SHORT).show()
