@@ -3,6 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:background="@color/citas_background">
 
     <LinearLayout
@@ -14,13 +15,13 @@
 
         <ImageView
             android:id="@+id/ivLogo"
-            android:layout_width="136dp"
+            android:layout_width="300dp"
             android:layout_height="136dp"
             android:layout_marginTop="24dp"
             android:padding="20dp"
-            android:src="@drawable/citas_medicas_logo" />
+            android:src="@drawable/salu_plus_logo" />
 
-        <TextView
+        <com.google.android.material.textview.MaterialTextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Registro de Usuario"
@@ -29,22 +30,16 @@
             android:textColor="@color/citas_primary"
             android:layout_marginTop="8dp"/>
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Citas Médicas"
-            android:textSize="14sp"
-            android:textColor="@color/citas_primary"
-            android:layout_marginBottom="20dp"/>
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
             android:background="@drawable/bg_tabs"
             android:padding="20dp"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:elevation="4dp">
 
-            <TextView
+            <com.google.android.material.textview.MaterialTextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Crear Cuenta"
@@ -52,7 +47,7 @@
                 android:textSize="18sp"
                 android:textColor="@color/citas_primary"/>
 
-            <TextView
+            <com.google.android.material.textview.MaterialTextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Complete todos los campos para registrarse"
@@ -60,25 +55,31 @@
                 android:textColor="@color/citas_primary"
                 android:layout_marginBottom="16dp"/>
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Número de Afiliado ISSS"
-                android:textColor="@color/citas_primary"/>
-
-            <EditText
-                android:id="@+id/etAfiliadoR"
+            <!-- Campo: Número de Afiliado ISSS -->
+            <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:hint="Ej: 123456789"
-                android:background="@drawable/bg_input"
-                android:padding="12dp"
-                android:layout_marginBottom="12dp"/>
+                android:layout_height="wrap_content"
+                android:hint="Número de Afiliado ISSS"
+                android:textColorHint="@color/citas_primary"
+                app:hintTextColor="@color/citas_primary"
+                app:boxStrokeColor="@color/citas_primary"
+                android:layout_marginBottom="12dp"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etAfiliadoR"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="number"
+                    android:textColor="@color/citas_primary" />
+            </com.google.android.material.textfield.TextInputLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal">
+
+                <!-- Campo: Nombre -->
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -86,189 +87,232 @@
                     android:orientation="vertical"
                     android:layout_marginEnd="8dp">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Nombre"
-                        android:textColor="@color/citas_primary"
-                        android:textSize="14sp"
-                        android:layout_marginBottom="4dp"/>
-
-                    <EditText
-                        android:id="@+id/etNombreR"
+                    <com.google.android.material.textfield.TextInputLayout
                         android:layout_width="match_parent"
-                        android:layout_height="50dp"
-                        android:hint="Juan"
-                        android:background="@drawable/bg_input"
-                        android:padding="12dp"/>
+                        android:layout_height="wrap_content"
+                        android:hint="Nombre"
+                        android:textColorHint="@color/citas_primary"
+                        app:hintTextColor="@color/citas_primary"
+                        app:boxStrokeColor="@color/citas_primary"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etNombreR"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="textPersonName"
+                            android:textColor="@color/citas_primary"/>
+                    </com.google.android.material.textfield.TextInputLayout>
                 </LinearLayout>
 
+                <!-- Campo: Apellido -->
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:orientation="vertical">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Apellido"
-                        android:textColor="@color/citas_primary"
-                        android:textSize="14sp"
-                        android:layout_marginBottom="4dp"/>
-
-                    <EditText
-                        android:id="@+id/etApellidoR"
+                    <com.google.android.material.textfield.TextInputLayout
                         android:layout_width="match_parent"
-                        android:layout_height="50dp"
-                        android:hint="Pérez"
-                        android:background="@drawable/bg_input"
-                        android:padding="12dp"/>
+                        android:layout_height="wrap_content"
+                        android:hint="Apellido"
+                        android:textColorHint="@color/citas_primary"
+                        app:hintTextColor="@color/citas_primary"
+                        app:boxStrokeColor="@color/citas_primary"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etApellidoR"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="textPersonName"
+                            android:textColor="@color/citas_primary"/>
+                    </com.google.android.material.textfield.TextInputLayout>
                 </LinearLayout>
             </LinearLayout>
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="DUI"
-                android:layout_marginTop="12dp"
-                android:textColor="@color/citas_primary"/>
-
-            <EditText
-                android:id="@+id/etDuiR"
+            <!-- Campo: DUI -->
+            <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:hint="00000000-0"
-                android:background="@drawable/bg_input"
-                android:padding="12dp"/>
-
-            <TextView
-                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Fecha de Nacimiento"
+                android:hint="DUI"
                 android:layout_marginTop="12dp"
-                android:textColor="@color/citas_primary"/>
+                android:textColorHint="@color/citas_primary"
+                app:hintTextColor="@color/citas_primary"
+                app:boxStrokeColor="@color/citas_primary"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
-            <EditText
-                android:id="@+id/etFechaR"
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etDuiR"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="number"
+                    android:textColor="@color/citas_primary"/>
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Campo: Fecha de Nacimiento -->
+            <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:hint="aaaa-mm-dd"
-                android:background="@drawable/bg_input"
-                android:drawableEnd="@android:drawable/ic_menu_my_calendar"
-                android:padding="12dp"/>
-
-            <TextView
-                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Género"
+                android:hint="Fecha de Nacimiento"
                 android:layout_marginTop="12dp"
-                android:textColor="@color/citas_primary"/>
+                android:textColorHint="@color/citas_primary"
+                app:hintTextColor="@color/citas_primary"
+                app:boxStrokeColor="@color/citas_primary"
+                app:endIconMode="custom"
+                app:endIconDrawable="@android:drawable/ic_menu_my_calendar"
+                app:endIconTint="@color/citas_primary"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
-            <Spinner
-                android:id="@+id/spGeneroR"
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etFechaR"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:focusable="false"
+                    android:clickable="true"
+                    android:textColor="@color/citas_primary"/>
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Campo Dropdown: Género -->
+            <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:background="@drawable/bg_input"
-                android:padding="12dp"/>
-
-            <TextView
-                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Estado Familiar"
+                android:hint="Género"
                 android:layout_marginTop="12dp"
-                android:textColor="@color/citas_primary"/>
+                android:textColorHint="@color/citas_primary"
+                app:hintTextColor="@color/citas_primary"
+                app:boxStrokeColor="@color/citas_primary"
+                tools:ignore="MissingPrefix">
 
-            <Spinner
-                android:id="@+id/spEstadoFamiliarR"
+                <Spinner
+                    android:id="@+id/spGeneroR"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:background="@drawable/bg_input"
+                    android:padding="12dp"/>
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Campo Dropdown: Estado Familiar -->
+            <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:background="@drawable/bg_input"
-                android:padding="12dp"/>
-
-            <TextView
-                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Correo Electrónico"
+                android:hint="Estado Familiar"
                 android:layout_marginTop="12dp"
-                android:textColor="@color/citas_primary"/>
+                android:textColorHint="@color/citas_primary"
+                app:hintTextColor="@color/citas_primary"
+                app:boxStrokeColor="@color/citas_primary"
+                tools:ignore="MissingPrefix">
 
-            <EditText
-                android:id="@+id/etCorreoR"
+                <Spinner
+                    android:id="@+id/spEstadoFamiliarR"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:background="@drawable/bg_input"
+                    android:padding="12dp"/>
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Campo: Correo Electrónico -->
+            <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:hint="correo@ejemplo.com"
-                android:background="@drawable/bg_input"
-                android:padding="12dp"/>
-
-            <TextView
-                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Teléfono"
+                android:hint="Correo Electrónico"
                 android:layout_marginTop="12dp"
-                android:textColor="@color/citas_primary"/>
+                android:textColorHint="@color/citas_primary"
+                app:hintTextColor="@color/citas_primary"
+                app:boxStrokeColor="@color/citas_primary"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
-            <EditText
-                android:id="@+id/etTelefonoR"
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etCorreoR"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textEmailAddress"
+                    android:textColor="@color/citas_primary"/>
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Campo: Teléfono -->
+            <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:hint="0000-0000"
-                android:background="@drawable/bg_input"
-                android:padding="12dp"/>
-
-            <TextView
-                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Contraseña"
+                android:hint="Teléfono"
                 android:layout_marginTop="12dp"
-                android:textColor="@color/citas_primary"/>
+                android:textColorHint="@color/citas_primary"
+                app:hintTextColor="@color/citas_primary"
+                app:boxStrokeColor="@color/citas_primary"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
-            <EditText
-                android:id="@+id/etClaveR"
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etTelefonoR"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="phone"
+                    android:textColor="@color/citas_primary"/>
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Campo: Contraseña -->
+            <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:hint="Mínimo 8 caracteres"
-                android:inputType="textPassword"
-                android:background="@drawable/bg_input"
-                android:padding="12dp"/>
-
-            <TextView
-                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Confirmar Contraseña"
+                android:hint="Contraseña"
                 android:layout_marginTop="12dp"
-                android:textColor="@color/citas_primary"/>
+                android:textColorHint="@color/citas_primary"
+                app:hintTextColor="@color/citas_primary"
+                app:boxStrokeColor="@color/citas_primary"
+                app:passwordToggleEnabled="true"
+                app:passwordToggleTint="@color/citas_primary"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
-            <EditText
-                android:id="@+id/etConfirmarClaveR"
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etClaveR"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textPassword"
+                    android:textColor="@color/citas_primary"/>
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Campo: Confirmar Contraseña -->
+            <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:hint="Repita su contraseña"
-                android:inputType="textPassword"
-                android:background="@drawable/bg_input"
-                android:padding="12dp"/>
+                android:layout_height="wrap_content"
+                android:hint="Confirmar Contraseña"
+                android:layout_marginTop="12dp"
+                android:textColorHint="@color/citas_primary"
+                app:hintTextColor="@color/citas_primary"
+                app:boxStrokeColor="@color/citas_primary"
+                app:passwordToggleEnabled="true"
+                app:passwordToggleTint="@color/citas_primary"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
-            <ProgressBar
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etConfirmarClaveR"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textPassword"
+                    android:textColor="@color/citas_primary"/>
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.progressindicator.CircularProgressIndicator
                 android:id="@+id/progressBar"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:visibility="gone"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent" />
+                android:layout_gravity="center"
+                app:indicatorColor="@color/citas_primary"/>
 
-            <Button
+            <!-- Botón de Registro como Material Filled Button -->
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnCrearCuenta"
+                style="@style/Widget.Material3.Button"
                 android:layout_width="match_parent"
                 android:layout_height="55dp"
                 android:text="Crear Cuenta"
                 android:textAllCaps="false"
                 android:textColor="@color/citas_white"
-                android:backgroundTint="@color/citas_primary"
-                android:layout_marginTop="20dp"/>
+                app:backgroundTint="@color/citas_primary"
+                android:layout_marginTop="20dp"
+                app:cornerRadius="8dp" />
 
-            <TextView
+            <com.google.android.material.textview.MaterialTextView
                 android:id="@+id/tvVolverALogin"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

@@ -11,7 +11,6 @@ import androidx.fragment.app.Fragment
 import com.citas.medicas.R
 import com.citas.medicas.databinding.ActivityDashboardMedicoBinding
 import com.citas.medicas.databinding.ActivityRegistroBinding
-import com.citas.medicas.ui.SplashActivity
 import com.citas.medicas.ui.auth.LoginActivity
 import com.citas.medicas.utils.SessionManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -73,6 +72,8 @@ class DashboardMedicoActivity : AppCompatActivity() {
                         actualizarEstiloTabs(pestanaActiva = "perfil")
                     }
                     btnSalir.setOnClickListener {
+                        val prefs = getSharedPreferences("CitasMedicasPrefs", MODE_PRIVATE)
+                        prefs.edit().clear().apply()
                         MaterialAlertDialogBuilder(this@DashboardMedicoActivity)
                             .setTitle("Cerrar Sesión")
                             .setMessage("¿Está seguro de que desea salir del sistema?")

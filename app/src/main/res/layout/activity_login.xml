@@ -9,106 +9,105 @@
     android:padding="32dp"
     android:background="@color/citas_background"
     android:gravity="center_horizontal"
-    tools:context=".ui.SplashActivity">
+    tools:context=".ui.auth.LoginActivity">
 
     <ImageView
         android:id="@+id/ivLogo"
-        android:layout_width="136dp"
-        android:layout_height="136dp"
+        android:layout_width="300dp"
+        android:layout_height="200dp"
         android:layout_marginTop="32dp"
         android:padding="20dp"
-        android:src="@drawable/citas_medicas_logo"/>
+        android:src="@drawable/salu_plus_logo"/>
 
-    <TextView
-        android:id="@+id/tvTitle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="Citas Médicas"
-        android:textColor="@color/citas_primary"
-        android:textSize="30sp"
-        android:textStyle="bold"
-        android:textAlignment="center" />
 
-    <TextView
-        android:id="@+id/tvSubtitle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="Instituto Salvadoreño del Seguro Social"
-        android:textColor="@color/citas_primary"
-        android:textSize="16sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tvTitle" />
 
+
+    <!-- Contenedor con elevación y bordes redondeados tipo Material Card -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/bg_tabs"
+        android:background="@color/citas_white"
         android:padding="24dp"
         android:layout_marginTop="32dp"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:elevation="4dp">
 
-        <TextView
-            android:id="@+id/tvIdentificador"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Número de Afiliado"
-            android:textColor="@color/citas_primary"/>
-
-        <EditText
-            android:id="@+id/etAfiliado"
+        <!-- Campo: Número de Afiliado -->
+        <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:hint="Ej: 123456789"
-            android:background="@drawable/bg_input"
-            android:padding="12dp"
-            android:layout_marginBottom="16dp"/>
-
-        <TextView
-            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Contraseña"
-            android:textColor="@color/citas_primary"/>
+            android:layout_marginTop="20dp"
+            android:hint="Identificador"
+            android:textColorHint="@color/citas_primary"
+            app:hintTextColor="@color/citas_primary"
+            app:boxStrokeColor="@color/citas_primary"
+            android:layout_marginBottom="16dp"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
-        <EditText
-            android:id="@+id/etClave"
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etAfiliado"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="number"
+                android:textColor="@color/citas_primary"/>
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Campo: Contraseña -->
+        <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:hint="Ingrese su contraseña"
-            android:inputType="textPassword"
-            android:background="@drawable/bg_input"
-            android:padding="12dp"
-            android:layout_marginBottom="20dp"/>
+            android:layout_height="wrap_content"
+            android:hint="Contraseña"
+            android:textColorHint="@color/citas_primary"
+            app:hintTextColor="@color/citas_primary"
+            app:boxStrokeColor="@color/citas_primary"
+            app:passwordToggleEnabled="true"
+            app:passwordToggleTint="@color/citas_primary"
+            android:layout_marginBottom="20dp"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
-        <TextView
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etClave"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textPassword"
+                android:textColor="@color/citas_primary"/>
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Campo Secreto Oculto -->
+        <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tvLabelSecreto"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Frase de Seguridad"
-            android:visibility="gone"
-            android:textColor="@color/citas_primary"/>
-
-        <EditText
-            android:id="@+id/etFraseSecreta"
             android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:hint="Frase secreta de administrador"
-            android:inputType="textPassword"
+            android:layout_height="wrap_content"
+            android:hint="Frase de Seguridad"
+            android:textColorHint="@color/citas_primary"
+            app:hintTextColor="@color/citas_primary"
+            app:boxStrokeColor="@color/citas_primary"
+            app:passwordToggleEnabled="true"
+            app:passwordToggleTint="@color/citas_primary"
             android:visibility="gone"
-            android:background="@drawable/bg_input"
-            android:padding="12dp"
-            android:layout_marginBottom="20dp"/>
+            android:layout_marginBottom="20dp"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
-        <Button
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etFraseSecreta"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textPassword"
+                android:textColor="@color/citas_primary"/>
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Botón con estilo Material Filled Button -->
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnLogin"
             android:layout_width="match_parent"
-            android:layout_height="44dp"
+            android:layout_height="52dp"
+            android:layout_marginTop="30dp"
             android:text="Iniciar Sesión"
             android:textAllCaps="false"
             android:textColor="@color/citas_primary"
-            android:backgroundTint="@color/citas_secondary"/>
+            app:backgroundTint="@color/citas_secondary"
+            app:cornerRadius="8dp"
+            style="@style/Widget.Material3.Button"/>
 
         <TextView
             android:id="@+id/tvIrARegistro"

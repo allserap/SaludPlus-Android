@@ -32,7 +32,6 @@ class LoginActivity : AppCompatActivity() {
         //getSharedPreferences("CitasMedicasPrefs", MODE_PRIVATE).edit().clear().apply()
 
         // Configuración inicial de la UI genérica
-        binding.tvIdentificador.text = "Identificador (N° Afiliado, JVPM o Correo)"
         binding.tvIrARegistro.visibility = View.VISIBLE
 
         setupListeners()

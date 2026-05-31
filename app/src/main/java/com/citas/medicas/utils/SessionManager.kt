@@ -2,7 +2,6 @@ package com.citas.medicas.utils
 
 import android.content.Context
 import android.content.Intent
-import com.citas.medicas.ui.SplashActivity
 import com.citas.medicas.ui.auth.LoginActivity
 
 object SessionManager {

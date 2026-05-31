@@ -17,6 +17,8 @@ import com.citas.medicas.ui.auth.RegistroActivity
 import com.citas.medicas.ui.medico.AgendaFragment
 import com.citas.medicas.ui.medico.HistorialFragment
 import com.citas.medicas.ui.medico.RecetasFragment
+import com.citas.medicas.utils.SessionManager
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 class DashboardAdminActivity : AppCompatActivity() {
 
@@ -73,14 +75,21 @@ class DashboardAdminActivity : AppCompatActivity() {
                 // Borrar token al salir
                 val prefs = getSharedPreferences("CitasMedicasPrefs", MODE_PRIVATE)
                 prefs.edit().clear().apply()
-                Toast.makeText(
-                    this@DashboardAdminActivity,
-                    "Cerrando sesión...",
-                    Toast.LENGTH_SHORT
-                ).show()
-                val intent = Intent(this@DashboardAdminActivity, LoginActivity::class.java)
-                startActivity(intent)
-                finishAffinity()
+                MaterialAlertDialogBuilder(this@DashboardAdminActivity)
+                    .setTitle("Cerrar Sesión")
+                    .setMessage("¿Está seguro de que desea salir del sistema?")
+                    .setNegativeButton("Cancelar", null)
+                    .setPositiveButton("Salir") { _, _ ->
+                        SessionManager.logout(this@DashboardAdminActivity)
+
+                        // Redirige al Login limpiando el historial de navegación
+                        val intent = Intent(this@DashboardAdminActivity, LoginActivity::class.java).apply {
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                        }
+                        startActivity(intent)
+                        finish()
+                    }
+                    .show()
             }
         }
     }
