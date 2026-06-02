@@ -26,10 +26,19 @@ data class PacienteResponse (
     @SerializedName("tiposangre")
     val tipoSangre: String?,
     val alergias: String?,
-    @SerializedName("condicionescronicos")
+    @SerializedName("condicionescronicas")
     val condicionesCronicas: String?,
     @SerializedName("notaclinica")
     val notaClinica: String?,
-    @SerializedName("medicamentosrecurrentes")
-    val medicamentosRecurrentes: String?
+    @SerializedName(
+        value = "medicamentos_recurrente",
+        alternate = [
+            "medicamentosRecurrentes",
+            "medicamentosrecurrentes",
+            "medicamentos_recurrentes",
+            "medicamentosrecurrente",
+            "medicamentos",
+            "MEDICAMENTOS_RECURRENTE"
+        ]
+    )    val medicamentosRecurrentes: String? = null
 )

@@ -48,13 +48,25 @@
             android:id="@+id/tvTipoCita"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
+            android:layout_marginTop="2dp"
             android:text="Consulta General"
             android:textColor="@color/citas_primary"
             android:textSize="12sp"
             app:layout_constraintEnd_toEndOf="@+id/tvNombrePaciente"
             app:layout_constraintStart_toStartOf="@+id/tvNombrePaciente"
             app:layout_constraintTop_toBottomOf="@+id/tvNombrePaciente" />
+
+        <TextView
+            android:id="@+id/tvFechaCita"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="31/05/2026"
+            android:textColor="#747488"
+            android:textSize="11sp"
+            app:layout_constraintEnd_toEndOf="@+id/tvNombrePaciente"
+            app:layout_constraintStart_toStartOf="@+id/tvNombrePaciente"
+            app:layout_constraintTop_toBottomOf="@+id/tvTipoCita" />
 
         <TextView
             android:id="@+id/tvHoraCita"
@@ -72,7 +84,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
             android:background="@drawable/bg_tabs"
-            android:backgroundTint="@color/status_canceled"
+            android:backgroundTint="@color/citas_secondary"
             android:paddingHorizontal="8dp"
             android:paddingVertical="4dp"
             android:text="Confirmada"

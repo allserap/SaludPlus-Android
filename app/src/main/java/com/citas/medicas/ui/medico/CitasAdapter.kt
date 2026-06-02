@@ -5,9 +5,10 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.citas.medicas.databinding.ItemCitaMedicoBinding
 import com.citas.medicas.models.CitaItem
+import com.citas.medicas.models.CitaResponse
 
 class CitasAdapter(
-    private var citas: List<CitaItem>,
+    private var citas: List<CitaResponse>,
     private val onPacienteClick: (Int) -> Unit
 ) : RecyclerView.Adapter<CitasAdapter.CitaViewHolder>() {
 
@@ -29,6 +30,7 @@ class CitasAdapter(
             tvNombrePaciente.text = "${cita.nombrepaciente} ${cita.apellidopaciente}"
             tvTipoCita.text = cita.especialidadcita
             tvHoraCita.text = cita.horaasignada
+            tvFechaCita.text = cita.fechacita
             tvEstadoCita.text = cita.estadocita.replaceFirstChar { it.uppercase() }
 
             // Lógica para calcular y setear iniciales (Ej: María Guzmán -> MG)
@@ -45,7 +47,7 @@ class CitasAdapter(
 
     override fun getItemCount(): Int = citas.size
 
-    fun updateList(newList: List<CitaItem>) {
+    fun updateList(newList: List<CitaResponse>) {
         this.citas = newList
         notifyDataSetChanged()
     }

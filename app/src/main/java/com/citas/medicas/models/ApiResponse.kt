@@ -67,11 +67,11 @@ data class CitaFormateada(
 )
 
 data class UnidadEspecialidadRequest(
-    @SerializedName("unidad_medica_id")
+    @SerializedName("unidadMedica")
     val unidad_medica_id: Int,
-    @SerializedName("especialidad_id")
+    @SerializedName("especialidad")
     val especialidad_id: Int,
-    @SerializedName("cupo_diario")
+    @SerializedName("cupoDiario")
     val cupo_diario: Int,
     @SerializedName("activo")
     val activo: Boolean
@@ -80,15 +80,37 @@ data class UnidadEspecialidadRequest(
 data class UnidadEspecialidadResponse(
     @SerializedName("id")
     val id: Int,
-    @SerializedName("unidad_medica_id")
+    @SerializedName("unidadMedicaId", alternate = ["unidadmedicaid", "unidad_medica_id", "UNIDAD_MEDICA_ID"])
     val unidad_medica_id: Int,
-    @SerializedName("especialidad_id")
+    @SerializedName("unidadMedicaNombre", alternate = ["unidadmedicanombre", "unidad_medica_nombre"])
+    val unidad_medica_nombre: String?,
+    @SerializedName("especialidadId", alternate = ["especialidadid", "especialidad_id", "ESPECIALIDAD_ID"])
     val especialidad_id: Int,
-    @SerializedName("cupo_diario")
+    @SerializedName("especialidadNombre", alternate = ["especialidadnombre", "especialidad_nombre"])
+    val especialidad_nombre: String?,
+    @SerializedName("cupoDiario", alternate = ["cupodiario", "cupo_diario"])
     val cupo_diario: Int,
     @SerializedName("activo")
     val activo: Boolean
 )
+
+data class HistoricoCitasResponse(
+    @SerializedName("id") val id: Int,
+    @SerializedName("pacienteId") val pacienteId: Int,
+    @SerializedName("medicoId") val medicoId: Int,
+    @SerializedName("unidadMedicaId") val unidadMedicaId: Int,
+    @SerializedName("especialidadId") val especialidadId: Int,
+    @SerializedName("fechaSolicitada") val fechaSolicitada: String,
+    @SerializedName("horaAsignada") val horaAsignada: String,
+    @SerializedName("estadoId") val estadoId: Int,
+    @SerializedName("motivoConsulta") val motivoConsulta: String?,
+    // Flags numéricos calculados por los CASE WHEN de la Base de Datos
+    @SerializedName("asistida") val asistida: Int,
+    @SerializedName("cancelada") val cancelada: Int,
+    @SerializedName("reprogramada") val reprogramada: Int,
+    @SerializedName("noAsistida") val noAsistida: Int
+)
+
 data class ApiResponseHistorial(
     val exito: Boolean,
     val datos: DatosHistorial
@@ -222,35 +244,16 @@ data class MedicamentoWrapper(
 )
 
 data class CitaResponse(
-    @SerializedName("pacienteid") val pacienteId: Int,
-    @SerializedName("nombrepaciente") val nombrePaciente: String,
-    @SerializedName("apellidopaciente") val apellidoPaciente: String,
-    @SerializedName("medicoid") val medicoId: Int,
-    @SerializedName("medicousuarioid") val medicoUsuarioId: String,
-    @SerializedName("estadocita") val estadoCita: String,
-    @SerializedName("especialidadid") val especialidadId: Int,
-    @SerializedName("especialidadcita") val especialidadCita: String,
-    @SerializedName("horaasignada") val horaAsignada: String
-)
-
-data class HistorialPacienteRequest(
-    @SerializedName("tipoSangre") val tipoSangre: String?,
-    @SerializedName("alergias") val alergias: String?,
-    @SerializedName("condicionesCronicas") val condicionesCronicas: String?,
-    @SerializedName("notaClinica") val notaClinica: String?,
-    @SerializedName("medicamentosRecurrentes") val medicamentosRecurrentes: String?
-)
-
-data class HistorialPacienteResponse(
-    @SerializedName("pacienteid") val pacienteId: Int,
-    @SerializedName("usuarioId") val usuarioId: String,
-    @SerializedName("estadoFamiliar") val estadoFamiliar: String,
-    @SerializedName("numAfiliado") val numAfiliado: String,
-    @SerializedName("tipoSangre") val tipoSangre: String,
-    @SerializedName("alergias") val alergias: String,
-    @SerializedName("condicionesCronicas") val condicionesCronicas: String,
-    @SerializedName("notaClinica") val notaClinica: String,
-    @SerializedName("medicamentosRecurrente") val medicamentosRecurrente: String
+    @SerializedName("pacienteid") val pacienteid: Int,
+    @SerializedName("nombrepaciente") val nombrepaciente: String,
+    @SerializedName("apellidopaciente") val apellidopaciente: String,
+    @SerializedName("medicoid") val medicoid: Int,
+    @SerializedName("medicousuarioid") val medicoUsuarioid: String,
+    @SerializedName("estadocita") val estadocita: String,
+    @SerializedName("especialidadid") val especialidadid: Int,
+    @SerializedName("especialidadcita") val especialidadcita: String,
+    @SerializedName("horaasignada") val horaasignada: String,
+    @SerializedName("fechacita") val fechacita: String
 )
 
 data class MedicamentoResponse(

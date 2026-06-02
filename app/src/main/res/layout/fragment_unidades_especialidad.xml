@@ -39,20 +39,21 @@
                     android:layout_marginBottom="20dp" />
 
                 <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/layoutUnidadMedica"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Buscar Unidad Médica"
+                    android:hint="Seleccionar Unidad Especialidad"
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                     android:layout_marginBottom="16dp"
                     app:boxStrokeColor="#1A303A"
-                    app:hintTextColor="#1A303A">
+                    app:hintTextColor="#1A303A"
+                    app:errorEnabled="true">
 
                     <AutoCompleteTextView
                         android:id="@+id/acUnidadMedica"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="text"
-                        android:completionThreshold="1"
+                        android:inputType="none"
                         android:textColor="#333333" />
                 </com.google.android.material.textfield.TextInputLayout>
 
@@ -60,16 +61,21 @@
                     android:id="@+id/layoutEspecialidad"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Seleccionar Especialidad"
+                    android:hint="Especialidad Vinculada"
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-                    android:layout_marginBottom="16dp">
+                    android:layout_marginBottom="16dp"
+                    app:errorEnabled="true">
 
                     <AutoCompleteTextView
                         android:id="@+id/spnEspecialidad"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:inputType="none"
-                        android:textColor="#333333" />
+                        android:focusable="false"
+                        android:clickable="false"
+                        android:editable="false"
+                        android:textColor="#333333"
+                        tools:ignore="Deprecated" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <com.google.android.material.textfield.TextInputLayout
@@ -78,7 +84,8 @@
                     android:hint="Cupo Diario"
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                     android:layout_marginBottom="16dp"
-                    app:boxStrokeColor="#1A303A">
+                    app:boxStrokeColor="#1A303A"
+                    app:errorEnabled="true">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etCupoDiario"
@@ -119,10 +126,9 @@
                     android:gravity="center">
 
                     <Button
-                        android:id="@+id/btnCancelarMedico"
-                        android:layout_width="100dp"
-                        android:layout_height="40dp"
-                        android:layout_gravity="end"
+                        android:id="@+id/btnCancelarUnidad"
+                        android:layout_width="110dp"
+                        android:layout_height="48dp"
                         android:layout_marginEnd="10dp"
                         android:backgroundTint="@color/citas_secondary"
                         android:text="Cancelar"
@@ -130,10 +136,9 @@
                         android:textColor="@color/citas_primary" />
 
                     <Button
-                        android:id="@+id/btnGuardarMedico"
-                        android:layout_width="100dp"
-                        android:layout_height="40dp"
-                        android:layout_gravity="end"
+                        android:id="@+id/btnGuardarUnidad"
+                        android:layout_width="110dp"
+                        android:layout_height="48dp"
                         android:layout_marginStart="10dp"
                         android:backgroundTint="@color/citas_primary"
                         android:text="Guardar"

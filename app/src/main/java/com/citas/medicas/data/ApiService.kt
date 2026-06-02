@@ -28,6 +28,7 @@ import com.citas.medicas.models.RegistroResponse
 import com.citas.medicas.models.RespuestaGenerica
 import com.citas.medicas.models.RolResponse
 import com.citas.medicas.models.UnidadMedicaResponse
+import com.google.android.gms.common.api.Api
 import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.*
@@ -68,15 +69,14 @@ interface ApiService {
     suspend fun eliminarMedico(@Path("id") id: Int): Response<Unit>
 
     @GET("admin/unidad_especialidad/read")
-    suspend fun buscarUnidadEspecialidad(
-        @Query("unidad_medica_id") unidadMedicaId: Int,
-        @Query("especialidad_id") especialidadId: Int
-    ): Response<ApiResponse<UnidadEspecialidadResponse>>
+    suspend fun obtenerUnidadesEspecialidad(
+        @Header("Authorization") token: String? = null
+    ): Response<ApiResponse<List<UnidadEspecialidadResponse>>>
 
-    @POST("admin/unidad_especialidad/create")
+    /*@POST("admin/unidad_especialidad/create")
     suspend fun crearUnidadEspecialidad(
         @Body request: UnidadEspecialidadRequest
-    ): Response<UnidadEspecialidadResponse>
+    ): Response<UnidadEspecialidadResponse>*/
 
     @PUT("admin/unidad_especialidad/update/{id}")
     suspend fun actualizarUnidadEspecialidad(
@@ -97,6 +97,13 @@ interface ApiService {
     suspend fun obtenerPacientes(
         @Header("Authorization") token: String? = null
     ): Response<CatalogosResponse<List<PacienteResponse>>>
+
+    // Obtener histórico
+    @GET("admin/estadisticas/historico_citas/")
+    suspend fun obtenerHistoricoCitas(
+        @Header("Authorization") token: String?,
+        @Path("id") unidadMedicaId: Int
+    ): Response<ApiResponse<List<HistoricoCitasResponse>>>
 
     // Actualizar paciente por ID
     @POST("admin/pacientes/update/{id}")
@@ -174,10 +181,10 @@ interface ApiService {
     // AGREGADO: NUEVOS ENDPOINTS PARA EL FLUJO OPERATIVO DEL MÉDICO
     // =========================================================================
 
-    @GET("citas/allAppointments")
+    @GET("medico/citas/allAppointments")
     suspend fun obtenerTodasLasCitas(): Response<ApiResponse<AgendaCitasWrapper>>
 
-    @GET("medico/historialPaciente/information/{id}")
+/*    @GET("medico/historialPaciente/information/{id}")
     suspend fun obtenerInformacionPaciente(
         @Path("id") pacienteId: Int
     ): Response<ApiResponse<PacienteResponse>>
@@ -186,15 +193,10 @@ interface ApiService {
     suspend fun actualizarHistorialPaciente(
         @Path("id") pacienteId: Int,
         @Body request: HistorialPacienteRequest
-    ): Response<ApiResponse<HistorialPacienteResponse>>
+    ): Response<ApiResponse<HistorialPacienteResponse>>*/
 
     @GET("medico/medicina")
     suspend fun obtenerTodosLosMedicamentos(): Response<ApiResponse<MedicamentoWrapper>>
-
-    @GET("medico/medicina/{id}")
-    suspend fun obtenerMedicamentoPorId(
-        @Path("id") medicamentoId: Int
-    ): Response<ApiResponse<MedicamentoWrapper>>
 
     @PATCH("medico/asistencia/update/{id}")
     suspend fun marcarAsistenciaCita(

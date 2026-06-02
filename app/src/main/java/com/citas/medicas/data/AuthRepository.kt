@@ -2,12 +2,19 @@ package com.citas.medicas.data
 
 import android.content.Context
 import android.util.Log
+import com.citas.medicas.models.AgendaCitasWrapper
 import com.citas.medicas.models.ApiResponse
 import com.citas.medicas.models.CatalogosResponse
+import com.citas.medicas.models.DetalleRecetaItemRequest
+import com.citas.medicas.models.DetalleRecetaResponse
+import com.citas.medicas.models.HistoricoCitasResponse
+import com.citas.medicas.models.MedicamentoWrapper
 import com.citas.medicas.models.MedicoResponse
 import com.citas.medicas.models.MedicoUpdateRequest
 import com.citas.medicas.models.PacienteResponse
 import com.citas.medicas.models.PacienteUpdateRequest
+import com.citas.medicas.models.RecetaRequest
+import com.citas.medicas.models.RecetaResponse
 import com.citas.medicas.models.RegistroRequest
 import com.citas.medicas.models.UnidadEspecialidadRequest
 import com.citas.medicas.models.UnidadEspecialidadResponse
@@ -79,29 +86,6 @@ class AuthRepository(private val context: Context) {
         }
     }
 
-    // region NUEVO: Persistencia de datos para la combinación UnidadEspecialidad
-    suspend fun buscarUnidadEspecialidad(unidadMedicaId: Int, especialidadId: Int): Response<ApiResponse<UnidadEspecialidadResponse>> {
-        return apiService.buscarUnidadEspecialidad(unidadMedicaId, especialidadId)
-    }
-
-    /**
-     * CREATE (POST): Inserta un nuevo registro de asignación médica con su cupo diario.
-     */
-    suspend fun crearUnidadEspecialidad(datos: UnidadEspecialidadRequest): Result<String> {
-        return try {
-            val response = apiService.crearUnidadEspecialidad(datos)
-            if (response.isSuccessful) {
-                Result.success("Asignación vinculada con éxito")
-            } else {
-                val errorServidor = response.errorBody()?.string()
-                Log.e("API_DEBUG", "Error al crear UnidadEspecialidad: $errorServidor")
-                Result.failure(Exception(errorServidor ?: "La combinación ya existe o los datos son inválidos"))
-            }
-        } catch (e: Exception) {
-            Result.failure(Exception("Error de red: ${e.message}"))
-        }
-    }
-
     suspend fun actualizarUnidadEspecialidad(id: Int, datos: UnidadEspecialidadRequest): Result<String> {
         return try {
             val response = apiService.actualizarUnidadEspecialidad(id, datos)
@@ -115,6 +99,14 @@ class AuthRepository(private val context: Context) {
         } catch (e: Exception) {
             Result.failure(Exception("Error de red: ${e.message}"))
         }
+    }
+
+    suspend fun crearRecetaCabecera(pacienteId: Int, request: RecetaRequest): Response<ApiResponse<RecetaResponse>> {
+        return apiService.crearRecetaCabecera(pacienteId, request)
+    }
+
+    suspend fun agregarMedicamentosAReceta(request: List<DetalleRecetaItemRequest>): Response<ApiResponse<List<DetalleRecetaResponse>>> {
+        return apiService.agregarMedicamentosAReceta(request)
     }
     // endregion
 
@@ -131,4 +123,19 @@ class AuthRepository(private val context: Context) {
     suspend fun obtenerEspecialidades() = apiService.obtenerEspecialidades()
 
     suspend fun obtenerUnidadesMedicas() = apiService.obtenerUnidadesMedicas()
+
+    suspend fun obtenerUnidadesEspecialidad(token: String? = null): Response<ApiResponse<List<UnidadEspecialidadResponse>>> {
+    return apiService.obtenerUnidadesEspecialidad(token)}
+
+    suspend fun obtenerHistoricoCitas(token: String?, unidadMedicaId: Int): Response<ApiResponse<List<HistoricoCitasResponse>>> {
+        return apiService.obtenerHistoricoCitas(token, unidadMedicaId)
+    }
+
+    suspend fun obtenerTodasLasCitas(): Response<ApiResponse<AgendaCitasWrapper>> {
+        return apiService.obtenerTodasLasCitas()
+    }
+
+    suspend fun obtenerTodosLosMedicamentos(): Response<ApiResponse<MedicamentoWrapper>> {
+        return apiService.obtenerTodosLosMedicamentos()
+    }
 }

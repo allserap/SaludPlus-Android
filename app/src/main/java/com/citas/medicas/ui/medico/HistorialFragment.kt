@@ -4,7 +4,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Toast
-import androidx.fragment.app.viewModels
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import com.citas.medicas.R
 import com.citas.medicas.databinding.FragmentHistorialBinding
@@ -20,13 +20,21 @@ class HistorialFragment : BaseFragment(R.layout.fragment_historial) {
     private var _binding: FragmentHistorialBinding? = null
     private val binding get() = _binding!!
 
-    private val authViewModel: AuthViewModel by viewModels()
+    // Se recomienda activityViewModels para evitar re-descargar la lista que ya tiene la Agenda
+    private val authViewModel: AuthViewModel by activityViewModels()
+
+    // Variables de respaldo para mitigar cierres inesperados de la vista de entrada
+    private var usuarioIdRespaldo: String? = null
     private var pacienteSeleccionado: PacienteResponse? = null
+
+    // Opciones del Spinner para mitigar errores de digitación por el médico
+    private val opcionesTipoSangre = arrayOf("O+", "O-", "A+", "A-", "B+", "B-", "AB+", "AB-")
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentHistorialBinding.bind(view)
 
+        setupSpinnerTipoSangre()
         setupObservers()
         setupListeners()
 
@@ -38,29 +46,31 @@ class HistorialFragment : BaseFragment(R.layout.fragment_historial) {
         arguments?.let {
             val idAgenda = it.getInt("PACIENTE_ID", -1)
             if (idAgenda != -1) {
-                // Buscar al paciente localmente si la lista ya cargó, o esperamos al observer
                 mapearPacienteDesdeAgenda(idAgenda)
             }
         }
     }
 
+    private fun setupSpinnerTipoSangre() {
+        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, opcionesTipoSangre)
+        binding.spinnerTipoSangre.setAdapter(adapter)
+    }
+
     private fun setupObservers() {
-        // Feedback de carga idéntico a Gestión
         authViewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
-            //binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+            binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
             binding.btnGuardarExpediente.isEnabled = !isLoading
             binding.btnGuardarExpediente.text = if (isLoading) "Guardando..." else "Guardar Consulta"
         }
 
-        // Lista de pacientes para el buscador (Filtro Interno)
         authViewModel.listaPacientes.observe(viewLifecycleOwner) { pacientes ->
             if (pacientes.isNullOrEmpty()) {
+                android.util.Log.d("JSON_CRUDO_FRONT", "Primer paciente completo: ${pacientes[0]}")
                 Toast.makeText(requireContext(), "No se encontraron pacientes registrados", Toast.LENGTH_LONG).show()
                 binding.autoCompleteConsultar.setAdapter(null)
             } else {
                 configurarBuscador(pacientes)
 
-                // Por si venía un ID de la agenda y la lista tardó en responder
                 arguments?.let {
                     val idAgenda = it.getInt("PACIENTE_ID", -1)
                     if (idAgenda != -1) mapearPacienteDesdeAgenda(idAgenda)
@@ -68,24 +78,26 @@ class HistorialFragment : BaseFragment(R.layout.fragment_historial) {
             }
         }
 
-        // Éxito en la actualización del expediente
         authViewModel.registroExitoso.observe(viewLifecycleOwner) {
-            Toast.makeText(context, "Expediente actualizado correctamente", Toast.LENGTH_SHORT).show()
-            resetearInterfaz()
-            authViewModel.cargarPacientes() // Refrescar lista local
+            if (usuarioIdRespaldo != null) {
+                Toast.makeText(context, "Expediente actualizado correctamente", Toast.LENGTH_SHORT).show()
+                resetearInterfaz()
+                authViewModel.cargarPacientes()
+            }
         }
 
-        // Manejo de errores
         authViewModel.error.observe(viewLifecycleOwner) { errorMsg ->
-            Toast.makeText(requireContext(), errorMsg, Toast.LENGTH_LONG).show()
+            if (!errorMsg.isNullOrEmpty()) {
+                Toast.makeText(requireContext(), errorMsg, Toast.LENGTH_LONG).show()
+            }
         }
     }
 
     private fun setupListeners() {
         binding.btnGuardarExpediente.setOnClickListener {
-            ocultarTeclado()
+            binding.root.post { ocultarTeclado() }
 
-            if (pacienteSeleccionado == null) {
+            if (usuarioIdRespaldo == null) {
                 Toast.makeText(context, "Selecciona un paciente primero", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
@@ -94,6 +106,8 @@ class HistorialFragment : BaseFragment(R.layout.fragment_historial) {
             if (notasInput.isEmpty()) {
                 binding.etNotasClinicas.error = "Las notas clínicas son obligatorias para guardar la consulta"
                 return@setOnClickListener
+            } else {
+                binding.etNotasClinicas.error = null
             }
 
             enviarActualizacionAlServidor()
@@ -112,6 +126,7 @@ class HistorialFragment : BaseFragment(R.layout.fragment_historial) {
             val paciente = pacientes.find { "${it.nombre} ${it.apellido} (${it.dui})" == seleccion }
             paciente?.let {
                 this.pacienteSeleccionado = it
+                this.usuarioIdRespaldo = it.usuarioId
                 llenarFormulario(it)
             }
         }
@@ -122,32 +137,35 @@ class HistorialFragment : BaseFragment(R.layout.fragment_historial) {
         val paciente = pacientes?.find { it.pacienteId == pacienteId }
         paciente?.let {
             this.pacienteSeleccionado = it
-            // Setea visualmente el texto en el buscador para mantener coherencia
+            this.usuarioIdRespaldo = it.usuarioId
             binding.autoCompleteConsultar.setText("${it.nombre} ${it.apellido} (${it.dui})", false)
             llenarFormulario(it)
         }
     }
 
     private fun llenarFormulario(paciente: PacienteResponse) {
+        android.util.Log.d("API_DEBUG", "Medicamentos del paciente: ${paciente.medicamentosRecurrentes}")
         with(binding) {
-            // Datos de Identificación (Campos de solo lectura en tu Vista de Historial)
             tvDisplayPacienteNombre.setText("${paciente.nombre} ${paciente.apellido}")
             tvDisplayDui.setText(paciente.dui)
             tvDisplayGenero.setText(paciente.genero)
-            tvDisplayEdad.setText(paciente.edad.toString())
+            tvDisplayEdad.setText(paciente.edad?.toString() ?: "N/A")
 
-            // Datos Clínicos Editables (Campos de Entrada de Gestión Médica)
             etAlergias.setText(paciente.alergias ?: "")
             etNotasClinicas.setText(paciente.notaClinica ?: "")
-            etTipoSangre.setText(paciente.tipoSangre)
-            etMedicamentosRecurrentes.setText(paciente.medicamentosRecurrentes)
-            etCondicionesCronicas.setText(paciente.condicionesCronicas)
+            etMedicamentosRecurrentes.setText(paciente.medicamentosRecurrentes ?: "")
+            etCondicionesCronicas.setText(paciente.condicionesCronicas ?: "")
 
-            // Si el paciente está inactivo, deshabilitamos la edición médica por seguridad
+            if (!paciente.tipoSangre.isNullOrBlank() && opcionesTipoSangre.contains(paciente.tipoSangre)) {
+                spinnerTipoSangre.setText(paciente.tipoSangre, false)
+            } else {
+                spinnerTipoSangre.setText("", false)
+            }
+
             val esActivo = paciente.activo
             etAlergias.isEnabled = esActivo
             etNotasClinicas.isEnabled = esActivo
-            etTipoSangre.isEnabled = esActivo
+            tilTipoSangre.isEnabled = esActivo
             etMedicamentosRecurrentes.isEnabled = esActivo
             etCondicionesCronicas.isEnabled = esActivo
             btnGuardarExpediente.isEnabled = esActivo
@@ -160,15 +178,13 @@ class HistorialFragment : BaseFragment(R.layout.fragment_historial) {
 
     private fun enviarActualizacionAlServidor() {
         val p = pacienteSeleccionado ?: return
+        val currentUsuarioId = usuarioIdRespaldo ?: return
 
-        val idUsuario = p.usuarioId
-        if (idUsuario.isNullOrBlank()) {
-            Toast.makeText(context, "Error: El ID del paciente no es válido", Toast.LENGTH_SHORT).show()
-            return
-        }
+        // Extracción segura del valor del spinner de tipo de sangre
+        val tipoSangreSeleccionado = binding.spinnerTipoSangre.text.toString().trim()
 
         val updateRequest = PacienteUpdateRequest(
-            id = p.usuarioId,
+            id = currentUsuarioId,
             nombre = p.nombre,
             apellido = p.apellido,
             dui = p.dui,
@@ -178,19 +194,17 @@ class HistorialFragment : BaseFragment(R.layout.fragment_historial) {
             fechaNacimiento = p.fechaNacimiento,
             genero = p.genero,
             rol = p.rolId,
-            activo = p.activo, // Mantiene su estado actual
+            activo = p.activo,
 
-            // Se guardan los nuevos datos ingresados por el médico en esta consulta
             estadoFamiliar = p.estadoFamiliar,
             numAfiliado = p.numAfiliado,
-            tipoSangre = binding.etTipoSangre.text.toString().trim(),
+            tipoSangre = if (tipoSangreSeleccionado.isNotEmpty()) tipoSangreSeleccionado else null,
             alergias = binding.etAlergias.text.toString().trim(),
             condicionesCronicas = binding.etCondicionesCronicas.text.toString().trim(),
             notaClinica = binding.etNotasClinicas.text.toString().trim(),
             medicamentosRecurrentes = binding.etMedicamentosRecurrentes.text.toString().trim()
         )
 
-        // Consume exactamente el mismo flujo centralizado en tu AuthViewModel
         authViewModel.actualizarPaciente(updateRequest)
     }
 
@@ -200,13 +214,19 @@ class HistorialFragment : BaseFragment(R.layout.fragment_historial) {
             binding.etNotasClinicas,
             binding.autoCompleteConsultar,
             binding.etMedicamentosRecurrentes,
-            binding.etTipoSangre,
+            binding.etCondicionesCronicas,
             binding.tvDisplayGenero,
             binding.tvDisplayDui,
             binding.tvDisplayPacienteNombre,
             binding.tvDisplayEdad
         )
+
+        // Manejo del reseteo del spinner fuera de la función limpiarCampos
+        binding.spinnerTipoSangre.setText("", false)
+        setupSpinnerTipoSangre()
+
         pacienteSeleccionado = null
+        usuarioIdRespaldo = null
         binding.btnGuardarExpediente.text = "Guardar Consulta"
     }
 

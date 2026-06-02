@@ -8,6 +8,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.citas.medicas.data.AuthRepository
+import com.citas.medicas.models.AgendaCitasWrapper
 import com.citas.medicas.models.EspecialidadResponse
 import com.citas.medicas.models.MedicoResponse
 import com.citas.medicas.models.MedicoUpdateRequest
@@ -19,6 +20,12 @@ import com.citas.medicas.models.UnidadMedicaResponse
 import com.citas.medicas.models.UnidadEspecialidadRequest
 import com.citas.medicas.models.UnidadEspecialidadResponse
 import com.citas.medicas.models.ApiResponse
+import com.citas.medicas.models.CitaItem
+import com.citas.medicas.models.CitaResponse
+import com.citas.medicas.models.DetalleRecetaItemRequest
+import com.citas.medicas.models.HistoricoCitasResponse
+import com.citas.medicas.models.MedicamentoResponse
+import com.citas.medicas.models.RecetaRequest
 import com.citas.medicas.utils.RolesUsuario
 import com.citas.medicas.utils.Validation
 import kotlinx.coroutines.Dispatchers
@@ -36,7 +43,7 @@ data class FormularioState(
     val afiliadoError: String? = null,
     val especialidadError: String? = null,
     val unidadError: String? = null,
-    val cupoDiarioError: String? = null, // Agregado para validación intermedia
+    val cupoDiarioError: String? = null,
     val isValid: Boolean = false
 )
 
@@ -61,19 +68,30 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     private val _listaPacientes = MutableLiveData<List<PacienteResponse>>()
     val listaPacientes: LiveData<List<PacienteResponse>> = _listaPacientes
 
+    // --- Mostrar Citas ---
+    private val _listaCitas = MutableLiveData<List<CitaResponse>>()
+    val listaCitas: LiveData<List<CitaResponse>> get() = _listaCitas
+
     // --- Mostrar catálogos ---
     private val _especialidades = MutableLiveData<List<EspecialidadResponse>>()
     val especialidades: LiveData<List<EspecialidadResponse>> = _especialidades
-
     private val _unidadesMedicas = MutableLiveData<List<UnidadMedicaResponse>>()
     val unidadesMedicas: LiveData<List<UnidadMedicaResponse>> = _unidadesMedicas
-
     private val _roles = MutableLiveData<List<RolResponse>>()
     val roles: LiveData<List<RolResponse>> = _roles
+    private val _unidadesEspecialidad = MutableLiveData<List<UnidadEspecialidadResponse>>()
+    val unidadesEspecialidad: LiveData<List<UnidadEspecialidadResponse>> get() = _unidadesEspecialidad
+    private val _listaMedicamentos = MutableLiveData<List<MedicamentoResponse>>()
+    val listaMedicamentos: LiveData<List<MedicamentoResponse>> get() = _listaMedicamentos
 
-    // --- NUEVO: Estado intermedio para UnidadEspecialidad ---
-    private val _unidadEspecialidadEncontrada = MutableLiveData<ApiResponse<UnidadEspecialidadResponse>?>()
-    val unidadEspecialidadEncontrada: LiveData<ApiResponse<UnidadEspecialidadResponse>?> get() = _unidadEspecialidadEncontrada
+
+    // --- Receta ---
+    private val _recetaProcesadaExito = MutableLiveData<Boolean>()
+    val recetaProcesadaExito: LiveData<Boolean> get() = _recetaProcesadaExito
+
+    // --- Mostrar histórico ---
+    private val _historicoCitas = MutableLiveData<List<HistoricoCitasResponse>>()
+    val historicoCitas: LiveData<List<HistoricoCitasResponse>> get() = _historicoCitas
     // endregion
 
     // region Ejecuciones Médicos y Pacientes
@@ -130,53 +148,80 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
     }
-    // endregion
 
-    // region NUEVO: Ejecuciones transaccionales de UnidadEspecialidad
-    fun buscarUnidadEspecialidad(unidadMedicaId: Int, especialidadId: Int) {
+    fun guardarRecetaCompleta(
+        pacienteId: Int,
+        cabecera: RecetaRequest,
+        constructorDetalles: (Int) -> List<DetalleRecetaItemRequest>
+    ) {
         viewModelScope.launch(Dispatchers.IO) {
+            withContext(Dispatchers.Main) { _isLoading.value = true }
+
             try {
-                val response = repository.buscarUnidadEspecialidad(unidadMedicaId, especialidadId)
-                withContext(Dispatchers.Main) {
-                    if (response.isSuccessful && response.body() != null) {
-                        _unidadEspecialidadEncontrada.value = response.body()
+                // 1. Petición de la Cabecera
+                val responseCabecera = repository.crearRecetaCabecera(pacienteId, cabecera)
+
+                if (responseCabecera.isSuccessful && responseCabecera.body()?.success == true) {
+                    val recetaIdAsignado = responseCabecera.body()?.data?.recetaId
+
+                    if (recetaIdAsignado != null && recetaIdAsignado != 0) {
+                        // 2. Construimos la lista de medicamentos inyectando el ID real retornado
+                        val listaDetallesFinal = constructorDetalles(recetaIdAsignado)
+
+                        // 3. Petición del Desglose de Medicamentos
+                        val responseDetalle = repository.agregarMedicamentosAReceta(listaDetallesFinal)
+
+                        withContext(Dispatchers.Main) {
+                            if (responseDetalle.isSuccessful && responseDetalle.body()?.success == true) {
+                                _recetaProcesadaExito.value = true
+                            } else {
+                                val errorBodyDetalle = responseDetalle.errorBody()?.string()
+                                val codigoHttp = responseDetalle.code()
+
+                                // Esto pintará en consola la razón exacta (Ej: Llave foránea inexistente, ID inválido, etc.)
+                                android.util.Log.e("API_ERROR_DETALLE", "Código: $codigoHttp | Cuerpo: $errorBodyDetalle")
+
+                                _error.value = "Error $codigoHttp en desglose: $errorBodyDetalle"
+                            }
+                        }
                     } else {
-                        _unidadEspecialidadEncontrada.value = null
+                        withContext(Dispatchers.Main) { _error.value = "Error: El servidor no retornó un ID de receta válido" }
+                    }
+                } else {
+                    withContext(Dispatchers.Main) {
+                        val errorBody = responseCabecera.errorBody()?.string()
+                        val codigoHttp = responseCabecera.code()
+                        // Esto te dirá exactamente qué no le gusta a tu Backend
+                        _error.value = "Error $codigoHttp: $errorBody"
+                        android.util.Log.e("API_ERROR", "Cuerpo del error: $errorBody")
                     }
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    Log.e("API_READ_ERROR", "Error al validar existencia intermedia: ${e.message}")
-                    _unidadEspecialidadEncontrada.value = null
+                    _error.value = "Fallo de comunicación: ${e.message}"
                 }
+            } finally {
+                withContext(Dispatchers.Main) { _isLoading.value = false }
             }
         }
     }
 
-    fun ejecutarCreacionUnidadEspecialidad(request: UnidadEspecialidadRequest) {
-        viewModelScope.launch {
-            _isLoading.value = true
-            // Asegúrate de pasar el 'request' que viene del fragmento, NO una variable global
-            val resultado = repository.crearUnidadEspecialidad(request)
-
-            resultado.onSuccess {
-                _registroExitoso.value = Unit.toString()
-            }.onFailure { error ->
-                _error.value = error.message ?: "Error desconocido"
-            }
-            _isLoading.value = false
-        }
+    fun resetRecetaStatus() {
+        _recetaProcesadaExito.value = false
     }
+    // endregion
 
+    // region Ejecuciones transaccionales de UnidadEspecialidad
     fun ejecutarActualizacionUnidadEspecialidad(id: Int, datos: UnidadEspecialidadRequest) {
         viewModelScope.launch {
             _isLoading.value = true
             try {
                 val resultado = repository.actualizarUnidadEspecialidad(id, datos)
-                resultado.onSuccess { mensaje ->
-                    _registroExitoso.value = mensaje
+
+                resultado.onSuccess {
+                    _registroExitoso.value = "Asignación actualizada exitosamente"
                 }.onFailure { excepcion ->
-                    _error.value = excepcion.message ?: "Error al actualizar la asignación"
+                    _error.value = excepcion.message ?: "Error al actualizar la asignación médica"
                 }
             } catch (e: Exception) {
                 _error.value = "Fallo crítico en la red remota: ${e.message}"
@@ -257,13 +302,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     fun cargarCatalogos() {
         viewModelScope.launch {
             try {
-                val resEsp = repository.obtenerEspecialidades()
-                if (resEsp.isSuccessful) {
-                    val listaReal = resEsp.body()?.data ?: emptyList()
-                    _especialidades.postValue(listaReal)
-                    Log.d("DEBUG_API", "Especialidades cargadas: ${listaReal.size}")
-                }
-
+                // Unidades Médicas
                 val resUni = repository.obtenerUnidadesMedicas()
                 if (resUni.isSuccessful) {
                     val listaReal = resUni.body()?.data ?: emptyList()
@@ -271,6 +310,27 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                     Log.d("DEBUG_API", "Unidades cargadas: ${listaReal.size}")
                 }
 
+                // Especialidades
+                val resEsp = repository.obtenerEspecialidades()
+                if (resEsp.isSuccessful) _especialidades.postValue(resEsp.body()?.data ?: emptyList())
+
+                val context = getApplication<Application>().applicationContext
+                val prefs = context.getSharedPreferences("CitasMedicasPrefs", Context.MODE_PRIVATE)
+                val tokenDirecto = prefs.getString("token_jwt", "") ?: ""
+                val tokenLimpio = if (tokenDirecto.startsWith("Bearer ", ignoreCase = true)) tokenDirecto.substring(7).trim() else tokenDirecto
+                val authHeader = if (tokenLimpio.isNotEmpty()) tokenLimpio else null
+
+                // Pasar el token obtenido a la consulta intermedia
+                val resIntermedia = repository.obtenerUnidadesEspecialidad(authHeader)
+                if (resIntermedia.isSuccessful) {
+                    val listaReal = resIntermedia.body()?.data ?: emptyList()
+                    _unidadesEspecialidad.postValue(listaReal)
+                    Log.d("DEBUG_API", "Tabla intermedia asignada con token: ${listaReal.size}")
+                } else {
+                    Log.e("DEBUG_API", "Error intermedio (Falta Auth/Token): ${resIntermedia.code()}")
+                }
+
+                // Roles
                 val resRol = repository.obtenerRoles()
                 if (resRol.isSuccessful) {
                     val listaReal = resRol.body()?.data ?: emptyList()
@@ -281,6 +341,101 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             } catch (e: Exception) {
                 Log.e("DEBUG_API", "Error de red: ${e.message}")
                 _error.postValue("Sin conexión al servidor")
+            }
+        }
+    }
+
+    fun cargarMedicamentosCatalogos() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val response = repository.obtenerTodosLosMedicamentos()
+
+                if (response.isSuccessful) {
+                    val apiResponse = response.body()
+                    // Usamos .medicamentos que es el miembro real de tu MedicamentoWrapper
+                    val listaReal = apiResponse?.data?.medicamentos ?: emptyList()
+
+                    withContext(Dispatchers.Main) {
+                        _listaMedicamentos.value = listaReal
+                    }
+                } else {
+                    withContext(Dispatchers.Main) {
+                        // Esto te ayudará a ver si da otro código diferente a 500
+                        _error.value = "Error del servidor al cargar medicinas: ${response.code()}"
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    _error.value = "Fallo de conexión: ${e.message}"
+                }
+            }
+        }
+    }
+
+    fun cargarReporteHistorico(unidadMedicaId: Int) {
+        viewModelScope.launch(Dispatchers.IO) {
+            withContext(Dispatchers.Main) { _isLoading.value = true }
+            try {
+                val context = getApplication<Application>().applicationContext
+                val prefs = context.getSharedPreferences("CitasMedicasPrefs", Context.MODE_PRIVATE)
+                val tokenDirecto = prefs.getString("token_jwt", "") ?: ""
+                val tokenLimpio = if (tokenDirecto.startsWith("Bearer ", ignoreCase = true)) tokenDirecto.substring(7).trim() else tokenDirecto
+                val authHeader = if (tokenLimpio.isNotEmpty()) "Bearer $tokenLimpio" else null
+
+                val response = repository.obtenerHistoricoCitas(authHeader, unidadMedicaId)
+
+                if (response.isSuccessful) {
+                    val listaReal = response.body()?.data ?: emptyList()
+                    withContext(Dispatchers.Main) {
+                        _historicoCitas.value = listaReal
+                        Log.d("API_GRAPH", "Datos de histórico cargados: ${listaReal.size} registros")
+                    }
+                } else {
+                    withContext(Dispatchers.Main) {
+                        _error.value = "Error al obtener estadísticas: ${response.code()}"
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    _error.value = "Error de red en gráficos: ${e.message}"
+                }
+            } finally {
+                withContext(Dispatchers.Main) { _isLoading.value = false }
+            }
+        }
+    }
+
+    fun cargarTodasLasCitas() {
+        viewModelScope.launch(Dispatchers.IO) {
+            withContext(Dispatchers.Main) { _isLoading.value = true }
+
+            try {
+                val response = repository.obtenerTodasLasCitas()
+
+                if (response.isSuccessful) {
+                    // 1. Especificamos explícitamente el tipo de dato esperado de la API
+                    val apiResponse: ApiResponse<AgendaCitasWrapper>? = response.body()
+
+                    // 2. Extraemos el wrapper interno de forma segura
+                    val citasWrapper: AgendaCitasWrapper? = apiResponse?.data
+
+                    // 3. Extraemos la lista de citas real usando el campo interno de tu wrapper
+                    val listaReal = citasWrapper?.citas ?: emptyList()
+
+                    withContext(Dispatchers.Main) {
+                        _listaCitas.value = listaReal
+                    }
+                } else {
+                    withContext(Dispatchers.Main) {
+                        _error.value = "Error del servidor: ${response.code()}"
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    _error.value = "Fallo de conexión: ${e.message}"
+                }
+            } finally {
+                withContext(Dispatchers.Main) { _isLoading.value = false }
             }
         }
     }
@@ -338,7 +493,6 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         _formState.value = estado.copy(isValid = !hayError)
     }
 
-    // NUEVO: Validación del subformulario de UnidadEspecialidad
     fun validarFormularioUnidadEspecialidad(cupoDiarioStr: String) {
         var estado = FormularioState()
         var hayError = false

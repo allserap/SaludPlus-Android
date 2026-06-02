@@ -15,8 +15,8 @@ import com.github.mikephil.charting.data.PieDataSet
 import com.github.mikephil.charting.data.PieEntry
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
 import com.citas.medicas.R
-import com.citas.medicas.databinding.FragmentEstadisticasBinding // Tu XML optimizado
-import com.citas.medicas.ui.auth.AuthViewModel // O el ViewModel donde manejes las citas
+import com.citas.medicas.databinding.FragmentEstadisticasBinding
+import com.citas.medicas.ui.auth.AuthViewModel
 import com.citas.medicas.ui.base.BaseFragment
 
 // Modelos mapeados localmente según la respuesta de tu API

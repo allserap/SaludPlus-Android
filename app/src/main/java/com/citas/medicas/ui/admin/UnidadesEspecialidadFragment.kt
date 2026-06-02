@@ -25,11 +25,12 @@ class UnidadEspecialidadFragment : BaseFragment(R.layout.fragment_unidades_espec
     private val authViewModel: AuthViewModel by viewModels()
 
     private var idUnidadEspecialidadActual: Int? = null
-    private var listaEspecialidades: List<EspecialidadResponse> = emptyList()
-    private var listaUnidades: List<UnidadMedicaResponse> = emptyList()
 
-    private var unidadSeleccionada: UnidadMedicaResponse? = null
-    private var especialidadSeleccionada: EspecialidadResponse? = null
+    private var listaUnidadesEspecialidad: List<UnidadEspecialidadResponse> = emptyList()
+    private var listaUnidades: List<UnidadMedicaResponse> = emptyList()
+    private var listaEspecialidades: List<EspecialidadResponse> = emptyList()
+
+    private var unidadEspecialidadSeleccionada: UnidadEspecialidadResponse? = null
 
     private var isEditMode = false
     private var estadoOriginal: Boolean = true
@@ -40,124 +41,158 @@ class UnidadEspecialidadFragment : BaseFragment(R.layout.fragment_unidades_espec
         _binding = FragmentUnidadesEspecialidadBinding.bind(view)
 
         setupObservers()
-        setupCatalogosObservers()
+        setupUnidadEspecialidadObserver()
         setupListeners()
 
-        // Carga inicial sincronizada con la arquitectura de SaludPlus
+        // Disparar la carga inicial de los catálogos y la tabla intermedia
         authViewModel.cargarCatalogos()
     }
 
     private fun setupObservers() {
-        // Feedback visual
         authViewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
-            binding.btnGuardarMedico.isEnabled = !isLoading
-            binding.btnGuardarMedico.text = if (isLoading) "Procesando..." else "Guardar"
+            binding.btnGuardarUnidad.isEnabled = !isLoading
+            binding.btnGuardarUnidad.text = if (isLoading) "Procesando..." else "Guardar"
         }
 
-        // Estado reactivo de validación del formulario
         authViewModel.formState.observe(viewLifecycleOwner) { estado ->
             with(binding) {
                 etCupoDiario.error = estado.cupoDiarioError
 
-                estado.especialidadError?.let { Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show() }
-                estado.unidadError?.let { Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show() }
-
                 if (estado.isValid) {
-                    // Capturamos los IDs de manera segura y definitiva aquí
-                    val uId = unidadSeleccionada?.id
-                    val eId = especialidadSeleccionada?.id
-
-                    if (uId != null && eId != null) {
-                        enviarActualizacionAlServidor(uId, eId)
+                    val r = unidadEspecialidadSeleccionada
+                    if (r != null) {
+                        enviarActualizacionAlServidor(r.unidad_medica_id, r.especialidad_id)
                     } else {
-                        Toast.makeText(requireContext(), "Error interno: Selección de catálogo perdida. Intente seleccionar de nuevo.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(requireContext(), "Por favor, seleccione una Unidad Especialidad válida.", Toast.LENGTH_SHORT).show()
                     }
                 }
             }
         }
 
-        // Observer para capturar el resultado si la combinación intermedia ya existía
-        authViewModel.unidadEspecialidadEncontrada.observe(viewLifecycleOwner) { apiResponse ->
-            val registro = apiResponse?.data
-            if (registro != null) {
-                llenarFormulario(registro)
+        authViewModel.registroExitoso.observe(viewLifecycleOwner) { msg ->
+            if (msg != null) {
+                Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                resetearInterfaz()
+                authViewModel.cargarCatalogos() // Refrescar fuentes de datos de forma limpia
             }
-        }
-
-        // Éxito en la persistencia transaccional
-        authViewModel.registroExitoso.observe(viewLifecycleOwner) {
-            val msg = if (isEditMode) "Asignación modificada exitosamente" else "Asignación vinculada con éxito"
-            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
-            resetearInterfaz()
-            authViewModel.cargarCatalogos()
         }
 
         authViewModel.error.observe(viewLifecycleOwner) { errorMsg ->
-            Toast.makeText(requireContext(), errorMsg, Toast.LENGTH_LONG).show()
+            if (errorMsg != null) {
+                Toast.makeText(requireContext(), errorMsg, Toast.LENGTH_LONG).show()
+            }
         }
     }
 
-    private fun setupCatalogosObservers() {
-        // 1. Observer del buscador predictivo de Unidades Médicas
-        authViewModel.unidadesMedicas.observe(viewLifecycleOwner) { lista ->
-            listaUnidades = lista
-
-            // NOTA: Si en tu modelo de SaludPlus el nombre se guarda en '.nombre', cambia 'it.unidadMedica' por 'it.nombre'
-            val sugerencias = lista.map { it.unidadMedica }
-            val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, sugerencias)
-
-            binding.acUnidadMedica.setAdapter(adapter)
-            binding.acUnidadMedica.setOnItemClickListener { _, _, position, _ ->
-                val seleccion = adapter.getItem(position)
-
-                // Buscamos el objeto haciendo la misma igualación que arriba
-                unidadSeleccionada = listaUnidades.find { it.unidadMedica == seleccion }
-
-                // IMPRIME ESTO EN EL LOGCAT: Verificamos si Android de verdad encontró el ID en la lista
-                Log.d("DEBUG_SELECCION", "Unidad Teclada: $seleccion | ID Encontrado en Objeto: ${unidadSeleccionada?.id}")
-
-                verificarExistenciaRegistro()
+    private fun setupUnidadEspecialidadObserver() {
+        authViewModel.unidadesMedicas.observe(viewLifecycleOwner) { unidades ->
+            if (unidades != null) {
+                listaUnidades = unidades
+                refrescarSpinnerIntermedio()
             }
         }
 
-        // 2. Observer de Especialidades adaptado al AutoCompleteTextView
-        authViewModel.especialidades.observe(viewLifecycleOwner) { lista ->
-            listaEspecialidades = lista
-            val nombres = lista.map { it.nombre }
-            val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, nombres)
+        authViewModel.especialidades.observe(viewLifecycleOwner) { especialidades ->
+            if (especialidades != null) {
+                listaEspecialidades = especialidades
+                refrescarSpinnerIntermedio()
+            }
+        }
 
-            binding.spnEspecialidad.setAdapter(adapter)
-            binding.spnEspecialidad.setOnItemClickListener { _, _, position, _ ->
-                val seleccion = adapter.getItem(position)
+        authViewModel.unidadesEspecialidad.observe(viewLifecycleOwner) { lista ->
+            if (lista != null) {
+                listaUnidadesEspecialidad = lista
+                refrescarSpinnerIntermedio()
+            }
+        }
+    }
 
-                especialidadSeleccionada = listaEspecialidades.find { it.nombre == seleccion }
+    private fun refrescarSpinnerIntermedio() {
+        if (listaUnidades.isEmpty() || listaEspecialidades.isEmpty() || listaUnidadesEspecialidad.isEmpty()) {
+            return
+        }
 
-                // IMPRIME ESTO EN EL LOGCAT: Verificamos el ID de la especialidad
-                Log.d("DEBUG_SELECCION", "Especialidad: $seleccion | ID Encontrado: ${especialidadSeleccionada?.id}")
+        // Llenar el Spinner de Unidades Médicas con sus nombres limpios
+        val sugerenciasUnidades = listaUnidades.map { it.unidadMedica }
+        val adapterUnidades = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, sugerenciasUnidades)
+        binding.acUnidadMedica.setAdapter(adapterUnidades)
 
-                verificarExistenciaRegistro()
+        // Llenar el Spinner de Especialidades con sus nombres limpios
+        val sugerenciasEspecialidades = listaEspecialidades.map { it.nombre }
+        val adapterEspecialidades = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, sugerenciasEspecialidades)
+        binding.spnEspecialidad.setAdapter(adapterEspecialidades)
+
+        // Escuchador para cuando seleccionan una Unidad
+        binding.acUnidadMedica.setOnItemClickListener { _, _, position, _ ->
+            evaluarCombinacionSeleccionada()
+        }
+
+        // 4. Escuchador para cuando seleccionan una Especialidad
+        binding.spnEspecialidad.setOnItemClickListener { _, _, position, _ ->
+            evaluarCombinacionSeleccionada()
+        }
+    }
+
+    private fun evaluarCombinacionSeleccionada() {
+        val textoUnidad = binding.acUnidadMedica.text.toString()
+        val textoEspecialidad = binding.spnEspecialidad.text.toString()
+
+        // Buscar los IDs correspondientes en los catálogos maestros basados en el texto seleccionado
+        val unidadId = listaUnidades.find { it.unidadMedica == textoUnidad }?.id
+        val especialidadId = listaEspecialidades.find { it.nombre == textoEspecialidad }?.id
+
+        if (unidadId != null && especialidadId != null) {
+            // Buscamos si existe la combinación en la tabla intermedia
+            val registroExistente = listaUnidadesEspecialidad.find {
+                it.unidad_medica_id == unidadId && it.especialidad_id == especialidadId
+            }
+
+            if (registroExistente != null) {
+                unidadEspecialidadSeleccionada = registroExistente
+                idUnidadEspecialidadActual = registroExistente.id
+
+                // Pasamos a modo edición automáticamente con los datos del servidor
+                this.isEditMode = true
+                this.estadoOriginal = registroExistente.activo
+
+                binding.tvTitulo.text = "Editar Unidad Especialidad"
+                binding.etCupoDiario.setText(registroExistente.cupo_diario.toString())
+                binding.switchActivo.isChecked = registroExistente.activo
+                binding.etCupoDiario.isEnabled = registroExistente.activo
+
+                Log.d("COMBINACION", "Match encontrado: ID ${registroExistente.id}")
+            } else {
+                // Si la combinación no existe, preparamos el formulario para una nueva asignación (Modo Creación)
+                idUnidadEspecialidadActual = null
+                unidadEspecialidadSeleccionada = null
+                this.isEditMode = false
+
+                binding.tvTitulo.text = "Nueva Asignación"
+                binding.etCupoDiario.setText("20") // Cupo por defecto
+                binding.switchActivo.isChecked = true
+                binding.etCupoDiario.isEnabled = true
+
+                Log.d("COMBINACION", "Nueva combinación detectada")
             }
         }
     }
 
     private fun setupListeners() {
-        binding.btnGuardarMedico.setOnClickListener {
+        binding.btnGuardarUnidad.setOnClickListener {
             ocultarTeclado()
 
-            if (unidadSeleccionada == null || especialidadSeleccionada == null) {
-                Toast.makeText(context, "Debe seleccionar la Unidad Médica y la Especialidad", Toast.LENGTH_SHORT).show()
+            if (unidadEspecialidadSeleccionada == null) {
+                Toast.makeText(context, "Debe seleccionar una Unidad Especialidad de la lista", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
             val estadoSeleccionado = binding.switchActivo.isChecked
-
             val ejecutarValidacion = {
                 authViewModel.validarFormularioUnidadEspecialidad(
                     cupoDiarioStr = binding.etCupoDiario.text.toString()
                 )
             }
 
-            // GESTIÓN DE ELIMINACIÓN LÓGICA INTERMEDIA
             if (estadoOriginal && !estadoSeleccionado) {
                 MaterialAlertDialogBuilder(requireContext())
                     .setTitle("Confirmar Desactivación")
@@ -170,46 +205,10 @@ class UnidadEspecialidadFragment : BaseFragment(R.layout.fragment_unidades_espec
             }
         }
 
-        binding.btnCancelarMedico.setOnClickListener { resetearInterfaz() }
-    }
-
-    private fun verificarExistenciaRegistro() {
-        val uId = unidadSeleccionada?.id
-        val eId = especialidadSeleccionada?.id
-
-        // Si se han seleccionado ambos nodos, disparamos la búsqueda reactiva en el ViewModel
-        if (uId != null && eId != null && !isEditMode) {
-            authViewModel.buscarUnidadEspecialidad(uId, eId)
-        }
-    }
-
-    private fun llenarFormulario(registro: UnidadEspecialidadResponse) {
-        this.isEditMode = true
-        this.idUnidadEspecialidadActual = registro.id
-        this.estadoOriginal = registro.activo
-
-        with(binding) {
-            tvTitulo.text = "Editar Unidad Especialidad"
-            etCupoDiario.setText(registro.cupo_diario.toString())
-            switchActivo.isChecked = registro.activo
-
-            // RESTRICCIÓN DE NEGOCIO: Inhabilitar alteración de llaves foráneas en edición
-            acUnidadMedica.isEnabled = false
-            layoutEspecialidad.isEnabled = false
-
-            // Modificación del cupo de cada unidad de especialidad habilitado según el requerimiento
-            val esActivo = registro.activo
-            etCupoDiario.isEnabled = esActivo
-            switchActivo.isEnabled = true
-
-            if (!esActivo) {
-                Toast.makeText(context, "Asignación inactiva. Actívela para editar sus datos.", Toast.LENGTH_LONG).show()
-            }
-        }
+        binding.btnCancelarUnidad.setOnClickListener { resetearInterfaz() }
     }
 
     private fun enviarActualizacionAlServidor(unidadId: Int, especialidadId: Int) {
-        // Construimos el objeto usando los nuevos nombres con guion bajo
         val requestBody = UnidadEspecialidadRequest(
             unidad_medica_id = unidadId,
             especialidad_id = especialidadId,
@@ -217,12 +216,10 @@ class UnidadEspecialidadFragment : BaseFragment(R.layout.fragment_unidades_espec
             activo = binding.switchActivo.isChecked
         )
 
-        Log.d("API_PAYLOAD", "Enviando con guiones bajos nativos: $requestBody")
+        Log.d("API_PAYLOAD", "Enviando payload con snake_case nativo: $requestBody")
 
         if (isEditMode && idUnidadEspecialidadActual != null) {
             authViewModel.ejecutarActualizacionUnidadEspecialidad(idUnidadEspecialidadActual!!, requestBody)
-        } else {
-            authViewModel.ejecutarCreacionUnidadEspecialidad(requestBody)
         }
     }
 
@@ -231,13 +228,11 @@ class UnidadEspecialidadFragment : BaseFragment(R.layout.fragment_unidades_espec
         binding.switchActivo.isChecked = true
         binding.tvTitulo.text = "Unidad Especialidad"
 
-        // Restauración total de controles de entrada de la UI
         binding.acUnidadMedica.isEnabled = true
         binding.layoutEspecialidad.isEnabled = true
         binding.etCupoDiario.isEnabled = true
 
-        unidadSeleccionada = null
-        especialidadSeleccionada = null
+        unidadEspecialidadSeleccionada = null
         idUnidadEspecialidadActual = null
         isEditMode = false
         estadoOriginal = true

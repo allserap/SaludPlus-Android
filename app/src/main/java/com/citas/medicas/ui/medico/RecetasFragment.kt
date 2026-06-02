@@ -5,6 +5,7 @@ import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Spinner
 import android.widget.Toast
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import com.citas.medicas.R
@@ -14,35 +15,39 @@ import com.citas.medicas.databinding.FragmentRecetasBinding
 import com.citas.medicas.models.PacienteResponse
 import com.citas.medicas.models.RecetaRequest
 import com.citas.medicas.models.DetalleRecetaItemRequest
+import com.citas.medicas.models.MedicamentoResponse
 import com.citas.medicas.ui.auth.AuthViewModel
 import com.citas.medicas.ui.base.BaseFragment
 import com.citas.medicas.utils.limpiarCampos
 import com.google.android.material.textfield.TextInputEditText
 import kotlinx.coroutines.launch
+import kotlin.collections.getOrNull
+import kotlin.collections.map
 
 class RecetasFragment : BaseFragment(R.layout.fragment_recetas) {
 
     private var _binding: FragmentRecetasBinding? = null
     private val binding get() = _binding!!
 
-    private val authViewModel: AuthViewModel by viewModels()
-    private lateinit var apiService: ApiService
+    // Se recomienda usar activityViewModels() si compartes estados globales de catálogos
+    private val authViewModel: AuthViewModel by activityViewModels()
     private var pacienteSeleccionado: PacienteResponse? = null
 
-    // Catálogos mockeados de IDs de medicamentos para poblar los spinners del listado dinámico
-    private val mockupMedicamentosId = listOf(1, 2, 3, 4, 5)
-    private val mockupMedicamentosNombres = arrayOf("Paracetamol 500mg", "Ibuprofeno 400mg", "Amoxicilina 500mg", "Loratadina 10mg", "Metformina 850mg")
+    // Lista local para retener el catálogo de medicinas del servidor
+    private var catalogoMedicamentosReales: List<MedicamentoResponse> = emptyList()
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentRecetasBinding.bind(view)
-        apiService = RetrofitClient.getApiService(requireContext())
+
+        // Se remueve la inicialización manual local de apiService. Toda petición va por Repositorio/ViewModel.
 
         setupObservers()
         setupListeners()
 
         viewLifecycleOwner.lifecycleScope.launch {
             authViewModel.cargarPacientes()
+            authViewModel.cargarMedicamentosCatalogos()
         }
 
         arguments?.let {
@@ -72,8 +77,23 @@ class RecetasFragment : BaseFragment(R.layout.fragment_recetas) {
             }
         }
 
+        // 🔥 NUEVO OBSERVER: Escucha el catálogo de medicamentos reales traídos del servidor
+        authViewModel.listaMedicamentos.observe(viewLifecycleOwner) { medicamentos ->
+            if (!medicamentos.isNullOrEmpty()) {
+                this.catalogoMedicamentosReales = medicamentos
+            }
+        }
+
         authViewModel.error.observe(viewLifecycleOwner) { errorMsg ->
             Toast.makeText(requireContext(), errorMsg, Toast.LENGTH_LONG).show()
+        }
+
+        authViewModel.recetaProcesadaExito.observe(viewLifecycleOwner) { exito ->
+            if (exito) {
+                Toast.makeText(context, "Receta guardada con éxito", Toast.LENGTH_SHORT).show()
+                resetearInterfaz()
+                authViewModel.resetRecetaStatus()
+            }
         }
     }
 
@@ -146,6 +166,11 @@ class RecetasFragment : BaseFragment(R.layout.fragment_recetas) {
             return false
         }
 
+        if (catalogoMedicamentosReales.isEmpty()) {
+            Toast.makeText(requireContext(), "El catálogo de medicinas no se ha cargado todavía", Toast.LENGTH_SHORT).show()
+            return false
+        }
+
         for (i in 0 until binding.containerMedicamentos.childCount) {
             val itemView = binding.containerMedicamentos.getChildAt(i)
             val txtDosis = itemView.findViewById<TextInputEditText>(R.id.txtDosis)
@@ -177,64 +202,56 @@ class RecetasFragment : BaseFragment(R.layout.fragment_recetas) {
         val p = pacienteSeleccionado ?: return
         val observacionesInput = binding.etObservacionesReceta.text.toString().trim()
 
-        viewLifecycleOwner.lifecycleScope.launch {
-            try {
-                // Crear la cabecera usando RecetaRequest
-                val cabeceraRequest = RecetaRequest(observaciones = observacionesInput.ifEmpty { null })
-                val responseCabecera = apiService.crearRecetaCabecera(p.pacienteId, cabeceraRequest)
+        val cabeceraRequest = RecetaRequest(observaciones = observacionesInput.ifEmpty { null })
 
-                if (responseCabecera.isSuccessful && responseCabecera.body()?.success == true) {
-                    val recetaId = responseCabecera.body()!!.data!!.recetaId
+        authViewModel.guardarRecetaCompleta(p.pacienteId, cabeceraRequest) { recetaIdObtenido ->
+            val listaDetalle = mutableListOf<DetalleRecetaItemRequest>()
 
-                    // Recolectar la lista dinámica de medicamentos usando DetalleRecetaItemRequest
-                    val listaDetalle = mutableListOf<DetalleRecetaItemRequest>()
-                    for (i in 0 until binding.containerMedicamentos.childCount) {
-                        val viewMed = binding.containerMedicamentos.getChildAt(i)
+            for (i in 0 until binding.containerMedicamentos.childCount) {
+                val viewMed = binding.containerMedicamentos.getChildAt(i)
 
-                        val spinnerMed = viewMed.findViewById<Spinner>(R.id.spnMunicipioMedicamento)
-                        val posSeleccionada = spinnerMed.selectedItemPosition
-                        val idMedicamentoFinal = mockupMedicamentosId.getOrElse(posSeleccionada) { 1 }
+                val spinnerMed = viewMed.findViewById<Spinner>(R.id.spnMunicipioMedicamento)
+                val posSeleccionada = spinnerMed.selectedItemPosition
 
-                        val dosis = viewMed.findViewById<TextInputEditText>(R.id.txtDosis).text.toString().trim()
-                        val cantidad = viewMed.findViewById<TextInputEditText>(R.id.txtCantidad).text.toString().toIntOrNull() ?: 1
-                        val dias = viewMed.findViewById<TextInputEditText>(R.id.txtDuracionDias).text.toString().toIntOrNull() ?: 1
-                        val instrucciones = viewMed.findViewById<TextInputEditText>(R.id.txtInstrucciones).text.toString().trim()
+                // 🛠️ EXTRAER MEDICAMENTO REAL: Obtenemos el objeto a partir del índice del Spinner
+                val medicinaSeleccionada = catalogoMedicamentosReales.getOrNull(posSeleccionada)
+                val idMedicamentoFinal = medicinaSeleccionada?.id ?: 0
 
-                        listaDetalle.add(
-                            DetalleRecetaItemRequest(
-                                recetaId = recetaId,
-                                medicamentoId = idMedicamentoFinal,
-                                dosis = dosis,
-                                duracionDias = dias,
-                                cantidad = cantidad,
-                                instrucciones = instrucciones
-                            )
-                        )
-                    }
+                val dosis = viewMed.findViewById<TextInputEditText>(R.id.txtDosis).text.toString().trim()
+                val cantidad = viewMed.findViewById<TextInputEditText>(R.id.txtCantidad).text.toString().toIntOrNull() ?: 1
+                val dias = viewMed.findViewById<TextInputEditText>(R.id.txtDuracionDias).text.toString().toIntOrNull() ?: 1
+                val instrucciones = viewMed.findViewById<TextInputEditText>(R.id.txtInstrucciones).text.toString().trim()
 
-                    // Paso 3: Enviar detalle usando agregarMedicamentosAReceta
-                    val responseDetalle = apiService.agregarMedicamentosAReceta(listaDetalle)
-                    if (responseDetalle.isSuccessful && responseDetalle.body()?.success == true) {
-                        Toast.makeText(context, "Receta guardada con éxito", Toast.LENGTH_SHORT).show()
-                        resetearInterfaz()
-                    } else {
-                        Toast.makeText(context, "Error al guardar el desglose de medicamentos", Toast.LENGTH_LONG).show()
-                    }
-                } else {
-                    Toast.makeText(context, "No se pudo procesar la receta", Toast.LENGTH_SHORT).show()
-                }
-            } catch (e: Exception) {
-                android.util.Log.e("RecetasFragment", "Error en transaccion de receta", e)
-                Toast.makeText(context, "Error de comunicación: ${e.message}", Toast.LENGTH_LONG).show()
+                listaDetalle.add(
+                    DetalleRecetaItemRequest(
+                        recetaId = recetaIdObtenido,
+                        medicamentoId = idMedicamentoFinal,
+                        dosis = dosis,
+                        duracionDias = dias,
+                        cantidad = cantidad,
+                        instrucciones = instrucciones
+                    )
+                )
             }
+            listaDetalle
         }
     }
 
     private fun agregarCampoMedicamento() {
-        val viewMed = layoutInflater.inflate(R.layout.item_medicamento, binding.containerMedicamentos, false)
+        if (catalogoMedicamentosReales.isEmpty()) {
+            Toast.makeText(requireContext(), "Cargando medicamentos del servidor, espere un momento...", Toast.LENGTH_SHORT).show()
+            return
+        }
 
+        val viewMed = layoutInflater.inflate(R.layout.item_medicamento, binding.containerMedicamentos, false)
         val spinnerMed = viewMed.findViewById<Spinner>(R.id.spnMunicipioMedicamento)
-        val adapterSpinner = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, mockupMedicamentosNombres)
+
+        // 🛠️ LLENADO DINÁMICO: Transformamos la lista de objetos de la BD a texto legible
+        val nombresMedicamentos = catalogoMedicamentosReales.map {
+            "${it.nombreGenerico} (${it.nombreComercial}) - ${it.concentracion}"
+        }.toTypedArray()
+
+        val adapterSpinner = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, nombresMedicamentos)
         spinnerMed.adapter = adapterSpinner
 
         viewMed.findViewById<View>(R.id.btnEliminarItemMedicamento).setOnClickListener {
@@ -249,7 +266,6 @@ class RecetasFragment : BaseFragment(R.layout.fragment_recetas) {
             binding.autoCompleteConsultarReceta,
             binding.etObservacionesReceta
         )
-        // Reiniciamos los TextView fijos de forma manual
         binding.tvDisplayPacienteNombreReceta.text = ""
         binding.tvDisplayDuiReceta.text = ""
         binding.tvDisplayEdadReceta.text = ""

@@ -2,11 +2,13 @@ package com.citas.medicas.ui.medico
 
 import android.os.Bundle
 import android.view.View
+import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.citas.medicas.R
 import com.citas.medicas.databinding.FragmentAgendaBinding
-import com.citas.medicas.models.CitaItem
+import com.citas.medicas.ui.auth.AuthViewModel
 
 class AgendaFragment : Fragment(R.layout.fragment_agenda) {
 
@@ -14,18 +16,20 @@ class AgendaFragment : Fragment(R.layout.fragment_agenda) {
     private val binding get() = _binding!!
     private lateinit var citasAdapter: CitasAdapter
 
+    // ViewModel compartido a nivel de Activity
+    private val authViewModel: AuthViewModel by activityViewModels()
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentAgendaBinding.bind(view)
 
         setupRecyclerView()
+        setupObservers()
         fetchAppointments()
     }
 
     private fun setupRecyclerView() {
-        // Inicializa el adaptador. El evento click recibe el id numérico del paciente
         citasAdapter = CitasAdapter(emptyList()) { idPacienteSeleccionado ->
-            // Navegación limpia delegada a la función puente del DashboardActivity
             val dash = (activity as? DashboardMedicoActivity)
             //dash?.navigateToHistorial(idPacienteSeleccionado)
         }
@@ -36,38 +40,50 @@ class AgendaFragment : Fragment(R.layout.fragment_agenda) {
         }
     }
 
+    private fun setupObservers() {
+        // Eliminamos por completo CUALQUIER observador previo asignado a estas variables,
+        // sin importar qué ciclo de vida (viejo o nuevo) lo esté reclamando.
+        authViewModel.listaCitas.removeObservers(viewLifecycleOwner)
+        authViewModel.error.removeObservers(viewLifecycleOwner)
+        authViewModel.isLoading.removeObservers(viewLifecycleOwner)
+
+        // authViewModel.listaCitas.removeObserver { }
+
+        // Observar la lista de citas
+        authViewModel.listaCitas.observe(viewLifecycleOwner, { listaCitas ->
+            val citasFiltradas = listaCitas.filter { cita ->
+                val estadoCita = cita.estadocita?.lowercase()?.trim() ?: ""
+
+                // Compara contra las 3 variantes que necesitas
+                estadoCita == "confirmada" ||
+                        estadoCita == "pendiente" ||
+                        estadoCita == "reprogramada"
+            }
+
+            // Evaluamos e inflamos la UI con la lista ya depurada
+            if (citasFiltradas.isNotEmpty()) {
+                citasAdapter.updateList(citasFiltradas)
+            } else {
+                Toast.makeText(requireContext(), "No hay citas pendientes o activas", Toast.LENGTH_SHORT).show()
+                citasAdapter.updateList(emptyList())
+            }
+        })
+
+        // Observar errores de red o servidor
+        authViewModel.error.observe(viewLifecycleOwner, { mensajeError ->
+            mensajeError?.let {
+                Toast.makeText(requireContext(), it, Toast.LENGTH_LONG).show()
+            }
+        })
+
+        // Observar estado de carga (ProgressBar)
+        authViewModel.isLoading.observe(viewLifecycleOwner, { isLoading ->
+            // binding.progressBar.visibility = if (isLoading == true) View.VISIBLE else View.GONE
+        })
+    }
+
     private fun fetchAppointments() {
-        // agregar la llamada asíncrona del ApiService cuando conecte Retrofit
-        // lifecycleScope.launch { ... }
-
-        // Datos mock simulados con la estructura real de la base de datos para probar el renderizado
-        val mockData = listOf(
-            CitaItem(
-                pacienteid = 3,
-                nombrepaciente = "María",
-                apellidopaciente = "Guzmán",
-                medicoid = 1,
-                medicousuarioid = "f56e5a64-768a-47b0-af3e-5c5f74215b1f",
-                estadocita = "pendiente",
-                especialidadid = 1,
-                especialidadcita = "Medicina General",
-                horaasignada = "15:30:00"
-            ),
-            CitaItem(
-                pacienteid = 1,
-                nombrepaciente = "Juan Carlos",
-                apellidopaciente = "Pérez",
-                medicoid = 1,
-                medicousuarioid = "f56e5a64-768a-47b0-af3e-5c5f74215b1f",
-                estadocita = "pendiente",
-                especialidadid = 1,
-                especialidadcita = "Medicina General",
-                horaasignada = "16:15:00"
-            )
-        )
-
-        // Cargar los datos en el RecyclerView
-        citasAdapter.updateList(mockData)
+        authViewModel.cargarTodasLasCitas()
     }
 
     override fun onDestroyView() {
