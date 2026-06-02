@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.citas.medicas.R
 import com.citas.medicas.ui.paciente.adapter.MapaAdapter
 import com.citas.medicas.data.RetrofitClient
+import com.citas.medicas.ui.AppDatabase
 import com.citas.medicas.ui.paciente.adapter.UnidadMedicaAdapter
 import com.citas.medicas.ui.paciente.local.entities.toEntity
 import com.citas.medicas.ui.paciente.local.entities.toModel
@@ -78,7 +79,7 @@ class MapaActivity : AppCompatActivity() {
 
     private fun cargarUnidades() {
         lifecycleScope.launch {
-            val db = com.citas.medicas.ui.paciente.local.AppDatabase.getDatabase(this@MapaActivity)
+            val db = AppDatabase.getDatabase(this@MapaActivity)
             val unidadDao = db.unidadMedicaDao()
 
             val unidadesGuardadas = unidadDao.obtenerTodasLasUnidades()

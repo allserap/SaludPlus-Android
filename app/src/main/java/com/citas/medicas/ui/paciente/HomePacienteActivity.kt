@@ -17,6 +17,7 @@ import androidx.lifecycle.lifecycleScope
 import com.citas.medicas.data.RetrofitClient
 import com.citas.medicas.models.ActualizarCitaRequest
 import com.citas.medicas.models.CitaHistorial
+import com.citas.medicas.ui.AppDatabase
 import com.citas.medicas.ui.auth.LoginActivity
 import com.citas.medicas.ui.paciente.local.entities.toEntity
 import com.citas.medicas.ui.paciente.local.entities.toModel
@@ -94,7 +95,7 @@ class HomePacienteActivity : AppCompatActivity() {
                     prefs.edit().clear().apply()
 
                     lifecycleScope.launch(kotlinx.coroutines.Dispatchers.IO) {
-                        val db = com.citas.medicas.ui.paciente.local.AppDatabase.getDatabase(this@HomePacienteActivity)
+                        val db = AppDatabase.getDatabase(this@HomePacienteActivity)
                         db.clearAllTables()
                     }
 
@@ -130,7 +131,7 @@ class HomePacienteActivity : AppCompatActivity() {
         }
 
         lifecycleScope.launch {
-            val db = com.citas.medicas.ui.paciente.local.AppDatabase.getDatabase(this@HomePacienteActivity)
+            val db = AppDatabase.getDatabase(this@HomePacienteActivity)
             val citasDao = db.citasDao()
 
             val citasGuardadas = citasDao.obtenerTodasLasCitas()
