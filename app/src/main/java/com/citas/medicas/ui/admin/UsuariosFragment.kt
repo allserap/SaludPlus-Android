@@ -129,7 +129,8 @@ class UsuariosFragment : BaseFragment(R.layout.fragment_usuarios) {
     private fun setupMedicosObserver() {
         authViewModel.listaMedicos.observe(viewLifecycleOwner) { medicos ->
             if (medicos != null && medicos.isNotEmpty()) {
-                usuarioAdapter.updateList(medicos)
+                val soloMedicos = medicos.filter { it.rolId == RolesUsuario.ID_MEDICO }
+                usuarioAdapter.updateList(soloMedicos)
                 Log.d("DEBUG_VIEW", "Lista actualizada en el Adapter con ${medicos.size} médicos")
             } else {
                 Log.d("DEBUG_VIEW", "La lista de médicos llegó vacía o nula al Fragment")
