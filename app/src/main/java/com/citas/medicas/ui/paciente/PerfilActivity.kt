@@ -17,6 +17,7 @@ import com.citas.medicas.R
 import com.citas.medicas.data.RetrofitClient
 import com.citas.medicas.models.DatosPerfil
 import com.citas.medicas.models.PacienteUpdateRequest
+import com.citas.medicas.ui.AppDatabase
 import com.citas.medicas.ui.auth.LoginActivity
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.button.MaterialButton
@@ -96,7 +97,7 @@ class PerfilActivity : AppCompatActivity() {
                     prefsEditor.clear().apply()
 
                     lifecycleScope.launch(kotlinx.coroutines.Dispatchers.IO) {
-                        val db = com.citas.medicas.ui.paciente.local.AppDatabase.getDatabase(this@PerfilActivity)
+                        val db = AppDatabase.getDatabase(this@PerfilActivity)
                         db.clearAllTables()
                     }
 

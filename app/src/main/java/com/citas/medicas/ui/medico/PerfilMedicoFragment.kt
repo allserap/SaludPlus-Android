@@ -14,6 +14,8 @@ import com.citas.medicas.data.RetrofitClient
 import com.citas.medicas.databinding.FragmentPerfilMedicoBinding
 import com.citas.medicas.models.MedicoProfileResponse
 import com.citas.medicas.models.MedicoUpdateRequest
+import com.citas.medicas.ui.AppDatabase
+import com.citas.medicas.ui.medico.local.entities.MedicoPerfilEntity
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import kotlinx.coroutines.launch
@@ -26,6 +28,7 @@ class PerfilMedicoFragment : Fragment() {
     private var _binding: FragmentPerfilMedicoBinding? = null
     private val binding get() = _binding!!
 
+    private var isOffline = false
     private lateinit var apiService: ApiService
     private var medicoActual: MedicoProfileResponse? = null
 
@@ -44,32 +47,60 @@ class PerfilMedicoFragment : Fragment() {
         cargarPerfilMedico()
 
         binding.btnEditarContacto.setOnClickListener {
+            if (isOffline) {
+                Toast.makeText(context, "Necesitas internet para editar tu perfil", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
             medicoActual?.let { mostrarDialogoEditarContacto(it) } ?: mostrarErrorCarga()
         }
 
         binding.btnCambiarClave.setOnClickListener {
+            if (isOffline) {
+                Toast.makeText(context, "Necesitas internet para cambiar tu contraseña", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
             medicoActual?.let { mostrarDialogoCambiarClave(it) } ?: mostrarErrorCarga()
         }
     }
 
     private fun cargarPerfilMedico() {
         lifecycleScope.launch {
+            val db = AppDatabase.getDatabase(requireContext())
+            val dao = db.medicoPerfilDao()
+
+            //  local primero (Offline-First)
+            val perfilGuardado = dao.obtenerPerfil()
+            if (perfilGuardado != null) {
+                medicoActual = perfilGuardado.toModel()
+                mapearDatosAInterfaz(medicoActual!!)
+            }
+
             try {
                 val response = apiService.obtenerPerfilMedicoLogueado()
                 if (response.isSuccessful && response.body() != null) {
                     val apiResponse = response.body()!!
                     if (apiResponse.success && apiResponse.data != null) {
+
+                        isOffline = false
                         medicoActual = apiResponse.data
                         mapearDatosAInterfaz(apiResponse.data)
+
+                        dao.limpiarTabla()
+                        dao.guardarPerfil(MedicoPerfilEntity.fromModel(apiResponse.data))
+
                     } else {
                         Toast.makeText(context, "Error: Datos no encontrados", Toast.LENGTH_SHORT).show()
                     }
-                } else {
-                    Toast.makeText(context, "Error de servidor: ${response.code()}", Toast.LENGTH_LONG).show()
                 }
             } catch (e: Exception) {
                 android.util.Log.e("PerfilMedico", "Error de red al cargar perfil", e)
-                Toast.makeText(context, "Error de red: ${e.message}", Toast.LENGTH_LONG).show()
+                isOffline = true
+
+                if (perfilGuardado != null) {
+                    Toast.makeText(context, "Modo sin conexión. Mostrando datos guardados.", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(context, "No hay internet y no hay datos guardados.", Toast.LENGTH_LONG).show()
+                }
             }
         }
     }
@@ -105,7 +136,6 @@ class PerfilMedicoFragment : Fragment() {
                 return@setOnClickListener
             }
 
-            // Construye el MedicoUpdateRequest reutilizando la estructura validada por el administrador
             val updateRequest = MedicoUpdateRequest(
                 id = medico.id,
                 nombre = medico.nombre,
@@ -170,12 +200,11 @@ class PerfilMedicoFragment : Fragment() {
     private fun ejecutarActualizacionServidor(id: String, request: MedicoUpdateRequest, dialog: AlertDialog) {
         lifecycleScope.launch {
             try {
-                // Hacer uso directo de la ruta PUT "admin/medicos/update/{id}"
                 val response = apiService.actualizarMedico(id, request)
                 if (response.isSuccessful) {
                     Toast.makeText(context, "Perfil actualizado correctamente", Toast.LENGTH_SHORT).show()
                     dialog.dismiss()
-                    cargarPerfilMedico() // Recarga la UI reflejando los nuevos cambios
+                    cargarPerfilMedico()
                 } else {
                     val errorContenido = response.errorBody()?.string() ?: ""
                     android.util.Log.e("PerfilMedico", "Error servidor: $errorContenido")

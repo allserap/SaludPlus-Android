@@ -71,6 +71,9 @@ class DashboardAdminActivity : AppCompatActivity() {
                 actualizarEstiloTabs(pestanaActiva = "gestiones")
             }
 
+
+
+
             btnSalir.setOnClickListener {
                 // Borrar token al salir
                 val prefs = getSharedPreferences("CitasMedicasPrefs", MODE_PRIVATE)

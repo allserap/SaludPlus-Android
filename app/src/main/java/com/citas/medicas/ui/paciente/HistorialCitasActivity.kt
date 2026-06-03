@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.citas.medicas.R
 import com.citas.medicas.data.RetrofitClient
 import com.citas.medicas.models.CitaHistorial
+import com.citas.medicas.ui.AppDatabase
 import com.citas.medicas.ui.paciente.local.entities.toEntity
 import com.citas.medicas.ui.paciente.local.entities.toModel
 import com.google.android.material.bottomnavigation.BottomNavigationView
@@ -103,7 +104,7 @@ class HistorialCitasActivity : AppCompatActivity() {
         val usuarioId = prefs.getString("user_usuarioid", "") ?: ""
 
         lifecycleScope.launch {
-            val db = com.citas.medicas.ui.paciente.local.AppDatabase.getDatabase(this@HistorialCitasActivity)
+            val db = AppDatabase.getDatabase(this@HistorialCitasActivity)
             val citasDao = db.citasDao()
 
             val citasGuardadas = citasDao.obtenerTodasLasCitas()
