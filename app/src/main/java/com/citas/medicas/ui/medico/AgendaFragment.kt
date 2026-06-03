@@ -99,7 +99,6 @@ class AgendaFragment : Fragment(R.layout.fragment_agenda) {
     }
 
     private fun fetchAppointments() {
-        authViewModel.cargarTodasLasCitas()
         authViewModel.cargarPacientes()
         authViewModel.cargarTodasLasCitas(requireContext())
     }

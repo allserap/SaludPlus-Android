@@ -37,7 +37,7 @@ class RecetasFragment : BaseFragment(R.layout.fragment_recetas) {
         setupListeners()
 
         viewLifecycleOwner.lifecycleScope.launch {
-            authViewModel.cargarTodasLasCitas()
+            authViewModel.cargarTodasLasCitas(requireContext())
             authViewModel.cargarMedicamentosCatalogos()
         }
     }
@@ -78,7 +78,7 @@ class RecetasFragment : BaseFragment(R.layout.fragment_recetas) {
                 resetearInterfaz()
                 authViewModel.resetRecetaStatus()
                 authViewModel.resetAsistenciaStatus()
-                authViewModel.cargarTodasLasCitas()
+                authViewModel.cargarTodasLasCitas(requireContext())
             }
         }
     }
