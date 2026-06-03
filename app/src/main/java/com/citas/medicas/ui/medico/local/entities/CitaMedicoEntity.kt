@@ -17,7 +17,7 @@ data class CitaMedicoEntity(
     val especialidadcita: String,
     val horaasignada: String,
     val fechacita: String,
-    val citaUuid: String // 👈 1. ¡AGREGAMOS EL NUEVO CAMPO A LA TABLA!
+    val citaUuid: String? = null
 ) {
     fun toModel(): CitaResponse {
         return CitaResponse(
@@ -31,7 +31,7 @@ data class CitaMedicoEntity(
             especialidadcita = especialidadcita,
             horaasignada = horaasignada,
             fechacita = fechacita,
-            citaUuid = citaUuid // 👈 2. SE LO PASAMOS AL MODELO
+            citaUuid = citaUuid ?: ""
         )
     }
 

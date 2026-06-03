@@ -435,53 +435,43 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch(Dispatchers.IO) {
             withContext(Dispatchers.Main) { _isLoading.value = true }
 
-            // primero entramos a modo offline
             val db = com.citas.medicas.ui.AppDatabase.getDatabase(context)
             val dao = db.citasMedicoDao()
 
-            val citasLocales = dao.obtenerTodasLasCitas().map { it.toModel() }
+            val citasLocales = dao.obtenerTodasLasCitas()
+            android.util.Log.d("AGENDA_OFFLINE", "Citas en Room: ${citasLocales.size}")
 
-            // Si tenemos citas guardadas, las mandamos a la pantalla
-            if (citasLocales.isNotEmpty()) {
+            val modelosLocales = citasLocales.map { it.toModel() }
+            if (modelosLocales.isNotEmpty()) {
                 withContext(Dispatchers.Main) {
-                    _listaCitas.value = citasLocales
+                    _listaCitas.value = modelosLocales
                 }
             }
 
-            //ir por datos de api
             try {
                 val response = repository.obtenerTodasLasCitas()
-
                 if (response.isSuccessful) {
                     val apiResponse = response.body()
                     val citasWrapper = apiResponse?.data
                     val listaReal = citasWrapper?.citas ?: emptyList()
 
+                    android.util.Log.d("AGENDA_OFFLINE", "Citas frescas de la API: ${listaReal.size}")
+
                     withContext(Dispatchers.Main) {
                         _listaCitas.value = listaReal
                     }
 
-                    // Borramos lo viejo y guardamos la nueva lista en el celular
                     dao.limpiarAgenda()
                     val entidadesParaGuardar = listaReal.map {
                         com.citas.medicas.ui.medico.local.entities.CitaMedicoEntity.fromModel(it)
                     }
                     dao.guardarCitas(entidadesParaGuardar)
+                    android.util.Log.d("AGENDA_OFFLINE", "Citas guardadas exitosamente en Room")
 
                 } else {
-                    if (citasLocales.isEmpty()) {
-                        withContext(Dispatchers.Main) {
-                            _error.value = "Error del servidor: ${response.code()}"
-                        }
-                    }
                 }
             } catch (e: Exception) {
-                // Solo mostramos error si el médico está offline y su base de datos local está vacía.
-                if (citasLocales.isEmpty()) {
-                    withContext(Dispatchers.Main) {
-                        _error.value = "Modo sin conexión y sin citas guardadas."
-                    }
-                }
+                android.util.Log.e("AGENDA_OFFLINE", "Error de red al buscar citas", e)
             } finally {
                 withContext(Dispatchers.Main) { _isLoading.value = false }
             }

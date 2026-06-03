@@ -23,7 +23,7 @@ import com.citas.medicas.ui.paciente.local.entities.UnidadMedicaEntity
         MedicoPerfilEntity::class,
         CitaMedicoEntity::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
