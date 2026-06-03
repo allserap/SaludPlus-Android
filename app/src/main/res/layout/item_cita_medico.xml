@@ -84,11 +84,11 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
             android:background="@drawable/bg_tabs"
-            android:backgroundTint="@color/citas_secondary"
+            android:backgroundTint="@color/status_canceled_light"
             android:paddingHorizontal="8dp"
             android:paddingVertical="4dp"
             android:text="Confirmada"
-            android:textColor="@color/citas_white"
+            android:textColor="@color/citas_primary"
             android:textSize="12sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/tvHoraCita" />

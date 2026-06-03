@@ -99,10 +99,9 @@ interface ApiService {
     ): Response<CatalogosResponse<List<PacienteResponse>>>
 
     // Obtener histórico
-    @GET("admin/estadisticas/historico_citas/")
+    @GET("admin/estadisticas/historico_citas")
     suspend fun obtenerHistoricoCitas(
-        @Header("Authorization") token: String?,
-        @Path("id") unidadMedicaId: Int
+        @Query("id") unidadMedicaId: Int?
     ): Response<ApiResponse<List<HistoricoCitasResponse>>>
 
     // Actualizar paciente por ID
@@ -198,7 +197,7 @@ interface ApiService {
     @GET("medico/medicina")
     suspend fun obtenerTodosLosMedicamentos(): Response<ApiResponse<MedicamentoWrapper>>
 
-    @PATCH("medico/asistencia/update/{id}")
+    @POST("medico/asistencia/update/{id}/")
     suspend fun marcarAsistenciaCita(
         @Path("id") citaUuid: String,
         @Body request: AsistenciaRequest

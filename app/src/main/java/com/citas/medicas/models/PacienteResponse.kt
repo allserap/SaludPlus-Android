@@ -40,5 +40,5 @@ data class PacienteResponse (
             "medicamentos",
             "MEDICAMENTOS_RECURRENTE"
         ]
-    )    val medicamentosRecurrentes: String? = null
+    )    val medicamentosRecurrentes: String? = null,
 )

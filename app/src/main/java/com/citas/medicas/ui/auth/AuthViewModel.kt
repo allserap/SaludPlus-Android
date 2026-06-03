@@ -3,6 +3,8 @@ package com.citas.medicas.ui.auth
 import android.app.Application
 import android.content.Context
 import android.util.Log
+import android.widget.Toast
+import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -20,7 +22,7 @@ import com.citas.medicas.models.UnidadMedicaResponse
 import com.citas.medicas.models.UnidadEspecialidadRequest
 import com.citas.medicas.models.UnidadEspecialidadResponse
 import com.citas.medicas.models.ApiResponse
-import com.citas.medicas.models.CitaItem
+import com.citas.medicas.models.AsistenciaRequest
 import com.citas.medicas.models.CitaResponse
 import com.citas.medicas.models.DetalleRecetaItemRequest
 import com.citas.medicas.models.HistoricoCitasResponse
@@ -89,6 +91,10 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     private val _recetaProcesadaExito = MutableLiveData<Boolean>()
     val recetaProcesadaExito: LiveData<Boolean> get() = _recetaProcesadaExito
 
+    // --- Asistencia Cita ---
+    private val _asistenciaMarcadaExito = MutableLiveData<Boolean>()
+    val asistenciaMarcadaExito: LiveData<Boolean> get() = _asistenciaMarcadaExito
+
     // --- Mostrar histórico ---
     private val _historicoCitas = MutableLiveData<List<HistoricoCitasResponse>>()
     val historicoCitas: LiveData<List<HistoricoCitasResponse>> get() = _historicoCitas
@@ -149,6 +155,32 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun actualizarAsistenciaCita(citaUuid: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val request = AsistenciaRequest(asistio = true)
+                val response = repository.marcarAsistenciaCita(citaUuid, request)
+
+                withContext(Dispatchers.Main) {
+                    if (response.isSuccessful && response.body()?.success == true) {
+                        _asistenciaMarcadaExito.value = true
+                        Log.d("API_ASISTENCIA", "Asistencia marcada con éxito para la cita autónoma: $citaUuid")
+                    } else {
+                        _error.value = "Error al confirmar la asistencia: ${response.code()}"
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    _error.value = "Error de red en asistencia: ${e.message}"
+                }
+            }
+        }
+    }
+
+    fun resetAsistenciaStatus() {
+        _asistenciaMarcadaExito.value = false
+    }
+
     fun guardarRecetaCompleta(
         pacienteId: Int,
         cabecera: RecetaRequest,
@@ -156,50 +188,48 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     ) {
         viewModelScope.launch(Dispatchers.IO) {
             withContext(Dispatchers.Main) { _isLoading.value = true }
-
             try {
-                // 1. Petición de la Cabecera
+                // 1) CABECERA: se crea la receta enviando el pacienteId
                 val responseCabecera = repository.crearRecetaCabecera(pacienteId, cabecera)
 
-                if (responseCabecera.isSuccessful && responseCabecera.body()?.success == true) {
-                    val recetaIdAsignado = responseCabecera.body()?.data?.recetaId
-
-                    if (recetaIdAsignado != null && recetaIdAsignado != 0) {
-                        // 2. Construimos la lista de medicamentos inyectando el ID real retornado
-                        val listaDetallesFinal = constructorDetalles(recetaIdAsignado)
-
-                        // 3. Petición del Desglose de Medicamentos
-                        val responseDetalle = repository.agregarMedicamentosAReceta(listaDetallesFinal)
-
-                        withContext(Dispatchers.Main) {
-                            if (responseDetalle.isSuccessful && responseDetalle.body()?.success == true) {
-                                _recetaProcesadaExito.value = true
-                            } else {
-                                val errorBodyDetalle = responseDetalle.errorBody()?.string()
-                                val codigoHttp = responseDetalle.code()
-
-                                // Esto pintará en consola la razón exacta (Ej: Llave foránea inexistente, ID inválido, etc.)
-                                android.util.Log.e("API_ERROR_DETALLE", "Código: $codigoHttp | Cuerpo: $errorBodyDetalle")
-
-                                _error.value = "Error $codigoHttp en desglose: $errorBodyDetalle"
-                            }
-                        }
-                    } else {
-                        withContext(Dispatchers.Main) { _error.value = "Error: El servidor no retornó un ID de receta válido" }
-                    }
-                } else {
+                if (!responseCabecera.isSuccessful || responseCabecera.body()?.success != true) {
+                    val errorBody = responseCabecera.errorBody()?.string()
                     withContext(Dispatchers.Main) {
-                        val errorBody = responseCabecera.errorBody()?.string()
-                        val codigoHttp = responseCabecera.code()
-                        // Esto te dirá exactamente qué no le gusta a tu Backend
-                        _error.value = "Error $codigoHttp: $errorBody"
-                        android.util.Log.e("API_ERROR", "Cuerpo del error: $errorBody")
+                        _error.value = "Error ${responseCabecera.code()}: $errorBody"
                     }
+                    android.util.Log.e("API_ERROR", "Cabecera: $errorBody")
+                    return@launch
                 }
+
+                val recetaData = responseCabecera.body()?.data
+                val recetaIdAsignado = recetaData?.recetaId ?: 0
+                val citaIdConfirmado = recetaData?.citaId
+
+                if (recetaIdAsignado == 0 || citaIdConfirmado.isNullOrEmpty()) {
+                    withContext(Dispatchers.Main) {
+                        _error.value = "El servidor no retornó recetaId/citaId válidos"
+                    }
+                    return@launch
+                }
+
+                // 2) DETALLE: medicamentos con el recetaId real
+                val listaDetallesFinal = constructorDetalles(recetaIdAsignado)
+                val responseDetalle = repository.agregarMedicamentosAReceta(listaDetallesFinal)
+
+                if (!responseDetalle.isSuccessful || responseDetalle.body()?.success != true) {
+                    val errorBody = responseDetalle.errorBody()?.string()
+                    withContext(Dispatchers.Main) {
+                        _error.value = "Error ${responseDetalle.code()} en desglose: $errorBody"
+                    }
+                    Log.e("API_ERROR_DETALLE", "Detalle: $errorBody")
+                    return@launch
+                }
+
+                withContext(Dispatchers.Main) { _recetaProcesadaExito.value = true }
+                actualizarAsistenciaCita(citaIdConfirmado)
+
             } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    _error.value = "Fallo de comunicación: ${e.message}"
-                }
+                withContext(Dispatchers.Main) { _error.value = "Fallo de comunicación: ${e.message}" }
             } finally {
                 withContext(Dispatchers.Main) { _isLoading.value = false }
             }
@@ -254,9 +284,9 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                         Log.d("API_SUCCESS", "Pacientes cargados en UI: ${listaPacientesReal.size}")
                     }
                 } else {
-                    withContext(Dispatchers.Main) {
+                    /*withContext(Dispatchers.Main) {
                         _error.value = "Error al obtener pacientes: ${response.code()}"
-                    }
+                    }*/
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
@@ -287,9 +317,9 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                         Log.d("API_SUCCESS", "Médicos cargados en UI: ${listaMedicosReal.size}")
                     }
                 } else {
-                    withContext(Dispatchers.Main) {
+                    /*withContext(Dispatchers.Main) {
                         _error.value = "Error del servidor: ${response.code()}"
-                    }
+                    }*/
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
@@ -360,7 +390,6 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                     }
                 } else {
                     withContext(Dispatchers.Main) {
-                        // Esto te ayudará a ver si da otro código diferente a 500
                         _error.value = "Error del servidor al cargar medicinas: ${response.code()}"
                     }
                 }
@@ -372,32 +401,29 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun cargarReporteHistorico(unidadMedicaId: Int) {
+    fun cargarReporteHistorico(unidadMedicaId: Int?) {
         viewModelScope.launch(Dispatchers.IO) {
             withContext(Dispatchers.Main) { _isLoading.value = true }
             try {
-                val context = getApplication<Application>().applicationContext
-                val prefs = context.getSharedPreferences("CitasMedicasPrefs", Context.MODE_PRIVATE)
-                val tokenDirecto = prefs.getString("token_jwt", "") ?: ""
-                val tokenLimpio = if (tokenDirecto.startsWith("Bearer ", ignoreCase = true)) tokenDirecto.substring(7).trim() else tokenDirecto
-                val authHeader = if (tokenLimpio.isNotEmpty()) "Bearer $tokenLimpio" else null
 
-                val response = repository.obtenerHistoricoCitas(authHeader, unidadMedicaId)
+                // Si es null o -1, mandamos null numérico. Retrofit omitirá el parámetro limpiamente.
+                val idQueryParam: Int? = if (unidadMedicaId == null || unidadMedicaId == -1) null else unidadMedicaId
 
+                val response = repository.obtenerHistoricoCitas(idQueryParam)
+
+                // REEMPLAZA TEMPORALMENTE ESTE BLOQUE EN TU VIEWMODEL PARA DETECTAR EL ESTADO
                 if (response.isSuccessful) {
                     val listaReal = response.body()?.data ?: emptyList()
-                    withContext(Dispatchers.Main) {
-                        _historicoCitas.value = listaReal
-                        Log.d("API_GRAPH", "Datos de histórico cargados: ${listaReal.size} registros")
-                    }
+                    Log.d("API_GRAPH_RESULT", "¡ÉXITO! Recibidos ${listaReal.size} elementos.")
+                    withContext(Dispatchers.Main) { _historicoCitas.value = listaReal }
                 } else {
-                    withContext(Dispatchers.Main) {
-                        _error.value = "Error al obtener estadísticas: ${response.code()}"
-                    }
+                    val errorRaw = response.errorBody()?.string()
+                    Log.e("API_GRAPH_RESULT", "¡ERROR HTTP! Código: ${response.code()} | Detalle: $errorRaw")
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
                     _error.value = "Error de red en gráficos: ${e.message}"
+                    Log.e("API_GRAPH", "Excepción: ${e.message}", e)
                 }
             } finally {
                 withContext(Dispatchers.Main) { _isLoading.value = false }
@@ -426,9 +452,9 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                         _listaCitas.value = listaReal
                     }
                 } else {
-                    withContext(Dispatchers.Main) {
-                        _error.value = "Error del servidor: ${response.code()}"
-                    }
+                    /*withContext(Dispatchers.Main) {
+                        _error.value = "Nohay: ${response.code()}"
+                    }*/
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
