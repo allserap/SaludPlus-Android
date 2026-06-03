@@ -83,7 +83,7 @@ class AgendaFragment : Fragment(R.layout.fragment_agenda) {
     }
 
     private fun fetchAppointments() {
-        authViewModel.cargarTodasLasCitas()
+        authViewModel.cargarTodasLasCitas(requireContext())
     }
 
     override fun onDestroyView() {

@@ -405,34 +405,56 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun cargarTodasLasCitas() {
+    fun cargarTodasLasCitas(context: android.content.Context) {
         viewModelScope.launch(Dispatchers.IO) {
             withContext(Dispatchers.Main) { _isLoading.value = true }
 
+            // primero entramos a modo offline
+            val db = com.citas.medicas.ui.AppDatabase.getDatabase(context)
+            val dao = db.citasMedicoDao()
+
+            val citasLocales = dao.obtenerTodasLasCitas().map { it.toModel() }
+
+            // Si tenemos citas guardadas, las mandamos a la pantalla
+            if (citasLocales.isNotEmpty()) {
+                withContext(Dispatchers.Main) {
+                    _listaCitas.value = citasLocales
+                }
+            }
+
+            //ir por datos de api
             try {
                 val response = repository.obtenerTodasLasCitas()
 
                 if (response.isSuccessful) {
-                    // 1. Especificamos explícitamente el tipo de dato esperado de la API
-                    val apiResponse: ApiResponse<AgendaCitasWrapper>? = response.body()
-
-                    // 2. Extraemos el wrapper interno de forma segura
-                    val citasWrapper: AgendaCitasWrapper? = apiResponse?.data
-
-                    // 3. Extraemos la lista de citas real usando el campo interno de tu wrapper
+                    val apiResponse = response.body()
+                    val citasWrapper = apiResponse?.data
                     val listaReal = citasWrapper?.citas ?: emptyList()
 
                     withContext(Dispatchers.Main) {
                         _listaCitas.value = listaReal
                     }
+
+                    // Borramos lo viejo y guardamos la nueva lista en el celular
+                    dao.limpiarAgenda()
+                    val entidadesParaGuardar = listaReal.map {
+                        com.citas.medicas.ui.medico.local.entities.CitaMedicoEntity.fromModel(it)
+                    }
+                    dao.guardarCitas(entidadesParaGuardar)
+
                 } else {
-                    withContext(Dispatchers.Main) {
-                        _error.value = "Error del servidor: ${response.code()}"
+                    if (citasLocales.isEmpty()) {
+                        withContext(Dispatchers.Main) {
+                            _error.value = "Error del servidor: ${response.code()}"
+                        }
                     }
                 }
             } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    _error.value = "Fallo de conexión: ${e.message}"
+                // Solo mostramos error si el médico está offline y su base de datos local está vacía.
+                if (citasLocales.isEmpty()) {
+                    withContext(Dispatchers.Main) {
+                        _error.value = "Modo sin conexión y sin citas guardadas."
+                    }
                 }
             } finally {
                 withContext(Dispatchers.Main) { _isLoading.value = false }

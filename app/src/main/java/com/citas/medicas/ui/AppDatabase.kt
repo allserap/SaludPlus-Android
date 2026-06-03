@@ -4,7 +4,9 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import com.citas.medicas.ui.medico.local.dao.CitasMedicoDao
 import com.citas.medicas.ui.medico.local.dao.MedicoPerfilDao
+import com.citas.medicas.ui.medico.local.entities.CitaMedicoEntity
 import com.citas.medicas.ui.medico.local.entities.MedicoPerfilEntity
 import com.citas.medicas.ui.paciente.local.dao.CitasDao
 import com.citas.medicas.ui.paciente.local.dao.PerfilDao
@@ -14,8 +16,14 @@ import com.citas.medicas.ui.paciente.local.entities.PerfilEntity
 import com.citas.medicas.ui.paciente.local.entities.UnidadMedicaEntity
 
 @Database(
-    entities = [CitaEntity::class, PerfilEntity::class, UnidadMedicaEntity::class, MedicoPerfilEntity::class],
-    version = 2,
+    entities = [
+        CitaEntity::class,
+        PerfilEntity::class,
+        UnidadMedicaEntity::class,
+        MedicoPerfilEntity::class,
+        CitaMedicoEntity::class
+    ],
+    version = 3,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -25,6 +33,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun perfilDao(): PerfilDao
     abstract fun unidadMedicaDao(): UnidadMedicaDao
     abstract fun medicoPerfilDao(): MedicoPerfilDao
+    abstract fun citasMedicoDao(): CitasMedicoDao
 
     companion object {
         @Volatile
