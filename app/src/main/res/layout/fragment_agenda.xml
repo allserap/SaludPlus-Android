@@ -33,7 +33,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="domingo, 19 abr"
-                android:textColor="@color/citas_primary" />
+                android:textColor="@color/citas_primary"
+                android:textSize="18sp"/>
         </LinearLayout>
 
         <androidx.recyclerview.widget.RecyclerView

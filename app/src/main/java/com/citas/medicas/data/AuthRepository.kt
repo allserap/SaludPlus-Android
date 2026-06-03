@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import com.citas.medicas.models.AgendaCitasWrapper
 import com.citas.medicas.models.ApiResponse
+import com.citas.medicas.models.AsistenciaRequest
 import com.citas.medicas.models.CatalogosResponse
 import com.citas.medicas.models.DetalleRecetaItemRequest
 import com.citas.medicas.models.DetalleRecetaResponse
@@ -18,7 +19,6 @@ import com.citas.medicas.models.RecetaResponse
 import com.citas.medicas.models.RegistroRequest
 import com.citas.medicas.models.UnidadEspecialidadRequest
 import com.citas.medicas.models.UnidadEspecialidadResponse
-import kotlinx.coroutines.runBlocking
 import retrofit2.Response
 
 class AuthRepository(private val context: Context) {
@@ -127,8 +127,11 @@ class AuthRepository(private val context: Context) {
     suspend fun obtenerUnidadesEspecialidad(token: String? = null): Response<ApiResponse<List<UnidadEspecialidadResponse>>> {
     return apiService.obtenerUnidadesEspecialidad(token)}
 
-    suspend fun obtenerHistoricoCitas(token: String?, unidadMedicaId: Int): Response<ApiResponse<List<HistoricoCitasResponse>>> {
-        return apiService.obtenerHistoricoCitas(token, unidadMedicaId)
+    suspend fun marcarAsistenciaCita(citaUuid: String, request: AsistenciaRequest) =
+        apiService.marcarAsistenciaCita(citaUuid, request)
+
+    suspend fun obtenerHistoricoCitas(unidadMedicaId: Int?): Response<ApiResponse<List<HistoricoCitasResponse>>> {
+        return apiService.obtenerHistoricoCitas(unidadMedicaId)
     }
 
     suspend fun obtenerTodasLasCitas(): Response<ApiResponse<AgendaCitasWrapper>> {

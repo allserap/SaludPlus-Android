@@ -63,7 +63,7 @@ class DashboardAdminActivity : AppCompatActivity() {
                 actualizarEstiloTabs(pestanaActiva = "usuarios")
             }
             tabEstadisticas.setOnClickListener {
-                replaceFragment(EstadisticasCitasFragment())
+                replaceFragment(EstadisticasFragment())
                 actualizarEstiloTabs(pestanaActiva = "estadisticas")
             }
             tabGestiones.setOnClickListener {

@@ -95,7 +95,7 @@ data class UnidadEspecialidadResponse(
 )
 
 data class HistoricoCitasResponse(
-    @SerializedName("id") val id: Int,
+    @SerializedName("id") val id: String,
     @SerializedName("pacienteId") val pacienteId: Int,
     @SerializedName("medicoId") val medicoId: Int,
     @SerializedName("unidadMedicaId") val unidadMedicaId: Int,
@@ -253,7 +253,8 @@ data class CitaResponse(
     @SerializedName("especialidadid") val especialidadid: Int,
     @SerializedName("especialidadcita") val especialidadcita: String,
     @SerializedName("horaasignada") val horaasignada: String,
-    @SerializedName("fechacita") val fechacita: String
+    @SerializedName("fechacita") val fechacita: String,
+    @SerializedName("citaUuid") val citaUuid: String
 )
 
 data class MedicamentoResponse(

@@ -9,6 +9,9 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.citas.medicas.R
 import com.citas.medicas.databinding.FragmentAgendaBinding
 import com.citas.medicas.ui.auth.AuthViewModel
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 class AgendaFragment : Fragment(R.layout.fragment_agenda) {
 
@@ -23,15 +26,30 @@ class AgendaFragment : Fragment(R.layout.fragment_agenda) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentAgendaBinding.bind(view)
 
+        setupFechaActual()
+
         setupRecyclerView()
         setupObservers()
         fetchAppointments()
     }
 
+    private fun setupFechaActual() {
+        // Formato deseado: "domingo, 19 abr"
+        val formatter = DateTimeFormatter.ofPattern("EEEE, d MMM", Locale("es", "ES"))
+
+        val fechaHoy = LocalDate.now().format(formatter)
+
+        // Asignamos el texto formateado al TextView de tu XML
+        binding.tvFechaActual.text = fechaHoy
+    }
+
     private fun setupRecyclerView() {
         citasAdapter = CitasAdapter(emptyList()) { idPacienteSeleccionado ->
-            val dash = (activity as? DashboardMedicoActivity)
-            //dash?.navigateToHistorial(idPacienteSeleccionado)
+            // 1. Instanciar el BottomSheet con el ID del paciente clicado
+            val bottomSheet = HistorialBottomSheetFragment.newInstance(idPacienteSeleccionado)
+
+            // 2. Mostrarlo inmediatamente sobre la pantalla actual
+            bottomSheet.show(childFragmentManager, "HistorialBottomSheet")
         }
 
         binding.rvCitas.apply {
@@ -41,8 +59,7 @@ class AgendaFragment : Fragment(R.layout.fragment_agenda) {
     }
 
     private fun setupObservers() {
-        // Eliminamos por completo CUALQUIER observador previo asignado a estas variables,
-        // sin importar qué ciclo de vida (viejo o nuevo) lo esté reclamando.
+        // Eliminamos por completo CUALQUIER observador previo asignado a estas variables
         authViewModel.listaCitas.removeObservers(viewLifecycleOwner)
         authViewModel.error.removeObservers(viewLifecycleOwner)
         authViewModel.isLoading.removeObservers(viewLifecycleOwner)
@@ -56,7 +73,6 @@ class AgendaFragment : Fragment(R.layout.fragment_agenda) {
 
                 // Compara contra las 3 variantes que necesitas
                 estadoCita == "confirmada" ||
-                        estadoCita == "pendiente" ||
                         estadoCita == "reprogramada"
             }
 
@@ -83,6 +99,8 @@ class AgendaFragment : Fragment(R.layout.fragment_agenda) {
     }
 
     private fun fetchAppointments() {
+        authViewModel.cargarTodasLasCitas()
+        authViewModel.cargarPacientes()
         authViewModel.cargarTodasLasCitas(requireContext())
     }
 

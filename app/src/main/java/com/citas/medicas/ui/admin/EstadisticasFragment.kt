@@ -2,9 +2,9 @@ package com.citas.medicas.ui.admin
 
 import android.graphics.Color
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.AdapterView
-import android.widget.ArrayAdapter
 import androidx.fragment.app.viewModels
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.BarData
@@ -16,32 +16,21 @@ import com.github.mikephil.charting.data.PieEntry
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
 import com.citas.medicas.R
 import com.citas.medicas.databinding.FragmentEstadisticasBinding
+import com.citas.medicas.models.UnidadMedicaResponse
+import com.citas.medicas.models.HistoricoCitasResponse
 import com.citas.medicas.ui.auth.AuthViewModel
 import com.citas.medicas.ui.base.BaseFragment
+import com.citas.medicas.utils.configurarConHint
 
-// Modelos mapeados localmente según la respuesta de tu API
-data class CitaFormateada(
-    val id: Int,
-    val estado: String,
-    val unidad_medica_id: Int,
-    val unidad_medica: String
-)
-
-data class UnidadMedicaUI(val id: Int, val nombre: String) {
-    override fun toString(): String = nombre
-}
-
-class EstadisticasCitasFragment : BaseFragment(R.layout.fragment_estadisticas) {
+class EstadisticasFragment : BaseFragment(R.layout.fragment_estadisticas) {
 
     // region Inicializacion
     private var _binding: FragmentEstadisticasBinding? = null
     private val binding get() = _binding!!
 
-    // verificar
     private val authViewModel: AuthViewModel by viewModels()
 
-    private var todasLasCitas: List<CitaFormateada> = emptyList()
-    private var listaUnidades: List<UnidadMedicaUI> = emptyList()
+    private var listaUnidades: List<UnidadMedicaResponse> = emptyList()
     // endregion
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -51,19 +40,24 @@ class EstadisticasCitasFragment : BaseFragment(R.layout.fragment_estadisticas) {
         setupObservers()
         setupListeners()
 
-        // Llamada inicial para disparar el flujo del repositorio/API
-        // authViewModel.cargarReporteHistorico()
+        // 1. Cargamos primero los catálogos (Unidades médicas) para llenar el Spinner.
+        authViewModel.cargarCatalogos()
 
-        simularRespuestaApi()
+        // 2. Cargamos el reporte histórico inicial general (null traerá el consolidado global de la API)
+        authViewModel.cargarReporteHistorico(null)
     }
 
     private fun setupListeners() {
         binding.spUnidades.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                if (listaUnidades.isNotEmpty()) {
-                    val unidadSeleccionada = listaUnidades[position]
-                    // Ejecuta el filtro dinámico e inmediato en el hilo principal
-                    calcularYMostrarEstadisticas(unidadSeleccionada.id)
+                // position 0 = hint → ignorar. Solo procesar selecciones reales.
+                if (position > 0 && (position - 1) < listaUnidades.size) {
+                    val unidadSeleccionada = listaUnidades[position - 1]
+                    if (unidadSeleccionada.id == -1) {
+                        authViewModel.cargarReporteHistorico(null)
+                    } else {
+                        authViewModel.cargarReporteHistorico(unidadSeleccionada.id)
+                    }
                 }
             }
             override fun onNothingSelected(parent: AdapterView<*>?) {}
@@ -71,72 +65,59 @@ class EstadisticasCitasFragment : BaseFragment(R.layout.fragment_estadisticas) {
     }
 
     private fun setupObservers() {
-        // modificar lógica
-        /*
-        authViewModel.historicoCitasResponse.observe(viewLifecycleOwner) { response ->
-            if (response != null) {
-                // Tu endpoint separa en 'proximas' y 'pasadas'; aquí las unificamos en Frontend
-                todasLasCitas = response.proximas + response.pasadas
-                mapearUnidadesMedicas(todasLasCitas)
+        // Observer para el histórico de citas que viene del servidor
+        authViewModel.historicoCitas.observe(viewLifecycleOwner) { listaCitas ->
+
+            Log.d("API_GRAPH_CHECK", "¿La lista es nula? ${listaCitas == null}. Tamaño: ${listaCitas?.size ?: 0}")
+            if (listaCitas != null) {
+                // Pintamos directamente la respuesta del backend sin filtros locales innecesarios
+                mostrarEstadisticasEnGraficos(listaCitas)
             }
         }
-        */
+
+        // Observer para el Spinner de unidades médicas
+        authViewModel.unidadesMedicas.observe(viewLifecycleOwner) { lista ->
+            if (lista != null) {
+                val opcionTodas = UnidadMedicaResponse(id = -1, unidadMedica = "Todas las unidades")
+                listaUnidades = listOf(opcionTodas) + lista
+
+                val nombres = listaUnidades.map { it.unidadMedica }.toTypedArray()
+                binding.spUnidades.configurarConHint(nombres, "Seleccione unidad médica")
+            }
+        }
     }
 
-    private fun mapearUnidadesMedicas(citas: List<CitaFormateada>) {
-        // Extrae combinaciones únicas de id y nombre directamente de la respuesta general
-        val unidadesUnicas = citas.distinctBy { it.unidad_medica_id }
-            .map { UnidadMedicaUI(it.unidad_medica_id, it.unidad_medica) }
-            .sortedBy { it.nombre }
+    private fun mostrarEstadisticasEnGraficos(citas: List<HistoricoCitasResponse>) {
+        Log.d("DEBUG_GRAFICOS", "Pintando gráficos con ${citas.size} registros devueltos por el servidor.")
 
-        // Agrega la opción comodín para ver consolidados globales
-        listaUnidades = listOf(UnidadMedicaUI(-1, "Todas las Unidades")) + unidadesUnicas
+        // Sumatorias limpias basadas en las banderas calculadas por tu base de datos
+        val asistidas = citas.sumOf { it.asistida }
+        val canceladas = citas.sumOf { it.cancelada }
+        val reprogramadas = citas.sumOf { it.reprogramada }
+        val noAsistidas = citas.sumOf { it.noAsistida }
 
-        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, listaUnidades)
-        binding.spUnidades.adapter = adapter
-    }
+        Log.d("DEBUG_GRAFICOS", "Resultados -> Asistidas: $asistidas, Canceladas: $canceladas, Reprogramadas: $reprogramadas, NoAsistidas: $noAsistidas")
 
-    private fun calcularYMostrarEstadisticas(unidadId: Int) {
-        // Filtrado reactivo en memoria
-        val citasFiltradas = if (unidadId == -1) {
-            todasLasCitas
-        } else {
-            todasLasCitas.filter { it.unidad_medica_id == unidadId }
-        }
+        // Opcional: Aquí seteas tus TextViews en caso de que utilices contadores de texto independientes
+        // binding.tvAsistidas.text = asistidas.toString()
+        // binding.tvCanceladas.text = canceladas.toString()
 
-        // Conteo usando predicados rápidos de colecciones en Kotlin
-        val total = citasFiltradas.size
-        val completadas = citasFiltradas.count { it.estado.equals("completada", ignoreCase = true) }
-        val canceladas = citasFiltradas.count { it.estado.equals("cancelada", ignoreCase = true) }
-        val reprogramadas = citasFiltradas.count { it.estado.equals("reprogramada", ignoreCase = true) }
-
-        val tasaCompletitud = if (total > 0) (completadas.toFloat() / total.toFloat()) * 100 else 0f
-
-        // Asignación a los componentes visuales
-        with(binding) {
-            tvCompletadas.text = completadas.toString()
-            tvCanceladas.text = canceladas.toString()
-            tvReprogramadas.text = reprogramadas.toString()
-
-            tvTotalCitas.text = "Total de Citas: $total"
-            tvPorcentajeCompletadas.text = String.format("Tasa de completitud: %.1f%%", tasaCompletitud)
-        }
-
-        // Actualización e invalidación de los componentes de gráficos
-        renderBarChart(completadas, canceladas)
-        renderPieChart(completadas, canceladas, reprogramadas)
+        // Pasamos los números listos a las funciones de renderizado de MPAndroidChart
+        renderBarChart(asistidas, canceladas)
+        renderPieChart(asistidas, canceladas, reprogramadas)
     }
 
     // region RenderizadoGraficos
-    private fun renderBarChart(completadas: Int, canceladas: Int) {
+    private fun renderBarChart(asistidas: Int, canceladas: Int) {
         val entries = arrayListOf(
-            BarEntry(0f, completadas.toFloat()),
+            BarEntry(0f, asistidas.toFloat()),
             BarEntry(1f, canceladas.toFloat())
         )
 
         val dataSet = BarDataSet(entries, "").apply {
             colors = listOf(Color.parseColor("#2ECC71"), Color.parseColor("#E74C3C"))
             valueTextSize = 12f
+            valueTextColor = Color.BLACK
         }
 
         binding.barChart.apply {
@@ -147,7 +128,7 @@ class EstadisticasCitasFragment : BaseFragment(R.layout.fragment_estadisticas) {
             axisLeft.setDrawGridLines(false)
 
             xAxis.apply {
-                valueFormatter = IndexAxisValueFormatter(listOf("Completadas", "Canceladas"))
+                valueFormatter = IndexAxisValueFormatter(listOf("Asistidas", "Canceladas"))
                 position = XAxis.XAxisPosition.BOTTOM
                 granularity = 1f
                 isGranularityEnabled = true
@@ -158,18 +139,21 @@ class EstadisticasCitasFragment : BaseFragment(R.layout.fragment_estadisticas) {
         }
     }
 
-    private fun renderPieChart(completadas: Int, canceladas: Int, reprogramadas: Int) {
+    private fun renderPieChart(asistidas: Int, canceladas: Int, reprogramadas: Int) {
         val entries = arrayListOf(
-            PieEntry(completadas.toFloat(), "Completadas"),
+            PieEntry(asistidas.toFloat(), "Asistidas"),
             PieEntry(canceladas.toFloat(), "Canceladas"),
-            PieEntry(reprogramadas.toFloat(), "Reprogramadas")
+            PieEntry(reprogramadas.toFloat(), "Reprogramadas"),
         )
 
-        val dataSet = PieDataSet(entries, "").apply {
+        // Filtramos las entradas con valor 0 para evitar distorsiones visuales en el PieChart
+        val entriesFiltradas = entries.filter { it.value > 0 }
+
+        val dataSet = PieDataSet(entriesFiltradas, "").apply {
             colors = listOf(
-                Color.parseColor("#2ECC71"),
-                Color.parseColor("#E74C3C"),
-                Color.parseColor("#F39C12")
+                Color.parseColor("#2ECC71"), // Verde
+                Color.parseColor("#E74C3C"), // Rojo
+                Color.parseColor("#F39C12")  // Naranja
             )
             valueTextSize = 12f
             valueTextColor = Color.WHITE
@@ -188,28 +172,13 @@ class EstadisticasCitasFragment : BaseFragment(R.layout.fragment_estadisticas) {
     }
     // endregion
 
-    private fun simularRespuestaApi() {
-        val pasadasMock = listOf(
-            CitaFormateada(1, "completada", 101, "Hospital Central"),
-            CitaFormateada(2, "cancelada", 101, "Hospital Central"),
-            CitaFormateada(3, "completada", 102, "Clínica San Benito"),
-            CitaFormateada(4, "completada", 102, "Clínica San Benito")
-        )
-        val proximasMock = listOf(
-            CitaFormateada(5, "reprogramada", 101, "Hospital Central"),
-            CitaFormateada(6, "pendiente", 102, "Clínica San Benito")
-        )
-
-        todasLasCitas = pasadasMock + proximasMock
-        mapearUnidadesMedicas(todasLasCitas)
-    }
-
     override fun resetearInterfaz() {
-        // añadir lógica
+        // Al resetear la interfaz limpiamos los gráficos pasando una lista vacía
+        mostrarEstadisticasEnGraficos(emptyList())
     }
 
     override fun onDestroyView() {
-        // Limpieza estricta de gráficos y listeners para mitigar warnings del Recolector de Basura
+        // Prevención estricta de fugas de memoria (Memory Leaks)
         _binding?.let {
             it.barChart.clear()
             it.pieChart.clear()
