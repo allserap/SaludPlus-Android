@@ -82,19 +82,16 @@
             android:focusable="true"
             android:gravity="center"
             android:orientation="vertical"
-            android:padding="8dp">
-
+            android:background="@drawable/bg_tab_item" android:padding="8dp">
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="📅"
                 android:textSize="18sp" />
-
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Agenda"
-                android:textColor="@color/citas_primary"
                 android:textSize="12sp"/>
         </LinearLayout>
 
@@ -107,14 +104,12 @@
             android:focusable="true"
             android:gravity="center"
             android:orientation="vertical"
-            android:padding="8dp">
-
+            android:background="@drawable/bg_tab_item" android:padding="8dp">
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="📋"
                 android:textSize="18sp" />
-
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -131,14 +126,12 @@
             android:focusable="true"
             android:gravity="center"
             android:orientation="vertical"
-            android:padding="8dp">
-
+            android:background="@drawable/bg_tab_item" android:padding="8dp">
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="💊"
                 android:textSize="18sp" />
-
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -155,14 +148,12 @@
             android:focusable="true"
             android:gravity="center"
             android:orientation="vertical"
-            android:padding="8dp">
-
+            android:background="@drawable/bg_tab_item" android:padding="8dp">
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="👥"
                 android:textSize="18sp" />
-
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

@@ -42,13 +42,6 @@ class HistorialFragment : BaseFragment(R.layout.fragment_historial) {
             authViewModel.cargarPacientes()
         }
 
-        // Verificar si viene direccionado de forma directa por la Agenda
-        arguments?.let {
-            val idAgenda = it.getInt("PACIENTE_ID", -1)
-            if (idAgenda != -1) {
-                mapearPacienteDesdeAgenda(idAgenda)
-            }
-        }
     }
 
     private fun setupSpinnerTipoSangre() {
@@ -70,11 +63,6 @@ class HistorialFragment : BaseFragment(R.layout.fragment_historial) {
                 binding.autoCompleteConsultar.setAdapter(null)
             } else {
                 configurarBuscador(pacientes)
-
-                arguments?.let {
-                    val idAgenda = it.getInt("PACIENTE_ID", -1)
-                    if (idAgenda != -1) mapearPacienteDesdeAgenda(idAgenda)
-                }
             }
         }
 
@@ -129,17 +117,6 @@ class HistorialFragment : BaseFragment(R.layout.fragment_historial) {
                 this.usuarioIdRespaldo = it.usuarioId
                 llenarFormulario(it)
             }
-        }
-    }
-
-    private fun mapearPacienteDesdeAgenda(pacienteId: Int) {
-        val pacientes = authViewModel.listaPacientes.value
-        val paciente = pacientes?.find { it.pacienteId == pacienteId }
-        paciente?.let {
-            this.pacienteSeleccionado = it
-            this.usuarioIdRespaldo = it.usuarioId
-            binding.autoCompleteConsultar.setText("${it.nombre} ${it.apellido} (${it.dui})", false)
-            llenarFormulario(it)
         }
     }
 

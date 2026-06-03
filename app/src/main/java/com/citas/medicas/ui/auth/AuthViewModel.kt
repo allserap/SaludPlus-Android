@@ -46,6 +46,7 @@ data class FormularioState(
     val especialidadError: String? = null,
     val unidadError: String? = null,
     val cupoDiarioError: String? = null,
+    val fechaError: String? = null,
     val isValid: Boolean = false
 )
 

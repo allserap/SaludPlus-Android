@@ -69,20 +69,31 @@ fun EditText.aplicarMascaraTelefono() {
 }
 
 fun EditText.aplicarMascaraDUI() {
-    this.addTextChangedListener(object : TextWatcher {
+    // Definimos el límite máximo de caracteres permitidos (8 dígitos + 1 guion + 1 dígito = 10)
+    this.filters = arrayOf(android.text.InputFilter.LengthFilter(10))
+
+    this.addTextChangedListener(object : android.text.TextWatcher {
         private var isUpdating = false
-        override fun afterTextChanged(s: Editable?) {
+
+        override fun afterTextChanged(s: android.text.Editable?) {
             if (isUpdating) return
             isUpdating = true
+
             val original = s.toString().replace("-", "")
             val formatted = StringBuilder()
+
             for (i in original.indices) {
                 formatted.append(original[i])
-                if (i == 7 && original.length > 8) formatted.append("-")
+                // Si llega al índice 7 y hay al menos 8 caracteres, se agrega el guion
+                if (i == 7 && original.length >= 8) {
+                    formatted.append("-")
+                }
             }
+
             s?.replace(0, s.length, formatted.toString())
             isUpdating = false
         }
+
         override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
         override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
     })

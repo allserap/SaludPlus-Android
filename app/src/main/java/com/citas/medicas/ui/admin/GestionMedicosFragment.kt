@@ -93,7 +93,9 @@ class GestionMedicosFragment : BaseFragment(R.layout.fragment_gestion_medicos) {
         // Lista de médicos para el buscador
         authViewModel.listaMedicos.observe(viewLifecycleOwner) { medicos ->
             if (!medicos.isNullOrEmpty()) {
-                configurarBuscador(medicos)
+                val soloMedicos = medicos.filter { it.rolId == RolesUsuario.ID_MEDICO }
+                // Pasamos la lista filtrada al buscador
+                configurarBuscador(soloMedicos)
             }
         }
 

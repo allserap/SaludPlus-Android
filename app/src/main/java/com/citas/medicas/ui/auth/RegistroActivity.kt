@@ -1,6 +1,7 @@
 package com.citas.medicas.ui.auth
 
 import android.app.DatePickerDialog
+import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
@@ -36,6 +37,18 @@ class RegistroActivity : AppCompatActivity(),  Reseteable {
 
     // Inicialización del ViewModel
     private val authViewModel: AuthViewModel by viewModels()
+
+    // Forzar idioma Español globalmente en la Activity heredable por el DatePicker
+    override fun attachBaseContext(newBase: Context) {
+        val localeEspanol = Locale("es", "ES")
+        Locale.setDefault(localeEspanol)
+
+        val config = newBase.resources.configuration
+        config.setLocale(localeEspanol)
+
+        val contextoEspanol = newBase.createConfigurationContext(config)
+        super.attachBaseContext(contextoEspanol)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -104,34 +117,71 @@ class RegistroActivity : AppCompatActivity(),  Reseteable {
         binding.spEstadoFamiliarR.configurarConHint(opcionesEstado, "Seleccione estado familiar")
     }
 
-        private fun setupListeners() {
-            binding.etTelefonoR.aplicarMascaraTelefono()
-            binding.etDuiR.aplicarMascaraDUI()
-            binding.etFechaR.setOnClickListener {
-                showDatePickerDialog(this, binding.etFechaR)
-            }
+    private fun setupListeners() {
+        binding.etTelefonoR.aplicarMascaraTelefono()
+        binding.etDuiR.aplicarMascaraDUI()
 
-            // Volver al login
-            binding.tvVolverALogin.setOnClickListener {
-                startActivity(Intent(this, LoginActivity::class.java))
-                finish() // Cerrar registro para no acumular pantallas
-            }
+        // Control y restricción de fechas futuras nativas con DatePickerDialog directo
+        binding.etFechaR.setOnClickListener {
+            val calendarioActual = Calendar.getInstance()
+            val año = calendarioActual.get(Calendar.YEAR)
+            val mes = calendarioActual.get(Calendar.MONTH)
+            val dia = calendarioActual.get(Calendar.DAY_OF_MONTH)
 
-            binding.btnCrearCuenta.setOnClickListener {
-                authViewModel.validarFormulario(
-                    rolId = RolesUsuario.ID_PACIENTE,
-                    nombres = binding.etNombreR.text.toString(),
-                    apellidos = binding.etApellidoR.text.toString(),
-                    dui = binding.etDuiR.text.toString(),
-                    correo = binding.etCorreoR.text.toString(),
-                    telefono = binding.etTelefonoR.text.toString(),
-                    password = binding.etClaveR.text.toString(),
-                    extraCampo = binding.etAfiliadoR.text.toString(),
-                    especialidadPos = 1, // 1 para que no de error
-                    unidadPos = 1
-                )
-            }
+            val picker = DatePickerDialog(this, { _, year, monthOfYear, dayOfMonth ->
+                val mesFormateado = String.format("%02d", monthOfYear + 1)
+                val diaFormateado = String.format("%02d", dayOfMonth)
+                val fechaSeleccionada = "$year-$mesFormateado-$diaFormateado"
+
+                val fechaSeleccionadaCal = Calendar.getInstance().apply {
+                    set(year, monthOfYear, dayOfMonth)
+                }
+
+                if (fechaSeleccionadaCal.after(calendarioActual)) {
+                    Toast.makeText(this, "La fecha de nacimiento no puede ser una fecha futura", Toast.LENGTH_LONG).show()
+                } else {
+                    binding.etFechaR.setText(fechaSeleccionada)
+                    binding.etFechaR.error = null
+                }
+            }, año, mes, dia)
+
+            // Bloquear visualmente los días posteriores al día de hoy (se verán deshabilitados)
+            picker.datePicker.maxDate = System.currentTimeMillis()
+            picker.show()
         }
+
+        // Volver al login
+        binding.tvVolverALogin.setOnClickListener {
+            startActivity(Intent(this, LoginActivity::class.java))
+            finish() // Cerrar registro para no acumular pantallas
+        }
+
+        binding.btnCrearCuenta.setOnClickListener {
+            val contrasena = binding.etClaveR.text.toString()
+            val confirmarContrasena = binding.etConfirmarClaveR.text.toString()
+
+            // Validación local para cerciorarse de que las claves coincidan
+            if (contrasena != confirmarContrasena) {
+                binding.etConfirmarClaveR.error = "Las contraseñas no coinciden"
+                Toast.makeText(this, "Las contraseñas ingresadas deben ser iguales", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener // Frena la ejecución del registro si falla
+            } else {
+                binding.etConfirmarClaveR.error = null // Limpia el error si ya coincide
+            }
+            authViewModel.validarFormulario(
+                rolId = RolesUsuario.ID_PACIENTE,
+                nombres = binding.etNombreR.text.toString(),
+                apellidos = binding.etApellidoR.text.toString(),
+                dui = binding.etDuiR.text.toString(),
+                correo = binding.etCorreoR.text.toString(),
+                telefono = binding.etTelefonoR.text.toString(),
+                password = binding.etClaveR.text.toString(),
+                extraCampo = binding.etAfiliadoR.text.toString(),
+                especialidadPos = 1, // 1 para que no de error
+                unidadPos = 1
+            )
+        }
+    }
     override fun resetearInterfaz() {
         // limpiarCampos del BaseFragment pasando todos los EditTexts
         limpiarCampos(

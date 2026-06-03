@@ -9,4 +9,5 @@
     <color name="status_canceled">#F44336</color>
     <color name="status_canceled_light">#FDEDEC</color>
     <color name="status_completed_light">#D1FADF</color>
+
 </resources>

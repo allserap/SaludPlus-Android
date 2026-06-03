@@ -2,21 +2,13 @@ package com.citas.medicas.ui.admin
 
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Button
-import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
+import android.view.View
+import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
 import com.citas.medicas.R
 import com.citas.medicas.databinding.ActivityDashboardAdminBinding
-import com.citas.medicas.databinding.ActivityDashboardMedicoBinding
 import com.citas.medicas.ui.auth.LoginActivity
-import com.citas.medicas.ui.auth.RegistroActivity
-import com.citas.medicas.ui.medico.AgendaFragment
-import com.citas.medicas.ui.medico.HistorialFragment
-import com.citas.medicas.ui.medico.RecetasFragment
 import com.citas.medicas.utils.SessionManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
@@ -24,65 +16,74 @@ class DashboardAdminActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityDashboardAdminBinding
 
+    // Lista para iterar los tabs fácilmente usando View Binding
+    private lateinit var listaTabs: List<LinearLayout>
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
 
         // Inicializar el binding
         binding = ActivityDashboardAdminBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Inicializar fragment
+        // Agrupamos las vistas de los tabs usando binding después de inflar la vista
+        listaTabs = listOf(binding.tabUsuarios, binding.tabEstadisticas, binding.tabGestiones)
+
+        // Inicializar con el fragmento y tab por defecto
         if (savedInstanceState == null) {
             replaceFragment(UsuariosFragment())
-            actualizarEstiloTabs(pestanaActiva = "usuarios")
+            seleccionarTabVisual(binding.tabUsuarios)
         }
 
         cargarDatosHeader()
         setupNavigation()
     }
+
     private fun cargarDatosHeader() {
         val prefs = getSharedPreferences("CitasMedicasPrefs", MODE_PRIVATE)
 
-        // Recuperar valores reales del Administrador desde las SharedPreferences
+        // Recuperar valores reales del Administrador
         val nombre = prefs.getString("user_nombre", "") ?: ""
         val apellido = prefs.getString("user_apellido", "") ?: ""
-        val email = prefs.getString("user_email", "admin@saludplus.com") ?: "admin@saludplus.com"
 
-        // Editar la UI de la cabecera usando View Binding
+        // Editar la UI usando View Binding
         with(binding) {
-            // Asigna directamente los textos correspondientes al rol administrativo
             tvHeaderRol.text = "Administrador del Sistema"
             tvHeaderNombre.text = "$nombre $apellido".trim().ifEmpty { "Administrador" }
         }
     }
+
     private fun setupNavigation() {
         with(binding) {
+            // Click de pestaña Usuarios
             tabUsuarios.setOnClickListener {
                 replaceFragment(UsuariosFragment())
-                actualizarEstiloTabs(pestanaActiva = "usuarios")
+                seleccionarTabVisual(tabUsuarios)
             }
+
+            // Click de pestaña Estadísticas
             tabEstadisticas.setOnClickListener {
+                // Asegúrate de que este fragmento exista con este nombre exacto
                 replaceFragment(EstadisticasFragment())
-                actualizarEstiloTabs(pestanaActiva = "estadisticas")
+                seleccionarTabVisual(tabEstadisticas)
             }
+
+            // Click de pestaña Gestiones
             tabGestiones.setOnClickListener {
+                // Asegúrate de que este fragmento exista con este nombre exacto
                 replaceFragment(GestionesFragment())
-                actualizarEstiloTabs(pestanaActiva = "gestiones")
+                seleccionarTabVisual(tabGestiones)
             }
 
-
-
-
+            // Botón Salir
             btnSalir.setOnClickListener {
-                // Borrar token al salir
-                val prefs = getSharedPreferences("CitasMedicasPrefs", MODE_PRIVATE)
-                prefs.edit().clear().apply()
                 MaterialAlertDialogBuilder(this@DashboardAdminActivity)
                     .setTitle("Cerrar Sesión")
                     .setMessage("¿Está seguro de que desea salir del sistema?")
                     .setNegativeButton("Cancelar", null)
                     .setPositiveButton("Salir") { _, _ ->
+                        val prefs = getSharedPreferences("CitasMedicasPrefs", MODE_PRIVATE)
+                        prefs.edit().clear().apply()
                         SessionManager.logout(this@DashboardAdminActivity)
 
                         // Redirige al Login limpiando el historial de navegación
@@ -97,27 +98,25 @@ class DashboardAdminActivity : AppCompatActivity() {
         }
     }
 
-    // Funcion para cambiar de fragment
-    fun replaceFragment(fragment: Fragment) {
+    // Función encargada del intercambio de fragmentos
+    private fun replaceFragment(fragment: Fragment) {
+        // 1. Buscamos el fragmento que se encuentra cargado actualmente
+        val fragmentActual = supportFragmentManager.findFragmentById(R.id.containerFragment)
+
+        // 2. Si el tipo de fragmento es exactamente igual al que se quiere abrir, abortamos la operación
+        if (fragmentActual != null && fragmentActual::class.java == fragment::class.java) {
+            return
+        }
         supportFragmentManager.beginTransaction()
             .replace(R.id.containerFragment, fragment)
             .commit()
     }
 
-    // Función auxiliar para que visualmente cambie el diseño del Tab seleccionado
-    private fun actualizarEstiloTabs(pestanaActiva: String) {
-        with(binding) {
-            // Primero removemos el fondo resaltado de todos
-            tabUsuarios.setBackgroundResource(0)
-            tabEstadisticas.setBackgroundResource(0)
-            tabGestiones.setBackgroundResource(0)
-
-            // Se lo aplicamos únicamente al que está activo en el momento
-            when (pestanaActiva) {
-                "usuarios" -> tabUsuarios.setBackgroundResource(R.drawable.bg_tabs)
-                "estadisticas" -> tabEstadisticas.setBackgroundResource(R.drawable.bg_tabs)
-                "gestiones" -> tabGestiones.setBackgroundResource(R.drawable.bg_tabs)
-            }
+    // Función optimizada: Cambia el estado de la pestaña seleccionada.
+    // Al pasar a "true", el XML (bg_tab_item) cambia el color de fondo automáticamente.
+    private fun seleccionarTabVisual(tabSeleccionado: LinearLayout) {
+        listaTabs.forEach { tab ->
+            tab.isSelected = (tab == tabSeleccionado)
         }
     }
 }

@@ -157,7 +157,6 @@ class UnidadEspecialidadFragment : BaseFragment(R.layout.fragment_unidades_espec
 
                 binding.tvTitulo.text = "Editar Unidad Especialidad"
                 binding.etCupoDiario.setText(registroExistente.cupo_diario.toString())
-                binding.switchActivo.isChecked = registroExistente.activo
                 binding.etCupoDiario.isEnabled = registroExistente.activo
 
                 Log.d("COMBINACION", "Match encontrado: ID ${registroExistente.id}")
@@ -169,7 +168,6 @@ class UnidadEspecialidadFragment : BaseFragment(R.layout.fragment_unidades_espec
 
                 binding.tvTitulo.text = "Nueva Asignación"
                 binding.etCupoDiario.setText("20") // Cupo por defecto
-                binding.switchActivo.isChecked = true
                 binding.etCupoDiario.isEnabled = true
 
                 Log.d("COMBINACION", "Nueva combinación detectada")
@@ -186,23 +184,13 @@ class UnidadEspecialidadFragment : BaseFragment(R.layout.fragment_unidades_espec
                 return@setOnClickListener
             }
 
-            val estadoSeleccionado = binding.switchActivo.isChecked
             val ejecutarValidacion = {
                 authViewModel.validarFormularioUnidadEspecialidad(
                     cupoDiarioStr = binding.etCupoDiario.text.toString()
                 )
             }
 
-            if (estadoOriginal && !estadoSeleccionado) {
-                MaterialAlertDialogBuilder(requireContext())
-                    .setTitle("Confirmar Desactivación")
-                    .setMessage("¿Está seguro de desactivar esta especialidad en la unidad médica? No se podrán agendar citas en este rubro.")
-                    .setNegativeButton("Cancelar", null)
-                    .setPositiveButton("Desactivar") { _, _ -> ejecutarValidacion() }
-                    .show()
-            } else {
-                ejecutarValidacion()
-            }
+            ejecutarValidacion()
         }
 
         binding.btnCancelarUnidad.setOnClickListener { resetearInterfaz() }
@@ -213,7 +201,7 @@ class UnidadEspecialidadFragment : BaseFragment(R.layout.fragment_unidades_espec
             unidad_medica_id = unidadId,
             especialidad_id = especialidadId,
             cupo_diario = binding.etCupoDiario.text.toString().toIntOrNull() ?: 20,
-            activo = binding.switchActivo.isChecked
+            activo = estadoOriginal
         )
 
         Log.d("API_PAYLOAD", "Enviando payload con snake_case nativo: $requestBody")
@@ -225,7 +213,6 @@ class UnidadEspecialidadFragment : BaseFragment(R.layout.fragment_unidades_espec
 
     override fun resetearInterfaz() {
         limpiarCampos(binding.etCupoDiario, binding.acUnidadMedica, binding.spnEspecialidad)
-        binding.switchActivo.isChecked = true
         binding.tvTitulo.text = "Unidad Especialidad"
 
         binding.acUnidadMedica.isEnabled = true

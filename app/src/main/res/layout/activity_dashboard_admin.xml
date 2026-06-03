@@ -63,40 +63,36 @@
             android:background="@drawable/bg_tabs"
             android:orientation="horizontal"
             android:padding="8dp"
-            android:weightSum="4">
-
-            <LinearLayout
-                android:id="@+id/tabUsuarios"
-                android:layout_width="50dp"
+            android:weightSum="3"> <LinearLayout
+            android:id="@+id/tabUsuarios"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="@drawable/bg_tab_item" android:orientation="vertical"
+            android:gravity="center"
+            android:padding="8dp">
+            <TextView
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginStart="30dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:padding="8dp">
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="👥"
-                    android:textSize="18sp"/>
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Usuarios"
-                    android:textSize="10sp"/>
-            </LinearLayout>
+                android:text="👥"
+                android:textSize="18sp"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Usuarios"
+                android:textSize="10sp"/>
+        </LinearLayout>
 
             <LinearLayout
                 android:id="@+id/tabEstadisticas"
-                android:layout_width="50dp"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginStart="10dp"
                 android:clickable="true"
                 android:focusable="true"
-                android:orientation="vertical"
+                android:background="@drawable/bg_tab_item" android:orientation="vertical"
                 android:gravity="center"
                 android:padding="8dp">
                 <TextView
@@ -113,13 +109,12 @@
 
             <LinearLayout
                 android:id="@+id/tabGestiones"
-                android:layout_width="50dp"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginStart="10dp"
                 android:clickable="true"
                 android:focusable="true"
-                android:orientation="vertical"
+                android:background="@drawable/bg_tab_item" android:orientation="vertical"
                 android:gravity="center"
                 android:padding="8dp">
                 <TextView

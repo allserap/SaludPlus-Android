@@ -31,6 +31,7 @@ class EstadisticasFragment : BaseFragment(R.layout.fragment_estadisticas) {
     private val authViewModel: AuthViewModel by viewModels()
 
     private var listaUnidades: List<UnidadMedicaResponse> = emptyList()
+    private var isInitialSelection = true
     // endregion
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -43,20 +44,27 @@ class EstadisticasFragment : BaseFragment(R.layout.fragment_estadisticas) {
         // 1. Cargamos primero los catálogos (Unidades médicas) para llenar el Spinner.
         authViewModel.cargarCatalogos()
 
-        // 2. Cargamos el reporte histórico inicial general (null traerá el consolidado global de la API)
-        authViewModel.cargarReporteHistorico(null)
+        // 2. Estado inicial limpio (No llamamos a cargarReporteHistorico(null) aquí)
+        resetearInterfaz()
     }
 
     private fun setupListeners() {
         binding.spUnidades.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                // position 0 = hint → ignorar. Solo procesar selecciones reales.
-                if (position > 0 && (position - 1) < listaUnidades.size) {
+                if (isInitialSelection) {
+                    isInitialSelection = false
+                    return
+                }
+                // position 0 = "Seleccione unidad médica" (el hint)
+                if (position == 0) {
+                    // Al regresar al hint, limpiamos la pantalla por completo
+                    resetearInterfaz()
+                } else if ((position - 1) < listaUnidades.size) {
                     val unidadSeleccionada = listaUnidades[position - 1]
                     if (unidadSeleccionada.id == -1) {
-                        authViewModel.cargarReporteHistorico(null)
+                        authViewModel.cargarReporteHistorico(null) // "Todas las unidades"
                     } else {
-                        authViewModel.cargarReporteHistorico(unidadSeleccionada.id)
+                        authViewModel.cargarReporteHistorico(unidadSeleccionada.id) // Unidad específica
                     }
                 }
             }
@@ -96,11 +104,27 @@ class EstadisticasFragment : BaseFragment(R.layout.fragment_estadisticas) {
         val reprogramadas = citas.sumOf { it.reprogramada }
         val noAsistidas = citas.sumOf { it.noAsistida }
 
+        // Calcular el total general de citas consolidadas
+        val totalCitas = asistidas + canceladas + reprogramadas + noAsistidas
+
+        // Calcular la tasa de completitud (evitando divisiones por cero)
+        val tasaCompletitud = if (totalCitas > 0) {
+            (asistidas.toFloat() / totalCitas.toFloat()) * 100
+        } else {
+            0f
+        }
+
         Log.d("DEBUG_GRAFICOS", "Resultados -> Asistidas: $asistidas, Canceladas: $canceladas, Reprogramadas: $reprogramadas, NoAsistidas: $noAsistidas")
 
-        // Opcional: Aquí seteas tus TextViews en caso de que utilices contadores de texto independientes
-        // binding.tvAsistidas.text = asistidas.toString()
-        // binding.tvCanceladas.text = canceladas.toString()
+        // 2. ASIGNACIÓN A LA INTERFAZ (Lo que faltaba)
+        // Tarjetas Superiores
+        binding.tvCompletadas.text = asistidas.toString()
+        binding.tvCanceladas.text = canceladas.toString()
+        binding.tvReprogramadas.text = reprogramadas.toString()
+
+        // Resumen Inferior (Tarjeta Azul)
+        binding.tvTotalCitas.text = "Total de Citas: $totalCitas"
+        binding.tvPorcentajeCompletadas.text = String.format("Tasa de completitud: %.1f%%", tasaCompletitud)
 
         // Pasamos los números listos a las funciones de renderizado de MPAndroidChart
         renderBarChart(asistidas, canceladas)
@@ -175,6 +199,12 @@ class EstadisticasFragment : BaseFragment(R.layout.fragment_estadisticas) {
     override fun resetearInterfaz() {
         // Al resetear la interfaz limpiamos los gráficos pasando una lista vacía
         mostrarEstadisticasEnGraficos(emptyList())
+
+        binding.tvCompletadas.text = "0"
+        binding.tvCanceladas.text = "0"
+        binding.tvReprogramadas.text = "0"
+        binding.tvTotalCitas.text = "Total de Citas: --"
+        binding.tvPorcentajeCompletadas.text = "Tasa de completitud: --%"
     }
 
     override fun onDestroyView() {
