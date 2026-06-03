@@ -1,6 +1,9 @@
 package com.citas.medicas.ui.auth
 
+import android.content.Context
 import android.content.Intent
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -28,6 +31,9 @@ class LoginActivity : AppCompatActivity() {
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+
+        verificarSesionGuardada()
+
         // Limpieza de caché previa para desarrollo
         //getSharedPreferences("CitasMedicasPrefs", MODE_PRIVATE).edit().clear().apply()
 
@@ -36,6 +42,49 @@ class LoginActivity : AppCompatActivity() {
 
         setupListeners()
     }
+
+    private fun verificarSesionGuardada() {
+        val prefs = getSharedPreferences("CitasMedicasPrefs", MODE_PRIVATE)
+        val rolGuardado = prefs.getInt("user_rolid", -1)
+
+        // Si es -1, significa que nadie se ha logueado antes o cerraron sesión.
+        // Nos quedamos en esta pantalla para que se logueen.
+        if (rolGuardado == -1) return
+
+        if (!hayConexionInternet()) {
+            Toast.makeText(this, "Modo sin conexión. Entrando con sesión guardada...", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(this, "Bienvenido de nuevo", Toast.LENGTH_SHORT).show()
+        }
+
+        // Saltamos directo al menú correspondiente
+        redireccionarSegunRol(rolGuardado)
+    }
+
+    private fun redireccionarSegunRol(rolId: Int) {
+        when (rolId) {
+            RolesUsuario.ID_PACIENTE -> {
+                startActivity(Intent(this, HomePacienteActivity::class.java))
+                finish() // Matamos el Login para que no puedan regresar con el botón de "Atrás"
+            }
+            RolesUsuario.ID_MEDICO -> {
+                startActivity(Intent(this, DashboardMedicoActivity::class.java))
+                finish()
+            }
+            RolesUsuario.ID_ADMIN -> {
+                startActivity(Intent(this, DashboardAdminActivity::class.java))
+                finish()
+            }
+        }
+    }
+
+    private fun hayConexionInternet(): Boolean {
+        val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = connectivityManager.activeNetwork ?: return false
+        val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+    }
+
 
     private fun setupListeners() {
         binding.tvIrARegistro.setOnClickListener {
