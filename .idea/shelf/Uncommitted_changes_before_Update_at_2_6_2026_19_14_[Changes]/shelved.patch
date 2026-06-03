@@ -1,0 +1,237 @@
+Index: app/src/main/java/com/citas/medicas/ui/medico/AgendaFragment.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.citas.medicas.ui.medico\r\n\r\nimport android.os.Bundle\r\nimport android.view.View\r\nimport android.widget.Toast\r\nimport androidx.fragment.app.Fragment\r\nimport androidx.fragment.app.activityViewModels\r\nimport androidx.recyclerview.widget.LinearLayoutManager\r\nimport com.citas.medicas.R\r\nimport com.citas.medicas.databinding.FragmentAgendaBinding\r\nimport com.citas.medicas.ui.auth.AuthViewModel\r\n\r\nclass AgendaFragment : Fragment(R.layout.fragment_agenda) {\r\n\r\n    private var _binding: FragmentAgendaBinding? = null\r\n    private val binding get() = _binding!!\r\n    private lateinit var citasAdapter: CitasAdapter\r\n\r\n    // ViewModel compartido a nivel de Activity\r\n    private val authViewModel: AuthViewModel by activityViewModels()\r\n\r\n    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {\r\n        super.onViewCreated(view, savedInstanceState)\r\n        _binding = FragmentAgendaBinding.bind(view)\r\n\r\n        setupRecyclerView()\r\n        setupObservers()\r\n        fetchAppointments()\r\n    }\r\n\r\n    private fun setupRecyclerView() {\r\n        citasAdapter = CitasAdapter(emptyList()) { idPacienteSeleccionado ->\r\n            val dash = (activity as? DashboardMedicoActivity)\r\n            //dash?.navigateToHistorial(idPacienteSeleccionado)\r\n        }\r\n\r\n        binding.rvCitas.apply {\r\n            layoutManager = LinearLayoutManager(requireContext())\r\n            adapter = citasAdapter\r\n        }\r\n    }\r\n\r\n    private fun setupObservers() {\r\n        // Eliminamos por completo CUALQUIER observador previo asignado a estas variables,\r\n        // sin importar qué ciclo de vida (viejo o nuevo) lo esté reclamando.\r\n        authViewModel.listaCitas.removeObservers(viewLifecycleOwner)\r\n        authViewModel.error.removeObservers(viewLifecycleOwner)\r\n        authViewModel.isLoading.removeObservers(viewLifecycleOwner)\r\n\r\n        // authViewModel.listaCitas.removeObserver { }\r\n\r\n        // Observar la lista de citas\r\n        authViewModel.listaCitas.observe(viewLifecycleOwner, { listaCitas ->\r\n            val citasFiltradas = listaCitas.filter { cita ->\r\n                val estadoCita = cita.estadocita?.lowercase()?.trim() ?: \"\"\r\n\r\n                // Compara contra las 3 variantes que necesitas\r\n                estadoCita == \"confirmada\" ||\r\n                        estadoCita == \"pendiente\" ||\r\n                        estadoCita == \"reprogramada\"\r\n            }\r\n\r\n            // Evaluamos e inflamos la UI con la lista ya depurada\r\n            if (citasFiltradas.isNotEmpty()) {\r\n                citasAdapter.updateList(citasFiltradas)\r\n            } else {\r\n                Toast.makeText(requireContext(), \"No hay citas pendientes o activas\", Toast.LENGTH_SHORT).show()\r\n                citasAdapter.updateList(emptyList())\r\n            }\r\n        })\r\n\r\n        // Observar errores de red o servidor\r\n        authViewModel.error.observe(viewLifecycleOwner, { mensajeError ->\r\n            mensajeError?.let {\r\n                Toast.makeText(requireContext(), it, Toast.LENGTH_LONG).show()\r\n            }\r\n        })\r\n\r\n        // Observar estado de carga (ProgressBar)\r\n        authViewModel.isLoading.observe(viewLifecycleOwner, { isLoading ->\r\n            // binding.progressBar.visibility = if (isLoading == true) View.VISIBLE else View.GONE\r\n        })\r\n    }\r\n\r\n    private fun fetchAppointments() {\r\n        authViewModel.cargarTodasLasCitas()\r\n    }\r\n\r\n    override fun onDestroyView() {\r\n        super.onDestroyView()\r\n        _binding = null\r\n    }\r\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/citas/medicas/ui/medico/AgendaFragment.kt b/app/src/main/java/com/citas/medicas/ui/medico/AgendaFragment.kt
+--- a/app/src/main/java/com/citas/medicas/ui/medico/AgendaFragment.kt	(revision dc7f42434232079edde6dfc2e5313f163dcfc1b9)
++++ b/app/src/main/java/com/citas/medicas/ui/medico/AgendaFragment.kt	(date 1780447584970)
+@@ -83,7 +83,7 @@
+     }
+ 
+     private fun fetchAppointments() {
+-        authViewModel.cargarTodasLasCitas()
++        authViewModel.cargarTodasLasCitas(requireContext())
+     }
+ 
+     override fun onDestroyView() {
+Index: app/src/main/java/com/citas/medicas/ui/AppDatabase.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.citas.medicas.ui\r\n\r\nimport android.content.Context\r\nimport androidx.room.Database\r\nimport androidx.room.Room\r\nimport androidx.room.RoomDatabase\r\nimport com.citas.medicas.ui.medico.local.dao.MedicoPerfilDao\r\nimport com.citas.medicas.ui.medico.local.entities.MedicoPerfilEntity\r\nimport com.citas.medicas.ui.paciente.local.dao.CitasDao\r\nimport com.citas.medicas.ui.paciente.local.dao.PerfilDao\r\nimport com.citas.medicas.ui.paciente.local.dao.UnidadMedicaDao\r\nimport com.citas.medicas.ui.paciente.local.entities.CitaEntity\r\nimport com.citas.medicas.ui.paciente.local.entities.PerfilEntity\r\nimport com.citas.medicas.ui.paciente.local.entities.UnidadMedicaEntity\r\n\r\n@Database(\r\n    entities = [CitaEntity::class, PerfilEntity::class, UnidadMedicaEntity::class, MedicoPerfilEntity::class],\r\n    version = 2,\r\n    exportSchema = false\r\n)\r\nabstract class AppDatabase : RoomDatabase() {\r\n\r\n    // DAOs del Paciente\r\n    abstract fun citasDao(): CitasDao\r\n    abstract fun perfilDao(): PerfilDao\r\n    abstract fun unidadMedicaDao(): UnidadMedicaDao\r\n    abstract fun medicoPerfilDao(): MedicoPerfilDao\r\n\r\n    companion object {\r\n        @Volatile\r\n        private var INSTANCE: AppDatabase? = null\r\n\r\n        fun getDatabase(context: Context): AppDatabase {\r\n            return INSTANCE ?: synchronized(this) {\r\n                val instance = Room.databaseBuilder(\r\n                    context.applicationContext,\r\n                    AppDatabase::class.java,\r\n                    \"citas_medicas_db\"\r\n                )\r\n                    .fallbackToDestructiveMigration()\r\n                    .build()\r\n                INSTANCE = instance\r\n                instance\r\n            }\r\n        }\r\n    }\r\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/citas/medicas/ui/AppDatabase.kt b/app/src/main/java/com/citas/medicas/ui/AppDatabase.kt
+--- a/app/src/main/java/com/citas/medicas/ui/AppDatabase.kt	(revision dc7f42434232079edde6dfc2e5313f163dcfc1b9)
++++ b/app/src/main/java/com/citas/medicas/ui/AppDatabase.kt	(date 1780447189671)
+@@ -4,7 +4,9 @@
+ import androidx.room.Database
+ import androidx.room.Room
+ import androidx.room.RoomDatabase
++import com.citas.medicas.ui.medico.local.dao.CitasMedicoDao
+ import com.citas.medicas.ui.medico.local.dao.MedicoPerfilDao
++import com.citas.medicas.ui.medico.local.entities.CitaMedicoEntity
+ import com.citas.medicas.ui.medico.local.entities.MedicoPerfilEntity
+ import com.citas.medicas.ui.paciente.local.dao.CitasDao
+ import com.citas.medicas.ui.paciente.local.dao.PerfilDao
+@@ -14,8 +16,14 @@
+ import com.citas.medicas.ui.paciente.local.entities.UnidadMedicaEntity
+ 
+ @Database(
+-    entities = [CitaEntity::class, PerfilEntity::class, UnidadMedicaEntity::class, MedicoPerfilEntity::class],
+-    version = 2,
++    entities = [
++        CitaEntity::class,
++        PerfilEntity::class,
++        UnidadMedicaEntity::class,
++        MedicoPerfilEntity::class,
++        CitaMedicoEntity::class
++    ],
++    version = 3,
+     exportSchema = false
+ )
+ abstract class AppDatabase : RoomDatabase() {
+@@ -25,6 +33,7 @@
+     abstract fun perfilDao(): PerfilDao
+     abstract fun unidadMedicaDao(): UnidadMedicaDao
+     abstract fun medicoPerfilDao(): MedicoPerfilDao
++    abstract fun citasMedicoDao(): CitasMedicoDao
+ 
+     companion object {
+         @Volatile
+Index: app/src/main/java/com/citas/medicas/ui/auth/AuthViewModel.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.citas.medicas.ui.auth\r\n\r\nimport android.app.Application\r\nimport android.content.Context\r\nimport android.util.Log\r\nimport androidx.lifecycle.AndroidViewModel\r\nimport androidx.lifecycle.LiveData\r\nimport androidx.lifecycle.MutableLiveData\r\nimport androidx.lifecycle.viewModelScope\r\nimport com.citas.medicas.data.AuthRepository\r\nimport com.citas.medicas.models.AgendaCitasWrapper\r\nimport com.citas.medicas.models.EspecialidadResponse\r\nimport com.citas.medicas.models.MedicoResponse\r\nimport com.citas.medicas.models.MedicoUpdateRequest\r\nimport com.citas.medicas.models.PacienteResponse\r\nimport com.citas.medicas.models.PacienteUpdateRequest\r\nimport com.citas.medicas.models.RegistroRequest\r\nimport com.citas.medicas.models.RolResponse\r\nimport com.citas.medicas.models.UnidadMedicaResponse\r\nimport com.citas.medicas.models.UnidadEspecialidadRequest\r\nimport com.citas.medicas.models.UnidadEspecialidadResponse\r\nimport com.citas.medicas.models.ApiResponse\r\nimport com.citas.medicas.models.CitaItem\r\nimport com.citas.medicas.models.CitaResponse\r\nimport com.citas.medicas.models.DetalleRecetaItemRequest\r\nimport com.citas.medicas.models.HistoricoCitasResponse\r\nimport com.citas.medicas.models.MedicamentoResponse\r\nimport com.citas.medicas.models.RecetaRequest\r\nimport com.citas.medicas.utils.RolesUsuario\r\nimport com.citas.medicas.utils.Validation\r\nimport kotlinx.coroutines.Dispatchers\r\nimport kotlinx.coroutines.launch\r\nimport kotlinx.coroutines.withContext\r\n\r\ndata class FormularioState(\r\n    val nombreError: String? = null,\r\n    val apellidoError: String? = null,\r\n    val duiError: String? = null,\r\n    val correoError: String? = null,\r\n    val telefonoError: String? = null,\r\n    val passwordError: String? = null,\r\n    val jvpmError: String? = null,\r\n    val afiliadoError: String? = null,\r\n    val especialidadError: String? = null,\r\n    val unidadError: String? = null,\r\n    val cupoDiarioError: String? = null,\r\n    val isValid: Boolean = false\r\n)\r\n\r\nclass AuthViewModel(application: Application) : AndroidViewModel(application) {\r\n\r\n    // region Inicializaciones\r\n    private val repository = AuthRepository(application.applicationContext)\r\n    private val _registroExitoso = MutableLiveData<String?>()\r\n    val registroExitoso: LiveData<String?> get() = _registroExitoso\r\n\r\n    private val _isLoading = MutableLiveData<Boolean>()\r\n    val isLoading: LiveData<Boolean> get() = _isLoading\r\n\r\n    private val _error = MutableLiveData<String>()\r\n    val error: LiveData<String> get() = _error\r\n\r\n    // --- Mostrar médicos ---\r\n    private val _listaMedicos = MutableLiveData<List<MedicoResponse>>()\r\n    val listaMedicos: LiveData<List<MedicoResponse>> = _listaMedicos\r\n\r\n    // --- Mostrar pacientes ---\r\n    private val _listaPacientes = MutableLiveData<List<PacienteResponse>>()\r\n    val listaPacientes: LiveData<List<PacienteResponse>> = _listaPacientes\r\n\r\n    // --- Mostrar Citas ---\r\n    private val _listaCitas = MutableLiveData<List<CitaResponse>>()\r\n    val listaCitas: LiveData<List<CitaResponse>> get() = _listaCitas\r\n\r\n    // --- Mostrar catálogos ---\r\n    private val _especialidades = MutableLiveData<List<EspecialidadResponse>>()\r\n    val especialidades: LiveData<List<EspecialidadResponse>> = _especialidades\r\n    private val _unidadesMedicas = MutableLiveData<List<UnidadMedicaResponse>>()\r\n    val unidadesMedicas: LiveData<List<UnidadMedicaResponse>> = _unidadesMedicas\r\n    private val _roles = MutableLiveData<List<RolResponse>>()\r\n    val roles: LiveData<List<RolResponse>> = _roles\r\n    private val _unidadesEspecialidad = MutableLiveData<List<UnidadEspecialidadResponse>>()\r\n    val unidadesEspecialidad: LiveData<List<UnidadEspecialidadResponse>> get() = _unidadesEspecialidad\r\n    private val _listaMedicamentos = MutableLiveData<List<MedicamentoResponse>>()\r\n    val listaMedicamentos: LiveData<List<MedicamentoResponse>> get() = _listaMedicamentos\r\n\r\n\r\n    // --- Receta ---\r\n    private val _recetaProcesadaExito = MutableLiveData<Boolean>()\r\n    val recetaProcesadaExito: LiveData<Boolean> get() = _recetaProcesadaExito\r\n\r\n    // --- Mostrar histórico ---\r\n    private val _historicoCitas = MutableLiveData<List<HistoricoCitasResponse>>()\r\n    val historicoCitas: LiveData<List<HistoricoCitasResponse>> get() = _historicoCitas\r\n    // endregion\r\n\r\n    // region Ejecuciones Médicos y Pacientes\r\n    fun ejecutarRegistro(datos: RegistroRequest) {\r\n        viewModelScope.launch {\r\n            _isLoading.value = true\r\n            val resultado = if (datos.rol == 2) {\r\n                repository.registrarMedico(datos)\r\n            } else {\r\n                repository.registrarPaciente(datos)\r\n            }\r\n            resultado.onSuccess { mensaje ->\r\n                _registroExitoso.value = mensaje\r\n            }.onFailure { excepcion ->\r\n                _error.value = excepcion.message\r\n            }\r\n            _isLoading.value = false\r\n        }\r\n    }\r\n\r\n    fun ejecutarActualizacion(datos: MedicoUpdateRequest) {\r\n        viewModelScope.launch {\r\n            _isLoading.value = true\r\n            try {\r\n                val resultado = repository.actualizarMedico(datos)\r\n                resultado.onSuccess { mensaje ->\r\n                    _registroExitoso.value = mensaje\r\n                    cargarMedicos()\r\n                }.onFailure { excepcion ->\r\n                    _error.value = excepcion.message ?: \"Error desconocido al actualizar\"\r\n                }\r\n            } catch (e: Exception) {\r\n                _error.value = \"Error de conexión: ${e.message}\"\r\n            } finally {\r\n                _isLoading.value = false\r\n            }\r\n        }\r\n    }\r\n\r\n    fun actualizarPaciente(datos: PacienteUpdateRequest) {\r\n        viewModelScope.launch {\r\n            _isLoading.value = true\r\n            try {\r\n                val resultado = repository.actualizarPaciente(datos)\r\n                resultado.onSuccess {\r\n                    _registroExitoso.value = Unit.toString()\r\n                }.onFailure { error ->\r\n                    _error.value = error.message ?: \"Error desconocido\"\r\n                }\r\n            } catch (e: Exception) {\r\n                _error.value = \"Error inesperado: ${e.message}\"\r\n            } finally {\r\n                _isLoading.value = false\r\n            }\r\n        }\r\n    }\r\n\r\n    fun guardarRecetaCompleta(\r\n        pacienteId: Int,\r\n        cabecera: RecetaRequest,\r\n        constructorDetalles: (Int) -> List<DetalleRecetaItemRequest>\r\n    ) {\r\n        viewModelScope.launch(Dispatchers.IO) {\r\n            withContext(Dispatchers.Main) { _isLoading.value = true }\r\n\r\n            try {\r\n                // 1. Petición de la Cabecera\r\n                val responseCabecera = repository.crearRecetaCabecera(pacienteId, cabecera)\r\n\r\n                if (responseCabecera.isSuccessful && responseCabecera.body()?.success == true) {\r\n                    val recetaIdAsignado = responseCabecera.body()?.data?.recetaId\r\n\r\n                    if (recetaIdAsignado != null && recetaIdAsignado != 0) {\r\n                        // 2. Construimos la lista de medicamentos inyectando el ID real retornado\r\n                        val listaDetallesFinal = constructorDetalles(recetaIdAsignado)\r\n\r\n                        // 3. Petición del Desglose de Medicamentos\r\n                        val responseDetalle = repository.agregarMedicamentosAReceta(listaDetallesFinal)\r\n\r\n                        withContext(Dispatchers.Main) {\r\n                            if (responseDetalle.isSuccessful && responseDetalle.body()?.success == true) {\r\n                                _recetaProcesadaExito.value = true\r\n                            } else {\r\n                                val errorBodyDetalle = responseDetalle.errorBody()?.string()\r\n                                val codigoHttp = responseDetalle.code()\r\n\r\n                                // Esto pintará en consola la razón exacta (Ej: Llave foránea inexistente, ID inválido, etc.)\r\n                                android.util.Log.e(\"API_ERROR_DETALLE\", \"Código: $codigoHttp | Cuerpo: $errorBodyDetalle\")\r\n\r\n                                _error.value = \"Error $codigoHttp en desglose: $errorBodyDetalle\"\r\n                            }\r\n                        }\r\n                    } else {\r\n                        withContext(Dispatchers.Main) { _error.value = \"Error: El servidor no retornó un ID de receta válido\" }\r\n                    }\r\n                } else {\r\n                    withContext(Dispatchers.Main) {\r\n                        val errorBody = responseCabecera.errorBody()?.string()\r\n                        val codigoHttp = responseCabecera.code()\r\n                        // Esto te dirá exactamente qué no le gusta a tu Backend\r\n                        _error.value = \"Error $codigoHttp: $errorBody\"\r\n                        android.util.Log.e(\"API_ERROR\", \"Cuerpo del error: $errorBody\")\r\n                    }\r\n                }\r\n            } catch (e: Exception) {\r\n                withContext(Dispatchers.Main) {\r\n                    _error.value = \"Fallo de comunicación: ${e.message}\"\r\n                }\r\n            } finally {\r\n                withContext(Dispatchers.Main) { _isLoading.value = false }\r\n            }\r\n        }\r\n    }\r\n\r\n    fun resetRecetaStatus() {\r\n        _recetaProcesadaExito.value = false\r\n    }\r\n    // endregion\r\n\r\n    // region Ejecuciones transaccionales de UnidadEspecialidad\r\n    fun ejecutarActualizacionUnidadEspecialidad(id: Int, datos: UnidadEspecialidadRequest) {\r\n        viewModelScope.launch {\r\n            _isLoading.value = true\r\n            try {\r\n                val resultado = repository.actualizarUnidadEspecialidad(id, datos)\r\n\r\n                resultado.onSuccess {\r\n                    _registroExitoso.value = \"Asignación actualizada exitosamente\"\r\n                }.onFailure { excepcion ->\r\n                    _error.value = excepcion.message ?: \"Error al actualizar la asignación médica\"\r\n                }\r\n            } catch (e: Exception) {\r\n                _error.value = \"Fallo crítico en la red remota: ${e.message}\"\r\n            } finally {\r\n                _isLoading.value = false\r\n            }\r\n        }\r\n    }\r\n    // endregion\r\n\r\n    // region Cargar datos\r\n    fun cargarPacientes() {\r\n        viewModelScope.launch(Dispatchers.IO) {\r\n            withContext(Dispatchers.Main) { _isLoading.value = true }\r\n            try {\r\n                val context = getApplication<Application>().applicationContext\r\n                val prefs = context.getSharedPreferences(\"CitasMedicasPrefs\", Context.MODE_PRIVATE)\r\n                val tokenDirecto = prefs.getString(\"token_jwt\", \"\") ?: \"\"\r\n                val tokenLimpio = if (tokenDirecto.startsWith(\"Bearer \", ignoreCase = true)) tokenDirecto.substring(7).trim() else tokenDirecto\r\n                val authHeader = if (tokenLimpio.isNotEmpty()) tokenLimpio else null\r\n\r\n                val response = repository.obtenerPacientes(authHeader)\r\n\r\n                if (response.isSuccessful) {\r\n                    val contenedorBody = response.body()\r\n                    val listaPacientesReal = contenedorBody?.data ?: emptyList()\r\n\r\n                    withContext(Dispatchers.Main) {\r\n                        _listaPacientes.value = listaPacientesReal\r\n                        Log.d(\"API_SUCCESS\", \"Pacientes cargados en UI: ${listaPacientesReal.size}\")\r\n                    }\r\n                } else {\r\n                    withContext(Dispatchers.Main) {\r\n                        _error.value = \"Error al obtener pacientes: ${response.code()}\"\r\n                    }\r\n                }\r\n            } catch (e: Exception) {\r\n                withContext(Dispatchers.Main) {\r\n                    _error.value = \"Fallo de conexión: ${e.message}\"\r\n                }\r\n            } finally {\r\n                withContext(Dispatchers.Main) { _isLoading.value = false }\r\n            }\r\n        }\r\n    }\r\n\r\n    fun cargarMedicos() {\r\n        viewModelScope.launch(Dispatchers.IO) {\r\n            try {\r\n                val context = getApplication<Application>().applicationContext\r\n                val prefs = context.getSharedPreferences(\"CitasMedicasPrefs\", Context.MODE_PRIVATE)\r\n                val tokenDirecto = prefs.getString(\"token_jwt\", \"\")\r\n                val authHeader = if (!tokenDirecto.isNullOrEmpty()) tokenDirecto else null\r\n\r\n                val response = repository.obtenerMedicos(authHeader)\r\n\r\n                if (response.isSuccessful) {\r\n                    val contenedorBody = response.body()\r\n                    val listaMedicosReal = contenedorBody?.data ?: emptyList()\r\n\r\n                    withContext(Dispatchers.Main) {\r\n                        _listaMedicos.value = listaMedicosReal\r\n                        Log.d(\"API_SUCCESS\", \"Médicos cargados en UI: ${listaMedicosReal.size}\")\r\n                    }\r\n                } else {\r\n                    withContext(Dispatchers.Main) {\r\n                        _error.value = \"Error del servidor: ${response.code()}\"\r\n                    }\r\n                }\r\n            } catch (e: Exception) {\r\n                withContext(Dispatchers.Main) {\r\n                    _error.value = \"Fallo de conexión: ${e.message}\"\r\n                }\r\n            }\r\n        }\r\n    }\r\n\r\n    fun cargarCatalogos() {\r\n        viewModelScope.launch {\r\n            try {\r\n                // Unidades Médicas\r\n                val resUni = repository.obtenerUnidadesMedicas()\r\n                if (resUni.isSuccessful) {\r\n                    val listaReal = resUni.body()?.data ?: emptyList()\r\n                    _unidadesMedicas.postValue(listaReal)\r\n                    Log.d(\"DEBUG_API\", \"Unidades cargadas: ${listaReal.size}\")\r\n                }\r\n\r\n                // Especialidades\r\n                val resEsp = repository.obtenerEspecialidades()\r\n                if (resEsp.isSuccessful) _especialidades.postValue(resEsp.body()?.data ?: emptyList())\r\n\r\n                val context = getApplication<Application>().applicationContext\r\n                val prefs = context.getSharedPreferences(\"CitasMedicasPrefs\", Context.MODE_PRIVATE)\r\n                val tokenDirecto = prefs.getString(\"token_jwt\", \"\") ?: \"\"\r\n                val tokenLimpio = if (tokenDirecto.startsWith(\"Bearer \", ignoreCase = true)) tokenDirecto.substring(7).trim() else tokenDirecto\r\n                val authHeader = if (tokenLimpio.isNotEmpty()) tokenLimpio else null\r\n\r\n                // Pasar el token obtenido a la consulta intermedia\r\n                val resIntermedia = repository.obtenerUnidadesEspecialidad(authHeader)\r\n                if (resIntermedia.isSuccessful) {\r\n                    val listaReal = resIntermedia.body()?.data ?: emptyList()\r\n                    _unidadesEspecialidad.postValue(listaReal)\r\n                    Log.d(\"DEBUG_API\", \"Tabla intermedia asignada con token: ${listaReal.size}\")\r\n                } else {\r\n                    Log.e(\"DEBUG_API\", \"Error intermedio (Falta Auth/Token): ${resIntermedia.code()}\")\r\n                }\r\n\r\n                // Roles\r\n                val resRol = repository.obtenerRoles()\r\n                if (resRol.isSuccessful) {\r\n                    val listaReal = resRol.body()?.data ?: emptyList()\r\n                    RolesUsuario.inicializar(listaReal)\r\n                    _roles.postValue(listaReal)\r\n                    Log.d(\"DEBUG_API\", \"Roles cargados: ${listaReal.size}\")\r\n                }\r\n            } catch (e: Exception) {\r\n                Log.e(\"DEBUG_API\", \"Error de red: ${e.message}\")\r\n                _error.postValue(\"Sin conexión al servidor\")\r\n            }\r\n        }\r\n    }\r\n\r\n    fun cargarMedicamentosCatalogos() {\r\n        viewModelScope.launch(Dispatchers.IO) {\r\n            try {\r\n                val response = repository.obtenerTodosLosMedicamentos()\r\n\r\n                if (response.isSuccessful) {\r\n                    val apiResponse = response.body()\r\n                    // Usamos .medicamentos que es el miembro real de tu MedicamentoWrapper\r\n                    val listaReal = apiResponse?.data?.medicamentos ?: emptyList()\r\n\r\n                    withContext(Dispatchers.Main) {\r\n                        _listaMedicamentos.value = listaReal\r\n                    }\r\n                } else {\r\n                    withContext(Dispatchers.Main) {\r\n                        // Esto te ayudará a ver si da otro código diferente a 500\r\n                        _error.value = \"Error del servidor al cargar medicinas: ${response.code()}\"\r\n                    }\r\n                }\r\n            } catch (e: Exception) {\r\n                withContext(Dispatchers.Main) {\r\n                    _error.value = \"Fallo de conexión: ${e.message}\"\r\n                }\r\n            }\r\n        }\r\n    }\r\n\r\n    fun cargarReporteHistorico(unidadMedicaId: Int) {\r\n        viewModelScope.launch(Dispatchers.IO) {\r\n            withContext(Dispatchers.Main) { _isLoading.value = true }\r\n            try {\r\n                val context = getApplication<Application>().applicationContext\r\n                val prefs = context.getSharedPreferences(\"CitasMedicasPrefs\", Context.MODE_PRIVATE)\r\n                val tokenDirecto = prefs.getString(\"token_jwt\", \"\") ?: \"\"\r\n                val tokenLimpio = if (tokenDirecto.startsWith(\"Bearer \", ignoreCase = true)) tokenDirecto.substring(7).trim() else tokenDirecto\r\n                val authHeader = if (tokenLimpio.isNotEmpty()) \"Bearer $tokenLimpio\" else null\r\n\r\n                val response = repository.obtenerHistoricoCitas(authHeader, unidadMedicaId)\r\n\r\n                if (response.isSuccessful) {\r\n                    val listaReal = response.body()?.data ?: emptyList()\r\n                    withContext(Dispatchers.Main) {\r\n                        _historicoCitas.value = listaReal\r\n                        Log.d(\"API_GRAPH\", \"Datos de histórico cargados: ${listaReal.size} registros\")\r\n                    }\r\n                } else {\r\n                    withContext(Dispatchers.Main) {\r\n                        _error.value = \"Error al obtener estadísticas: ${response.code()}\"\r\n                    }\r\n                }\r\n            } catch (e: Exception) {\r\n                withContext(Dispatchers.Main) {\r\n                    _error.value = \"Error de red en gráficos: ${e.message}\"\r\n                }\r\n            } finally {\r\n                withContext(Dispatchers.Main) { _isLoading.value = false }\r\n            }\r\n        }\r\n    }\r\n\r\n    fun cargarTodasLasCitas() {\r\n        viewModelScope.launch(Dispatchers.IO) {\r\n            withContext(Dispatchers.Main) { _isLoading.value = true }\r\n\r\n            try {\r\n                val response = repository.obtenerTodasLasCitas()\r\n\r\n                if (response.isSuccessful) {\r\n                    // 1. Especificamos explícitamente el tipo de dato esperado de la API\r\n                    val apiResponse: ApiResponse<AgendaCitasWrapper>? = response.body()\r\n\r\n                    // 2. Extraemos el wrapper interno de forma segura\r\n                    val citasWrapper: AgendaCitasWrapper? = apiResponse?.data\r\n\r\n                    // 3. Extraemos la lista de citas real usando el campo interno de tu wrapper\r\n                    val listaReal = citasWrapper?.citas ?: emptyList()\r\n\r\n                    withContext(Dispatchers.Main) {\r\n                        _listaCitas.value = listaReal\r\n                    }\r\n                } else {\r\n                    withContext(Dispatchers.Main) {\r\n                        _error.value = \"Error del servidor: ${response.code()}\"\r\n                    }\r\n                }\r\n            } catch (e: Exception) {\r\n                withContext(Dispatchers.Main) {\r\n                    _error.value = \"Fallo de conexión: ${e.message}\"\r\n                }\r\n            } finally {\r\n                withContext(Dispatchers.Main) { _isLoading.value = false }\r\n            }\r\n        }\r\n    }\r\n    // endregion\r\n\r\n    // region Validaciones\r\n    private val _formState = MutableLiveData<FormularioState>()\r\n    val formState: LiveData<FormularioState> get() = _formState\r\n\r\n    fun validarFormulario(\r\n        rolId: Int,\r\n        nombres: String,\r\n        apellidos: String,\r\n        dui: String,\r\n        correo: String,\r\n        telefono: String,\r\n        password: String,\r\n        extraCampo: String,\r\n        especialidadPos: Int,\r\n        unidadPos: Int\r\n    ) {\r\n        var estado = FormularioState()\r\n        var hayError = false\r\n\r\n        if (nombres.isBlank()) {\r\n            estado = estado.copy(nombreError = \"Nombre requerido\"); hayError = true\r\n        }\r\n        if (apellidos.isBlank()) {\r\n            estado = estado.copy(apellidoError = \"Apellido requerido\"); hayError = true\r\n        }\r\n        if (!Validation.isValidDUI(dui)) {\r\n            estado = estado.copy(duiError = \"Formato de DUI incorrecto (00000000-0)\"); hayError = true\r\n        }\r\n        if (!Validation.isValidEmail(correo)) {\r\n            estado = estado.copy(correoError = \"Correo inválido\"); hayError = true\r\n        }\r\n        if (!Validation.isValidPassword(password)) {\r\n            estado = estado.copy(passwordError = \"Mínimo 8 caracteres, 1 mayúscula y 1 símbolo\"); hayError = true\r\n        }\r\n        if (!Validation.isValidPhone(telefono)) {\r\n            estado = estado.copy(telefonoError = \"Formato inválido (0000-0000)\"); hayError = true\r\n        }\r\n        if (especialidadPos <= 0) {\r\n            estado = estado.copy(especialidadError = \"Especialidad requerida\"); hayError = true\r\n        }\r\n\r\n        when (rolId) {\r\n            RolesUsuario.ID_MEDICO -> if (extraCampo.length < 4) {\r\n                estado = estado.copy(jvpmError = \"JVPM inválido\"); hayError = true\r\n            }\r\n            RolesUsuario.ID_PACIENTE -> if (extraCampo.isEmpty()) {\r\n                estado = estado.copy(afiliadoError = \"Requerido\"); hayError = true\r\n            }\r\n        }\r\n        _formState.value = estado.copy(isValid = !hayError)\r\n    }\r\n\r\n    fun validarFormularioUnidadEspecialidad(cupoDiarioStr: String) {\r\n        var estado = FormularioState()\r\n        var hayError = false\r\n\r\n        val cupoNum = cupoDiarioStr.trim().toIntOrNull()\r\n        if (cupoNum == null || cupoNum <= 0) {\r\n            estado = estado.copy(cupoDiarioError = \"El cupo diario debe ser un número mayor a 0\")\r\n            hayError = true\r\n        }\r\n\r\n        _formState.value = estado.copy(isValid = !hayError)\r\n    }\r\n    // endregion\r\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/citas/medicas/ui/auth/AuthViewModel.kt b/app/src/main/java/com/citas/medicas/ui/auth/AuthViewModel.kt
+--- a/app/src/main/java/com/citas/medicas/ui/auth/AuthViewModel.kt	(revision dc7f42434232079edde6dfc2e5313f163dcfc1b9)
++++ b/app/src/main/java/com/citas/medicas/ui/auth/AuthViewModel.kt	(date 1780447511915)
+@@ -405,34 +405,56 @@
+         }
+     }
+ 
+-    fun cargarTodasLasCitas() {
++    fun cargarTodasLasCitas(context: android.content.Context) {
+         viewModelScope.launch(Dispatchers.IO) {
+             withContext(Dispatchers.Main) { _isLoading.value = true }
+ 
++            // primero entramos a modo offline
++            val db = com.citas.medicas.ui.AppDatabase.getDatabase(context)
++            val dao = db.citasMedicoDao()
++
++            val citasLocales = dao.obtenerTodasLasCitas().map { it.toModel() }
++
++            // Si tenemos citas guardadas, las mandamos a la pantalla
++            if (citasLocales.isNotEmpty()) {
++                withContext(Dispatchers.Main) {
++                    _listaCitas.value = citasLocales
++                }
++            }
++
++            //ir por datos de api
+             try {
+                 val response = repository.obtenerTodasLasCitas()
+ 
+                 if (response.isSuccessful) {
+-                    // 1. Especificamos explícitamente el tipo de dato esperado de la API
+-                    val apiResponse: ApiResponse<AgendaCitasWrapper>? = response.body()
+-
+-                    // 2. Extraemos el wrapper interno de forma segura
+-                    val citasWrapper: AgendaCitasWrapper? = apiResponse?.data
+-
+-                    // 3. Extraemos la lista de citas real usando el campo interno de tu wrapper
++                    val apiResponse = response.body()
++                    val citasWrapper = apiResponse?.data
+                     val listaReal = citasWrapper?.citas ?: emptyList()
+ 
+                     withContext(Dispatchers.Main) {
+                         _listaCitas.value = listaReal
+                     }
++
++                    // Borramos lo viejo y guardamos la nueva lista en el celular
++                    dao.limpiarAgenda()
++                    val entidadesParaGuardar = listaReal.map {
++                        com.citas.medicas.ui.medico.local.entities.CitaMedicoEntity.fromModel(it)
++                    }
++                    dao.guardarCitas(entidadesParaGuardar)
++
+                 } else {
+-                    withContext(Dispatchers.Main) {
+-                        _error.value = "Error del servidor: ${response.code()}"
++                    if (citasLocales.isEmpty()) {
++                        withContext(Dispatchers.Main) {
++                            _error.value = "Error del servidor: ${response.code()}"
++                        }
+                     }
+                 }
+             } catch (e: Exception) {
+-                withContext(Dispatchers.Main) {
+-                    _error.value = "Fallo de conexión: ${e.message}"
++                // Solo mostramos error si el médico está offline y su base de datos local está vacía.
++                if (citasLocales.isEmpty()) {
++                    withContext(Dispatchers.Main) {
++                        _error.value = "Modo sin conexión y sin citas guardadas."
++                    }
+                 }
+             } finally {
+                 withContext(Dispatchers.Main) { _isLoading.value = false }
+Index: app/src/main/java/com/citas/medicas/ui/medico/local/entities/CitaMedicoEntity.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/citas/medicas/ui/medico/local/entities/CitaMedicoEntity.kt b/app/src/main/java/com/citas/medicas/ui/medico/local/entities/CitaMedicoEntity.kt
+new file mode 100644
+--- /dev/null	(date 1780447511924)
++++ b/app/src/main/java/com/citas/medicas/ui/medico/local/entities/CitaMedicoEntity.kt	(date 1780447511924)
+@@ -0,0 +1,52 @@
++package com.citas.medicas.ui.medico.local.entities
++
++import androidx.room.Entity
++import androidx.room.PrimaryKey
++import com.citas.medicas.models.CitaResponse
++
++@Entity(tableName = "agenda_medico")
++data class CitaMedicoEntity(
++    @PrimaryKey(autoGenerate = true) val localId: Int = 0,
++    val pacienteid: Int,
++    val nombrepaciente: String,
++    val apellidopaciente: String,
++    val medicoid: Int,
++    val medicousuarioid: String,
++    val estadocita: String,
++    val especialidadid: Int,
++    val especialidadcita: String,
++    val horaasignada: String,
++    val fechacita: String
++) {
++    fun toModel(): CitaResponse {
++        return CitaResponse(
++            pacienteid = pacienteid,
++            nombrepaciente = nombrepaciente,
++            apellidopaciente = apellidopaciente,
++            medicoid = medicoid,
++            medicoUsuarioid = medicousuarioid,
++            estadocita = estadocita,
++            especialidadid = especialidadid,
++            especialidadcita = especialidadcita,
++            horaasignada = horaasignada,
++            fechacita = fechacita
++        )
++    }
++
++    companion object {
++        fun fromModel(model: CitaResponse): CitaMedicoEntity {
++            return CitaMedicoEntity(
++                pacienteid = model.pacienteid,
++                nombrepaciente = model.nombrepaciente,
++                apellidopaciente = model.apellidopaciente,
++                medicoid = model.medicoid,
++                medicousuarioid = model.medicoUsuarioid,
++                estadocita = model.estadocita,
++                especialidadid = model.especialidadid,
++                especialidadcita = model.especialidadcita,
++                horaasignada = model.horaasignada,
++                fechacita = model.fechacita
++            )
++        }
++    }
++}
+\ No newline at end of file
+Index: app/src/main/java/com/citas/medicas/ui/medico/local/dao/CitasMedicoDao.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/citas/medicas/ui/medico/local/dao/CitasMedicoDao.kt b/app/src/main/java/com/citas/medicas/ui/medico/local/dao/CitasMedicoDao.kt
+new file mode 100644
+--- /dev/null	(date 1780447129970)
++++ b/app/src/main/java/com/citas/medicas/ui/medico/local/dao/CitasMedicoDao.kt	(date 1780447129970)
+@@ -0,0 +1,20 @@
++package com.citas.medicas.ui.medico.local.dao
++
++import androidx.room.Dao
++import androidx.room.Insert
++import androidx.room.OnConflictStrategy
++import androidx.room.Query
++import com.citas.medicas.ui.medico.local.entities.CitaMedicoEntity
++
++@Dao
++interface CitasMedicoDao {
++
++    @Query("SELECT * FROM agenda_medico")
++    suspend fun obtenerTodasLasCitas(): List<CitaMedicoEntity>
++
++    @Insert(onConflict = OnConflictStrategy.REPLACE)
++    suspend fun guardarCitas(citas: List<CitaMedicoEntity>)
++
++    @Query("DELETE FROM agenda_medico")
++    suspend fun limpiarAgenda()
++}
+\ No newline at end of file

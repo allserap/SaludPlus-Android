@@ -1,0 +1,452 @@
+Index: app/src/main/java/com/citas/medicas/ui/medico/PerfilMedicoFragment.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.citas.medicas.ui.medico\r\n\r\nimport android.os.Bundle\r\nimport android.view.LayoutInflater\r\nimport android.view.View\r\nimport android.view.ViewGroup\r\nimport android.widget.Toast\r\nimport androidx.appcompat.app.AlertDialog\r\nimport androidx.fragment.app.Fragment\r\nimport androidx.lifecycle.lifecycleScope\r\nimport com.citas.medicas.R\r\nimport com.citas.medicas.data.ApiService\r\nimport com.citas.medicas.data.RetrofitClient\r\nimport com.citas.medicas.databinding.FragmentPerfilMedicoBinding\r\nimport com.citas.medicas.models.MedicoProfileResponse\r\nimport com.citas.medicas.models.MedicoUpdateRequest\r\nimport com.google.android.material.button.MaterialButton\r\nimport com.google.android.material.textfield.TextInputEditText\r\nimport kotlinx.coroutines.launch\r\nimport java.time.ZonedDateTime\r\nimport java.time.format.DateTimeFormatter\r\nimport java.util.Locale\r\n\r\nclass PerfilMedicoFragment : Fragment() {\r\n\r\n    private var _binding: FragmentPerfilMedicoBinding? = null\r\n    private val binding get() = _binding!!\r\n\r\n    private lateinit var apiService: ApiService\r\n    private var medicoActual: MedicoProfileResponse? = null\r\n\r\n    override fun onCreateView(\r\n        inflater: LayoutInflater, container: ViewGroup?,\r\n        savedInstanceState: Bundle?\r\n    ): View {\r\n        _binding = FragmentPerfilMedicoBinding.inflate(inflater, container, false)\r\n        return binding.root\r\n    }\r\n\r\n    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {\r\n        super.onViewCreated(view, savedInstanceState)\r\n        apiService = RetrofitClient.getApiService(requireContext())\r\n\r\n        cargarPerfilMedico()\r\n\r\n        binding.btnEditarContacto.setOnClickListener {\r\n            medicoActual?.let { mostrarDialogoEditarContacto(it) } ?: mostrarErrorCarga()\r\n        }\r\n\r\n        binding.btnCambiarClave.setOnClickListener {\r\n            medicoActual?.let { mostrarDialogoCambiarClave(it) } ?: mostrarErrorCarga()\r\n        }\r\n    }\r\n\r\n    private fun cargarPerfilMedico() {\r\n        lifecycleScope.launch {\r\n            try {\r\n                val response = apiService.obtenerPerfilMedicoLogueado()\r\n                if (response.isSuccessful && response.body() != null) {\r\n                    val apiResponse = response.body()!!\r\n                    if (apiResponse.success && apiResponse.data != null) {\r\n                        medicoActual = apiResponse.data\r\n                        mapearDatosAInterfaz(apiResponse.data)\r\n                    } else {\r\n                        Toast.makeText(context, \"Error: Datos no encontrados\", Toast.LENGTH_SHORT).show()\r\n                    }\r\n                } else {\r\n                    Toast.makeText(context, \"Error de servidor: ${response.code()}\", Toast.LENGTH_LONG).show()\r\n                }\r\n            } catch (e: Exception) {\r\n                android.util.Log.e(\"PerfilMedico\", \"Error de red al cargar perfil\", e)\r\n                Toast.makeText(context, \"Error de red: ${e.message}\", Toast.LENGTH_LONG).show()\r\n            }\r\n        }\r\n    }\r\n\r\n    private fun mapearDatosAInterfaz(medico: MedicoProfileResponse) {\r\n        val jvpmTexto = if (medico.numJvpm.isNullOrEmpty() || medico.numJvpm == \"null\") \"No asignado\" else medico.numJvpm\r\n        binding.tvJVPM.text = \"JVPM $jvpmTexto\"\r\n\r\n        binding.tvDui.text = medico.dui\r\n        binding.tvFechaNacimiento.text = formatearFechaIso(medico.fechaNacimiento)\r\n        binding.tvGenero.text = medico.genero\r\n        binding.tvEmail.text = medico.email\r\n        binding.tvTelefono.text = medico.telefono\r\n    }\r\n\r\n    private fun mostrarDialogoEditarContacto(medico: MedicoProfileResponse) {\r\n        val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_editar_contacto, null)\r\n        val dialog = AlertDialog.Builder(requireContext()).setView(dialogView).create()\r\n\r\n        val txtEditEmail = dialogView.findViewById<TextInputEditText>(R.id.txtEditEmail)\r\n        val txtEditTelefono = dialogView.findViewById<TextInputEditText>(R.id.txtEditTelefono)\r\n        val btnGuardar = dialogView.findViewById<MaterialButton>(R.id.btnGuardarContacto)\r\n\r\n        txtEditEmail.setText(medico.email)\r\n        txtEditTelefono.setText(medico.telefono)\r\n\r\n        btnGuardar.setOnClickListener {\r\n            val nuevoEmail = txtEditEmail.text.toString().trim()\r\n            val nuevoTelefono = txtEditTelefono.text.toString().trim()\r\n\r\n            if (nuevoEmail.isEmpty() || nuevoTelefono.isEmpty()) {\r\n                Toast.makeText(context, \"Por favor, completa todos los campos\", Toast.LENGTH_SHORT).show()\r\n                return@setOnClickListener\r\n            }\r\n\r\n            // Construye el MedicoUpdateRequest reutilizando la estructura validada por el administrador\r\n            val updateRequest = MedicoUpdateRequest(\r\n                id = medico.id,\r\n                nombre = medico.nombre,\r\n                apellido = medico.apellido,\r\n                dui = medico.dui,\r\n                email = nuevoEmail,\r\n                telefono = nuevoTelefono,\r\n                fechaNacimiento = medico.fechaNacimiento?.split(\"T\")?.get(0),\r\n                genero = medico.generoId,\r\n                rol = medico.rolId,\r\n                activo = medico.activo,\r\n                numJvpm = if (medico.numJvpm.isNullOrEmpty() || medico.numJvpm == \"null\") \"\" else medico.numJvpm,\r\n                especialidad = medico.especialidad,\r\n                unidadMedica = medico.unidadMedica,\r\n                password = null\r\n            )\r\n\r\n            ejecutarActualizacionServidor(medico.id, updateRequest, dialog)\r\n        }\r\n        dialog.show()\r\n    }\r\n\r\n    private fun mostrarDialogoCambiarClave(medico: MedicoProfileResponse) {\r\n        val dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_cambiar_clave, null)\r\n        val dialog = AlertDialog.Builder(requireContext()).setView(dialogView).create()\r\n\r\n        val txtClaveActual = dialogView.findViewById<TextInputEditText>(R.id.txtClaveActual)\r\n        val txtClaveNueva = dialogView.findViewById<TextInputEditText>(R.id.txtClaveNueva)\r\n        val btnActualizar = dialogView.findViewById<MaterialButton>(R.id.btnActualizarClave)\r\n\r\n        btnActualizar.setOnClickListener {\r\n            val claveActual = txtClaveActual.text.toString().trim()\r\n            val claveNueva = txtClaveNueva.text.toString().trim()\r\n\r\n            if (claveActual.isEmpty() || claveNueva.isEmpty()) {\r\n                Toast.makeText(context, \"Por favor, completa ambos campos\", Toast.LENGTH_SHORT).show()\r\n                return@setOnClickListener\r\n            }\r\n\r\n            val updateRequest = MedicoUpdateRequest(\r\n                id = medico.id,\r\n                nombre = medico.nombre,\r\n                apellido = medico.apellido,\r\n                dui = medico.dui,\r\n                email = medico.email,\r\n                telefono = medico.telefono,\r\n                fechaNacimiento = medico.fechaNacimiento?.split(\"T\")?.get(0),\r\n                genero = medico.generoId,\r\n                rol = medico.rolId,\r\n                activo = medico.activo,\r\n                numJvpm = if (medico.numJvpm.isNullOrEmpty() || medico.numJvpm == \"null\") \"\" else medico.numJvpm,\r\n                especialidad = medico.especialidad,\r\n                unidadMedica = medico.unidadMedica,\r\n                password = claveNueva\r\n            )\r\n\r\n            ejecutarActualizacionServidor(medico.id, updateRequest, dialog)\r\n        }\r\n        dialog.show()\r\n    }\r\n\r\n    private fun ejecutarActualizacionServidor(id: String, request: MedicoUpdateRequest, dialog: AlertDialog) {\r\n        lifecycleScope.launch {\r\n            try {\r\n                // Hacer uso directo de la ruta PUT \"admin/medicos/update/{id}\"\r\n                val response = apiService.actualizarMedico(id, request)\r\n                if (response.isSuccessful) {\r\n                    Toast.makeText(context, \"Perfil actualizado correctamente\", Toast.LENGTH_SHORT).show()\r\n                    dialog.dismiss()\r\n                    cargarPerfilMedico() // Recarga la UI reflejando los nuevos cambios\r\n                } else {\r\n                    val errorContenido = response.errorBody()?.string() ?: \"\"\r\n                    android.util.Log.e(\"PerfilMedico\", \"Error servidor: $errorContenido\")\r\n                    Toast.makeText(context, \"No se pudo actualizar el perfil en el servidor\", Toast.LENGTH_LONG).show()\r\n                }\r\n            } catch (e: Exception) {\r\n                android.util.Log.e(\"PerfilMedico\", \"Fallo de conexión\", e)\r\n                Toast.makeText(context, \"Error de comunicación de red\", Toast.LENGTH_LONG).show()\r\n            }\r\n        }\r\n    }\r\n\r\n    private fun formatearFechaIso(fechaIso: String?): String {\r\n        if (fechaIso.isNullOrEmpty()) return \"No disponible\"\r\n        return try {\r\n            val fechaParseada = ZonedDateTime.parse(fechaIso)\r\n            val formateador = DateTimeFormatter.ofPattern(\"dd/MM/yyyy\", Locale.getDefault())\r\n            fechaParseada.format(formateador)\r\n        } catch (e: Exception) {\r\n            android.util.Log.e(\"PerfilMedico\", \"Error mapeando fecha: $fechaIso\", e)\r\n            fechaIso\r\n        }\r\n    }\r\n\r\n    private fun mostrarErrorCarga() {\r\n        Toast.makeText(context, \"Los datos del perfil no se han cargado aún\", Toast.LENGTH_SHORT).show()\r\n    }\r\n\r\n    override fun onDestroyView() {\r\n        super.onDestroyView()\r\n        _binding = null\r\n    }\r\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/citas/medicas/ui/medico/PerfilMedicoFragment.kt b/app/src/main/java/com/citas/medicas/ui/medico/PerfilMedicoFragment.kt
+--- a/app/src/main/java/com/citas/medicas/ui/medico/PerfilMedicoFragment.kt	(revision 78aa86c1d1e8044ecd44541adde97830075c5eb8)
++++ b/app/src/main/java/com/citas/medicas/ui/medico/PerfilMedicoFragment.kt	(date 1780364261830)
+@@ -14,6 +14,8 @@
+ import com.citas.medicas.databinding.FragmentPerfilMedicoBinding
+ import com.citas.medicas.models.MedicoProfileResponse
+ import com.citas.medicas.models.MedicoUpdateRequest
++import com.citas.medicas.ui.AppDatabase
++import com.citas.medicas.ui.medico.local.entities.MedicoPerfilEntity
+ import com.google.android.material.button.MaterialButton
+ import com.google.android.material.textfield.TextInputEditText
+ import kotlinx.coroutines.launch
+@@ -26,6 +28,7 @@
+     private var _binding: FragmentPerfilMedicoBinding? = null
+     private val binding get() = _binding!!
+ 
++    private var isOffline = false
+     private lateinit var apiService: ApiService
+     private var medicoActual: MedicoProfileResponse? = null
+ 
+@@ -44,32 +47,60 @@
+         cargarPerfilMedico()
+ 
+         binding.btnEditarContacto.setOnClickListener {
++            if (isOffline) {
++                Toast.makeText(context, "Necesitas internet para editar tu perfil", Toast.LENGTH_SHORT).show()
++                return@setOnClickListener
++            }
+             medicoActual?.let { mostrarDialogoEditarContacto(it) } ?: mostrarErrorCarga()
+         }
+ 
+         binding.btnCambiarClave.setOnClickListener {
++            if (isOffline) {
++                Toast.makeText(context, "Necesitas internet para cambiar tu contraseña", Toast.LENGTH_SHORT).show()
++                return@setOnClickListener
++            }
+             medicoActual?.let { mostrarDialogoCambiarClave(it) } ?: mostrarErrorCarga()
+         }
+     }
+ 
+     private fun cargarPerfilMedico() {
+         lifecycleScope.launch {
++            val db = AppDatabase.getDatabase(requireContext())
++            val dao = db.medicoPerfilDao()
++
++            //  local primero (Offline-First)
++            val perfilGuardado = dao.obtenerPerfil()
++            if (perfilGuardado != null) {
++                medicoActual = perfilGuardado.toModel()
++                mapearDatosAInterfaz(medicoActual!!)
++            }
++
+             try {
+                 val response = apiService.obtenerPerfilMedicoLogueado()
+                 if (response.isSuccessful && response.body() != null) {
+                     val apiResponse = response.body()!!
+                     if (apiResponse.success && apiResponse.data != null) {
++
++                        isOffline = false
+                         medicoActual = apiResponse.data
+                         mapearDatosAInterfaz(apiResponse.data)
++
++                        dao.limpiarTabla()
++                        dao.guardarPerfil(MedicoPerfilEntity.fromModel(apiResponse.data))
++
+                     } else {
+                         Toast.makeText(context, "Error: Datos no encontrados", Toast.LENGTH_SHORT).show()
+                     }
+-                } else {
+-                    Toast.makeText(context, "Error de servidor: ${response.code()}", Toast.LENGTH_LONG).show()
+                 }
+             } catch (e: Exception) {
+                 android.util.Log.e("PerfilMedico", "Error de red al cargar perfil", e)
+-                Toast.makeText(context, "Error de red: ${e.message}", Toast.LENGTH_LONG).show()
++                isOffline = true
++
++                if (perfilGuardado != null) {
++                    Toast.makeText(context, "Modo sin conexión. Mostrando datos guardados.", Toast.LENGTH_SHORT).show()
++                } else {
++                    Toast.makeText(context, "No hay internet y no hay datos guardados.", Toast.LENGTH_LONG).show()
++                }
+             }
+         }
+     }
+@@ -105,7 +136,6 @@
+                 return@setOnClickListener
+             }
+ 
+-            // Construye el MedicoUpdateRequest reutilizando la estructura validada por el administrador
+             val updateRequest = MedicoUpdateRequest(
+                 id = medico.id,
+                 nombre = medico.nombre,
+@@ -170,12 +200,11 @@
+     private fun ejecutarActualizacionServidor(id: String, request: MedicoUpdateRequest, dialog: AlertDialog) {
+         lifecycleScope.launch {
+             try {
+-                // Hacer uso directo de la ruta PUT "admin/medicos/update/{id}"
+                 val response = apiService.actualizarMedico(id, request)
+                 if (response.isSuccessful) {
+                     Toast.makeText(context, "Perfil actualizado correctamente", Toast.LENGTH_SHORT).show()
+                     dialog.dismiss()
+-                    cargarPerfilMedico() // Recarga la UI reflejando los nuevos cambios
++                    cargarPerfilMedico()
+                 } else {
+                     val errorContenido = response.errorBody()?.string() ?: ""
+                     android.util.Log.e("PerfilMedico", "Error servidor: $errorContenido")
+Index: app/src/main/java/com/citas/medicas/ui/admin/DashboardAdminActivity.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.citas.medicas.ui.admin\r\n\r\nimport android.content.Intent\r\nimport android.os.Bundle\r\nimport android.widget.Button\r\nimport android.widget.Toast\r\nimport androidx.activity.enableEdgeToEdge\r\nimport androidx.appcompat.app.AppCompatActivity\r\nimport androidx.core.view.ViewCompat\r\nimport androidx.core.view.WindowInsetsCompat\r\nimport androidx.fragment.app.Fragment\r\nimport com.citas.medicas.R\r\nimport com.citas.medicas.databinding.ActivityDashboardAdminBinding\r\nimport com.citas.medicas.databinding.ActivityDashboardMedicoBinding\r\nimport com.citas.medicas.ui.auth.LoginActivity\r\nimport com.citas.medicas.ui.auth.RegistroActivity\r\nimport com.citas.medicas.ui.medico.AgendaFragment\r\nimport com.citas.medicas.ui.medico.HistorialFragment\r\nimport com.citas.medicas.ui.medico.RecetasFragment\r\nimport com.citas.medicas.utils.SessionManager\r\nimport com.google.android.material.dialog.MaterialAlertDialogBuilder\r\n\r\nclass DashboardAdminActivity : AppCompatActivity() {\r\n\r\n    private lateinit var binding: ActivityDashboardAdminBinding\r\n\r\n    override fun onCreate(savedInstanceState: Bundle?) {\r\n        super.onCreate(savedInstanceState)\r\n\r\n\r\n        // Inicializar el binding\r\n        binding = ActivityDashboardAdminBinding.inflate(layoutInflater)\r\n        setContentView(binding.root)\r\n\r\n        // Inicializar fragment\r\n        if (savedInstanceState == null) {\r\n            replaceFragment(UsuariosFragment())\r\n            actualizarEstiloTabs(pestanaActiva = \"usuarios\")\r\n        }\r\n\r\n        cargarDatosHeader()\r\n        setupNavigation()\r\n    }\r\n    private fun cargarDatosHeader() {\r\n        val prefs = getSharedPreferences(\"CitasMedicasPrefs\", MODE_PRIVATE)\r\n\r\n        // Recuperar valores reales del Administrador desde las SharedPreferences\r\n        val nombre = prefs.getString(\"user_nombre\", \"\") ?: \"\"\r\n        val apellido = prefs.getString(\"user_apellido\", \"\") ?: \"\"\r\n        val email = prefs.getString(\"user_email\", \"admin@saludplus.com\") ?: \"admin@saludplus.com\"\r\n\r\n        // Editar la UI de la cabecera usando View Binding\r\n        with(binding) {\r\n            // Asigna directamente los textos correspondientes al rol administrativo\r\n            tvHeaderRol.text = \"Administrador del Sistema\"\r\n            tvHeaderNombre.text = \"$nombre $apellido\".trim().ifEmpty { \"Administrador\" }\r\n        }\r\n    }\r\n    private fun setupNavigation() {\r\n        with(binding) {\r\n            tabUsuarios.setOnClickListener {\r\n                replaceFragment(UsuariosFragment())\r\n                actualizarEstiloTabs(pestanaActiva = \"usuarios\")\r\n            }\r\n            tabEstadisticas.setOnClickListener {\r\n                replaceFragment(EstadisticasCitasFragment())\r\n                actualizarEstiloTabs(pestanaActiva = \"estadisticas\")\r\n            }\r\n            tabGestiones.setOnClickListener {\r\n                replaceFragment(GestionesFragment())\r\n                actualizarEstiloTabs(pestanaActiva = \"gestiones\")\r\n            }\r\n\r\n            btnSalir.setOnClickListener {\r\n                // Borrar token al salir\r\n                val prefs = getSharedPreferences(\"CitasMedicasPrefs\", MODE_PRIVATE)\r\n                prefs.edit().clear().apply()\r\n                MaterialAlertDialogBuilder(this@DashboardAdminActivity)\r\n                    .setTitle(\"Cerrar Sesión\")\r\n                    .setMessage(\"¿Está seguro de que desea salir del sistema?\")\r\n                    .setNegativeButton(\"Cancelar\", null)\r\n                    .setPositiveButton(\"Salir\") { _, _ ->\r\n                        SessionManager.logout(this@DashboardAdminActivity)\r\n\r\n                        // Redirige al Login limpiando el historial de navegación\r\n                        val intent = Intent(this@DashboardAdminActivity, LoginActivity::class.java).apply {\r\n                            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK\r\n                        }\r\n                        startActivity(intent)\r\n                        finish()\r\n                    }\r\n                    .show()\r\n            }\r\n        }\r\n    }\r\n\r\n    // Funcion para cambiar de fragment\r\n    fun replaceFragment(fragment: Fragment) {\r\n        supportFragmentManager.beginTransaction()\r\n            .replace(R.id.containerFragment, fragment)\r\n            .commit()\r\n    }\r\n\r\n    // Función auxiliar para que visualmente cambie el diseño del Tab seleccionado\r\n    private fun actualizarEstiloTabs(pestanaActiva: String) {\r\n        with(binding) {\r\n            // Primero removemos el fondo resaltado de todos\r\n            tabUsuarios.setBackgroundResource(0)\r\n            tabEstadisticas.setBackgroundResource(0)\r\n            tabGestiones.setBackgroundResource(0)\r\n\r\n            // Se lo aplicamos únicamente al que está activo en el momento\r\n            when (pestanaActiva) {\r\n                \"usuarios\" -> tabUsuarios.setBackgroundResource(R.drawable.bg_tabs)\r\n                \"estadisticas\" -> tabEstadisticas.setBackgroundResource(R.drawable.bg_tabs)\r\n                \"gestiones\" -> tabGestiones.setBackgroundResource(R.drawable.bg_tabs)\r\n            }\r\n        }\r\n    }\r\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/citas/medicas/ui/admin/DashboardAdminActivity.kt b/app/src/main/java/com/citas/medicas/ui/admin/DashboardAdminActivity.kt
+--- a/app/src/main/java/com/citas/medicas/ui/admin/DashboardAdminActivity.kt	(revision 78aa86c1d1e8044ecd44541adde97830075c5eb8)
++++ b/app/src/main/java/com/citas/medicas/ui/admin/DashboardAdminActivity.kt	(date 1780362048906)
+@@ -71,6 +71,9 @@
+                 actualizarEstiloTabs(pestanaActiva = "gestiones")
+             }
+ 
++
++
++
+             btnSalir.setOnClickListener {
+                 // Borrar token al salir
+                 val prefs = getSharedPreferences("CitasMedicasPrefs", MODE_PRIVATE)
+Index: app/src/main/java/com/citas/medicas/ui/paciente/HomePacienteActivity.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.citas.medicas.ui.paciente\r\n\r\nimport android.content.Intent\r\nimport android.os.Bundle\r\nimport android.widget.TextView\r\nimport androidx.activity.enableEdgeToEdge\r\nimport androidx.appcompat.app.AppCompatActivity\r\nimport com.citas.medicas.R\r\nimport com.google.android.material.bottomnavigation.BottomNavigationView\r\n\r\nimport android.util.Log\r\nimport android.widget.ImageView\r\nimport android.widget.LinearLayout\r\nimport android.widget.ProgressBar\r\nimport android.widget.Toast\r\nimport androidx.lifecycle.lifecycleScope\r\nimport com.citas.medicas.data.RetrofitClient\r\nimport com.citas.medicas.models.ActualizarCitaRequest\r\nimport com.citas.medicas.models.CitaHistorial\r\nimport com.citas.medicas.ui.auth.LoginActivity\r\nimport com.citas.medicas.ui.paciente.local.entities.toEntity\r\nimport com.citas.medicas.ui.paciente.local.entities.toModel\r\nimport kotlinx.coroutines.launch\r\nimport java.text.SimpleDateFormat\r\nimport java.util.Calendar\r\nimport java.util.Locale\r\nimport java.util.TimeZone\r\n\r\nclass HomePacienteActivity : AppCompatActivity() {\r\n    override fun onCreate(savedInstanceState: Bundle?) {\r\n        super.onCreate(savedInstanceState)\r\n        enableEdgeToEdge()\r\n        setContentView(R.layout.activity_home_paciente_activityn)\r\n\r\n\r\n\r\n        val btnCerrarSesion = findViewById<ImageView>(R.id.btnCerrarSesion)\r\n\r\n        val tvVerTodasCitas = findViewById<TextView>(R.id.tvVerTodasCitas)\r\n\r\n\r\n        tvVerTodasCitas.setOnClickListener {\r\n            startActivity(Intent(this, HistorialCitasActivity::class.java))\r\n        }\r\n\r\n\r\n\r\n        val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavigation)\r\n\r\n        bottomNav.selectedItemId = R.id.nav_inicio\r\n\r\n        bottomNav.setOnItemSelectedListener { item ->\r\n            when (item.itemId) {\r\n                R.id.nav_inicio -> {\r\n                    true\r\n                }\r\n                R.id.nav_solicitar -> {\r\n                    val intent = Intent(this, SolicitarCitaActivity::class.java)\r\n                    intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)\r\n                    startActivity(intent)\r\n                    true\r\n                }\r\n\r\n                R.id.nav_historial -> {\r\n                    val intent = Intent(this, HistorialCitasActivity::class.java)\r\n                    intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)\r\n                    startActivity(intent)\r\n                    true\r\n                }\r\n                R.id.nav_mapa -> {\r\n                    val intent = Intent(this, MapaActivity::class.java)\r\n                    intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)\r\n                    startActivity(intent)\r\n                    true\r\n                }\r\n                R.id.nav_perfil -> {\r\n                    val intent = Intent(this, PerfilActivity::class.java)\r\n                    intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)\r\n                    startActivity(intent)\r\n                    true\r\n                }\r\n\r\n                else -> false\r\n            }\r\n        }\r\n        btnCerrarSesion.setOnClickListener {\r\n            com.google.android.material.dialog.MaterialAlertDialogBuilder(this@HomePacienteActivity)\r\n                .setTitle(\"Cerrar Sesión\")\r\n                .setMessage(\"¿Estás seguro de que deseas salir de tu cuenta?\")\r\n                .setNegativeButton(\"Cancelar\", null)\r\n                .setPositiveButton(\"Salir\") { dialog, which ->\r\n\r\n                    val prefs = getSharedPreferences(\"CitasMedicasPrefs\", MODE_PRIVATE)\r\n                    prefs.edit().clear().apply()\r\n\r\n                    lifecycleScope.launch(kotlinx.coroutines.Dispatchers.IO) {\r\n                        val db = com.citas.medicas.ui.paciente.local.AppDatabase.getDatabase(this@HomePacienteActivity)\r\n                        db.clearAllTables()\r\n                    }\r\n\r\n                    val intent = Intent(this@HomePacienteActivity, LoginActivity::class.java)\r\n                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK\r\n                    startActivity(intent)\r\n                    finish()\r\n                }\r\n                .show()\r\n        }\r\n\r\n\r\n\r\n        cargarCitasDesdeApi()\r\n\r\n    }\r\n\r\n\r\n    private fun cargarCitasDesdeApi() {\r\n        val prefs = getSharedPreferences(\"CitasMedicasPrefs\", MODE_PRIVATE)\r\n        val nombreUsuario = prefs.getString(\"user_nombre\", \"Paciente\")\r\n        val apellidoUsuario = prefs.getString(\"user_apellido\", \"\")\r\n        val numAfiliado = prefs.getString(\"user_afiliado\", \"No disponible\")\r\n        val usuarioId = prefs.getString(\"user_usuarioid\", \"\") ?: \"\"\r\n\r\n        findViewById<TextView>(R.id.tvUserName).text = \"$nombreUsuario $apellidoUsuario\"\r\n        findViewById<TextView>(R.id.tvUserAffiliate).text = \"Afiliado: $numAfiliado\"\r\n\r\n        if (usuarioId.isEmpty()) {\r\n            Log.e(\"API_DEBUG\", \"¡ALERTA! El usuarioId está vacío.\")\r\n            Toast.makeText(this, \"Por favor, cierra sesión y vuelve a entrar.\", Toast.LENGTH_LONG).show()\r\n            return\r\n        }\r\n\r\n        lifecycleScope.launch {\r\n            val db = com.citas.medicas.ui.paciente.local.AppDatabase.getDatabase(this@HomePacienteActivity)\r\n            val citasDao = db.citasDao()\r\n\r\n            val citasGuardadas = citasDao.obtenerTodasLasCitas()\r\n            if (citasGuardadas.isNotEmpty()) {\r\n                val todasLasCitas = citasGuardadas.map { it.toModel() }\r\n\r\n                val sdf = SimpleDateFormat(\"yyyy-MM-dd\", Locale.getDefault())\r\n                val hoy = sdf.parse(sdf.format(java.util.Date()))\r\n                val estadosProximas = listOf(\"pendiente\", \"confirmada\", \"reprogramada\")\r\n\r\n                val proximasLocal = todasLasCitas.filter { cita ->\r\n                    var esFutura = false\r\n                    try {\r\n                        val fechaStr = cita.fecha_solicitada?.take(10)\r\n                        if (fechaStr != null) {\r\n                            val fechaCita = sdf.parse(fechaStr)\r\n                            esFutura = fechaCita?.before(hoy) == false\r\n                        }\r\n                    } catch (e: Exception) {}\r\n\r\n                    val esEstadoValido = cita.estado?.lowercase(Locale.getDefault()) in estadosProximas\r\n                    esEstadoValido && esFutura\r\n                }\r\n\r\n                pintarCitasEnPantalla(proximasLocal, isOffline = true)\r\n            }\r\n\r\n            try {\r\n                val apiService = RetrofitClient.getApiService(this@HomePacienteActivity)\r\n                val response = apiService.getHistorialCitas(usuarioId)\r\n\r\n                if (response.isSuccessful && response.body()?.exito == true) {\r\n\r\n                    val listaProximas = response.body()?.datos?.proximas ?: emptyList()\r\n                    val listaPasadas = response.body()?.datos?.pasadas ?: emptyList()\r\n\r\n                    val todasLasCitas = listaProximas + listaPasadas\r\n                    val citasEntities = todasLasCitas.map { it.toEntity() }\r\n\r\n                    citasDao.limpiarTablaCitas()\r\n                    citasDao.insertarCitas(citasEntities)\r\n\r\n                    pintarCitasEnPantalla(listaProximas, isOffline = false)\r\n                }\r\n            } catch (e: Exception) {\r\n                Log.e(\"API_DEBUG\", \"Fallo silencioso de red: ${e.message}\")\r\n\r\n                if (citasGuardadas.isNotEmpty()) {\r\n                    Toast.makeText(this@HomePacienteActivity, \"Sin conexión a internet. Viendo datos offline.\", Toast.LENGTH_SHORT).show()\r\n                }\r\n            }\r\n        }\r\n    }\r\n\r\n    private fun pintarCitasEnPantalla(listaProximas: List<CitaHistorial>, isOffline: Boolean) {\r\n        val container = findViewById<LinearLayout>(R.id.llUpcomingAppointmentsContainer)\r\n        container.removeAllViews()\r\n\r\n        if (listaProximas.isNotEmpty()) {\r\n            val citasLimitadas = listaProximas.take(3)\r\n\r\n            for (cita in citasLimitadas) {\r\n                val view = layoutInflater.inflate(R.layout.item_cita_home, container, false)\r\n\r\n                view.findViewById<TextView>(R.id.tvApptType).text = cita.especialidad\r\n                view.findViewById<TextView>(R.id.tvApptTime).text = cita.hora_asignada\r\n                view.findViewById<TextView>(R.id.tvApptLocation).text = \"\uD83C\uDFE5 ${cita.unidad_medica}\"\r\n                view.findViewById<TextView>(R.id.tvApptDoctor).text = \"\uD83D\uDC68\u200D⚕\uFE0F ${cita.doctor ?: \"Por asignar\"}\"\r\n\r\n                try {\r\n                    val parser = SimpleDateFormat(\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\", Locale.getDefault())\r\n                    val formatter = SimpleDateFormat(\"dd MMM yyyy\", Locale(\"es\", \"ES\"))\r\n                    val date = parser.parse(cita.fecha_solicitada ?: \"\")\r\n                    view.findViewById<TextView>(R.id.tvApptDate).text = \"\uD83D\uDCC5 ${formatter.format(date!!)}\"\r\n                } catch (e: Exception) {\r\n                    view.findViewById<TextView>(R.id.tvApptDate).text = \"\uD83D\uDCC5 ${cita.fecha_solicitada}\"\r\n                }\r\n\r\n                // LÓGICA DE CANCELAR\r\n                val btnCancel = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnCancelAppt)\r\n\r\n                btnCancel.setOnClickListener {\r\n                    if (isOffline) {\r\n                        Toast.makeText(this@HomePacienteActivity, \"Necesitas internet para cancelar citas.\", Toast.LENGTH_SHORT).show()\r\n                        return@setOnClickListener\r\n                    }\r\n\r\n                    com.google.android.material.dialog.MaterialAlertDialogBuilder(this@HomePacienteActivity)\r\n                        .setTitle(\"⚠\uFE0F ¿Cancelar Cita?\")\r\n                        .setMessage(\"¿Estás seguro de cancelar tu cita de ${cita.especialidad}?\\n\\nEsta acción es irreversible y perderás tu espacio reservado.\")\r\n                        .setPositiveButton(\"Sí, cancelar\") { dialog, which ->\r\n\r\n                            btnCancel.isEnabled = false\r\n                            btnCancel.text = \"Cancelando...\"\r\n\r\n                            lifecycleScope.launch {\r\n                                try {\r\n                                    val apiService = RetrofitClient.getApiService(this@HomePacienteActivity)\r\n                                    val request = ActualizarCitaRequest(estado_id = 3)\r\n                                    val response = apiService.actualizarCita(cita.id, request)\r\n\r\n                                    if (response.isSuccessful && response.body()?.exito == true) {\r\n                                        Toast.makeText(this@HomePacienteActivity, \"¡Cita cancelada con éxito!\", Toast.LENGTH_SHORT).show()\r\n                                        container.removeView(view)\r\n                                    } else {\r\n                                        Toast.makeText(this@HomePacienteActivity, \"No se pudo cancelar: ${response.body()?.mensaje}\", Toast.LENGTH_LONG).show()\r\n                                        btnCancel.isEnabled = true\r\n                                        btnCancel.text = \"Cancelar\"\r\n                                    }\r\n                                } catch (e: Exception) {\r\n                                    Log.e(\"API_ERROR\", \"Error al cancelar cita\", e)\r\n                                    Toast.makeText(this@HomePacienteActivity, \"Error de red al cancelar\", Toast.LENGTH_SHORT).show()\r\n                                    btnCancel.isEnabled = true\r\n                                    btnCancel.text = \"Cancelar\"\r\n                                }\r\n                            }\r\n                        }\r\n                        .setNegativeButton(\"Mantener\", null)\r\n                        .show()\r\n                }\r\n\r\n                // LÓGICA DE REPROGRAMAR\r\n                val btnChange = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnChangeAppt)\r\n\r\n                btnChange.setOnClickListener {\r\n                    if (isOffline) {\r\n                        Toast.makeText(this@HomePacienteActivity, \"Necesitas internet para reprogramar citas.\", Toast.LENGTH_SHORT).show()\r\n                        return@setOnClickListener\r\n                    }\r\n\r\n                    if (cita.especialidad_id != null && cita.unidad_medica_id != null) {\r\n                        abrirMenuReprogramar(cita)\r\n                    } else {\r\n                        Toast.makeText(this@HomePacienteActivity, \"Ids para citas no encontrados.\", Toast.LENGTH_SHORT).show()\r\n                    }\r\n                }\r\n\r\n                container.addView(view)\r\n            }\r\n        } else {\r\n            Log.d(\"API_DEBUG\", \"El paciente no tiene citas próximas\")\r\n        }\r\n    }\r\n\r\n\r\n\r\n    private fun abrirMenuReprogramar(cita: CitaHistorial) {\r\n        val datePicker = com.google.android.material.datepicker.MaterialDatePicker.Builder.datePicker()\r\n            .setTitleText(\"Selecciona una nueva fecha\")\r\n            .build()\r\n\r\n        datePicker.addOnPositiveButtonClickListener { selection ->\r\n            val calendar = Calendar.getInstance(TimeZone.getTimeZone(\"UTC\"))\r\n            calendar.timeInMillis = selection\r\n            val sdf = SimpleDateFormat(\"yyyy-MM-dd\", Locale.getDefault())\r\n            sdf.timeZone = TimeZone.getTimeZone(\"UTC\")\r\n            val nuevaFecha = sdf.format(calendar.time)\r\n\r\n            mostrarBottomSheetHoras(cita, nuevaFecha)\r\n        }\r\n\r\n        datePicker.show(supportFragmentManager, \"DATE_PICKER_REPROGRAMAR\")\r\n    }\r\n\r\n    private fun mostrarBottomSheetHoras(cita: CitaHistorial, nuevaFecha: String) {\r\n        val bottomSheetDialog = com.google.android.material.bottomsheet.BottomSheetDialog(this)\r\n        val view = layoutInflater.inflate(R.layout.bottom_sheet_reprogramar, null)\r\n        bottomSheetDialog.setContentView(view)\r\n\r\n        val tvDate = view.findViewById<TextView>(R.id.tvSheetDate)\r\n        val pbLoading = view.findViewById<ProgressBar>(R.id.pbSheetLoading)\r\n        val tvEmpty = view.findViewById<TextView>(R.id.tvSheetEmpty)\r\n        val chipGroup = view.findViewById<com.google.android.material.chip.ChipGroup>(R.id.cgHorasDisponibles)\r\n        val btnConfirmar = view.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnConfirmarReprogramacion)\r\n\r\n        tvDate.text = \"\uD83D\uDCC5 Nueva Fecha: $nuevaFecha\"\r\n        var horaSeleccionada: String? = null\r\n\r\n        bottomSheetDialog.show()\r\n\r\n        lifecycleScope.launch {\r\n            try {\r\n                val apiService = RetrofitClient.getApiService(this@HomePacienteActivity)\r\n\r\n                val response = apiService.getHorariosDisponibles(cita.unidad_medica_id!!, cita.especialidad_id!!, nuevaFecha)\r\n\r\n                pbLoading.visibility = android.view.View.GONE\r\n\r\n                if (response.isSuccessful) {\r\n                    val horasDisponibles = response.body()?.datos\r\n                    if (horasDisponibles != null && horasDisponibles.isNotEmpty()) {\r\n\r\n\r\n                        for (horaStr in horasDisponibles) {\r\n\r\n                            val nuevoChip = com.google.android.material.chip.Chip(this@HomePacienteActivity).apply {\r\n                                text = horaStr\r\n                                isCheckable = true\r\n                                isClickable = true\r\n\r\n                                setOnCheckedChangeListener { _, isChecked ->\r\n                                    if (isChecked) {\r\n                                        horaSeleccionada = this.text.toString()\r\n                                        btnConfirmar.isEnabled = true\r\n                                    }\r\n                                }\r\n                            }\r\n\r\n                            chipGroup.addView(nuevoChip)\r\n                        }\r\n                    } else {\r\n                        tvEmpty.visibility = android.view.View.VISIBLE\r\n                    }\r\n                } else {\r\n                    tvEmpty.text = \"Error al obtener horarios.\"\r\n                    tvEmpty.visibility = android.view.View.VISIBLE\r\n                }\r\n            } catch (e: Exception) {\r\n                pbLoading.visibility = android.view.View.GONE\r\n                tvEmpty.text = \"Error de red.\"\r\n                tvEmpty.visibility = android.view.View.VISIBLE\r\n            }\r\n        }\r\n\r\n        btnConfirmar.setOnClickListener {\r\n            if (horaSeleccionada == null) return@setOnClickListener\r\n\r\n            btnConfirmar.isEnabled = false\r\n            btnConfirmar.text = \"Reprogramando...\"\r\n\r\n            lifecycleScope.launch {\r\n                try {\r\n                    val apiService = RetrofitClient.getApiService(this@HomePacienteActivity)\r\n                    val request = ActualizarCitaRequest(\r\n                        fecha_solicitada = nuevaFecha,\r\n                        hora_asignada = horaSeleccionada\r\n                    )\r\n\r\n                    val response = apiService.actualizarCita(cita.id, request)\r\n\r\n                    if (response.isSuccessful && response.body()?.exito == true) {\r\n                        Toast.makeText(this@HomePacienteActivity, \"¡Cita reprogramada con éxito!\", Toast.LENGTH_LONG).show()\r\n                        bottomSheetDialog.dismiss()\r\n                        cargarCitasDesdeApi()\r\n                    } else {\r\n                        Toast.makeText(this@HomePacienteActivity, \"Error: ${response.body()?.mensaje}\", Toast.LENGTH_SHORT).show()\r\n                        btnConfirmar.isEnabled = true\r\n                        btnConfirmar.text = \"Confirmar Nuevo Horario\"\r\n                    }\r\n                } catch (e: Exception) {\r\n                    Toast.makeText(this@HomePacienteActivity, \"Error de red al reprogramar\", Toast.LENGTH_SHORT).show()\r\n                    btnConfirmar.isEnabled = true\r\n                    btnConfirmar.text = \"Confirmar Nuevo Horario\"\r\n                }\r\n            }\r\n        }\r\n    }\r\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/citas/medicas/ui/paciente/HomePacienteActivity.kt b/app/src/main/java/com/citas/medicas/ui/paciente/HomePacienteActivity.kt
+--- a/app/src/main/java/com/citas/medicas/ui/paciente/HomePacienteActivity.kt	(revision 78aa86c1d1e8044ecd44541adde97830075c5eb8)
++++ b/app/src/main/java/com/citas/medicas/ui/paciente/HomePacienteActivity.kt	(date 1780363634068)
+@@ -17,6 +17,7 @@
+ import com.citas.medicas.data.RetrofitClient
+ import com.citas.medicas.models.ActualizarCitaRequest
+ import com.citas.medicas.models.CitaHistorial
++import com.citas.medicas.ui.AppDatabase
+ import com.citas.medicas.ui.auth.LoginActivity
+ import com.citas.medicas.ui.paciente.local.entities.toEntity
+ import com.citas.medicas.ui.paciente.local.entities.toModel
+@@ -94,7 +95,7 @@
+                     prefs.edit().clear().apply()
+ 
+                     lifecycleScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+-                        val db = com.citas.medicas.ui.paciente.local.AppDatabase.getDatabase(this@HomePacienteActivity)
++                        val db = AppDatabase.getDatabase(this@HomePacienteActivity)
+                         db.clearAllTables()
+                     }
+ 
+@@ -130,7 +131,7 @@
+         }
+ 
+         lifecycleScope.launch {
+-            val db = com.citas.medicas.ui.paciente.local.AppDatabase.getDatabase(this@HomePacienteActivity)
++            val db = AppDatabase.getDatabase(this@HomePacienteActivity)
+             val citasDao = db.citasDao()
+ 
+             val citasGuardadas = citasDao.obtenerTodasLasCitas()
+Index: app/src/main/java/com/citas/medicas/ui/paciente/HistorialCitasActivity.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.citas.medicas.ui.paciente\r\n\r\nimport android.content.Intent\r\nimport android.os.Bundle\r\nimport android.util.Log\r\nimport android.widget.Button\r\nimport android.widget.Toast\r\nimport androidx.activity.enableEdgeToEdge\r\nimport androidx.appcompat.app.AppCompatActivity\r\nimport androidx.lifecycle.lifecycleScope\r\nimport androidx.recyclerview.widget.LinearLayoutManager\r\nimport com.citas.medicas.R\r\nimport com.citas.medicas.data.RetrofitClient\r\nimport com.citas.medicas.models.CitaHistorial\r\nimport com.citas.medicas.ui.paciente.local.entities.toEntity\r\nimport com.citas.medicas.ui.paciente.local.entities.toModel\r\nimport com.google.android.material.bottomnavigation.BottomNavigationView\r\nimport com.google.android.material.tabs.TabLayout\r\nimport kotlinx.coroutines.launch\r\nimport java.text.SimpleDateFormat\r\nimport java.util.Locale\r\n\r\nprivate var listaProximas = listOf<CitaHistorial>()\r\nprivate var listaPasadas = listOf<CitaHistorial>()\r\n\r\nprivate lateinit var adapter: HistorialAdapter\r\nclass HistorialCitasActivity : AppCompatActivity() {\r\n    override fun onCreate(savedInstanceState: Bundle?) {\r\n        super.onCreate(savedInstanceState)\r\n        enableEdgeToEdge()\r\n        setContentView(R.layout.activity_historial_citas)\r\n\r\n\r\n\r\n        val rvHistorial = findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.rvHistorialCitas)\r\n        rvHistorial.layoutManager = LinearLayoutManager(this)\r\n        adapter = HistorialAdapter(emptyList())\r\n        rvHistorial.adapter = adapter\r\n\r\n        val tabLayout = findViewById<TabLayout>(R.id.tabLayoutHistorial)\r\n        tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {\r\n            override fun onTabSelected(tab: TabLayout.Tab?) {\r\n                when (tab?.position) {\r\n                    0 -> adapter.actualizarDatos(listaProximas) // Clic en Próximas\r\n                    1 -> adapter.actualizarDatos(listaPasadas)  // Clic en Pasadas\r\n                }\r\n            }\r\n            override fun onTabUnselected(tab: TabLayout.Tab?) {}\r\n            override fun onTabReselected(tab: TabLayout.Tab?) {}\r\n        })\r\n\r\n\r\n\r\n        val btnNuevaCita = findViewById<Button>(R.id.btnNuevaCitaFlotante)\r\n\r\n\r\n        btnNuevaCita.setOnClickListener {\r\n            startActivity(Intent(this, SolicitarCitaActivity::class.java))\r\n        }\r\n\r\n        val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavigationHistorial)\r\n        bottomNav.selectedItemId = R.id.nav_historial\r\n\r\n        bottomNav.setOnItemSelectedListener { item ->\r\n            when (item.itemId) {\r\n                R.id.nav_inicio -> {\r\n                    val intent = Intent(this, HomePacienteActivity::class.java)\r\n                    intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)\r\n                    startActivity(intent)\r\n                    true\r\n                }\r\n                R.id.nav_solicitar -> {\r\n                    val intent = Intent(this, SolicitarCitaActivity::class.java)\r\n                    intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)\r\n                    startActivity(intent)\r\n                    true\r\n                }\r\n                R.id.nav_historial -> {\r\n                    true\r\n                }\r\n                R.id.nav_mapa -> {\r\n                    val intent = Intent(this, MapaActivity::class.java)\r\n                    intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)\r\n                    startActivity(intent)\r\n                    true\r\n                }\r\n                R.id.nav_perfil -> {\r\n                    val intent = Intent(this, PerfilActivity::class.java)\r\n                    intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)\r\n                    startActivity(intent)\r\n                    true\r\n                }\r\n                else -> false\r\n            }\r\n        }\r\n\r\n        cargarHistorial();\r\n\r\n    }\r\n\r\n    private fun cargarHistorial() {\r\n        val prefs = getSharedPreferences(\"CitasMedicasPrefs\", MODE_PRIVATE)\r\n        val usuarioId = prefs.getString(\"user_usuarioid\", \"\") ?: \"\"\r\n\r\n        lifecycleScope.launch {\r\n            val db = com.citas.medicas.ui.paciente.local.AppDatabase.getDatabase(this@HistorialCitasActivity)\r\n            val citasDao = db.citasDao()\r\n\r\n            val citasGuardadas = citasDao.obtenerTodasLasCitas()\r\n            if (citasGuardadas.isNotEmpty()) {\r\n                val todasLasCitas = citasGuardadas.map { it.toModel() }\r\n\r\n                val sdf = SimpleDateFormat(\"yyyy-MM-dd\", Locale.getDefault())\r\n                val hoy = sdf.parse(sdf.format(java.util.Date()))\r\n\r\n                val estadosProximas = listOf(\"pendiente\", \"confirmada\", \"reprogramada\")\r\n\r\n                val proximasLocal = todasLasCitas.filter { cita ->\r\n                    var esFutura = false\r\n                    try {\r\n                        val fechaStr = cita.fecha_solicitada?.take(10)\r\n                        if (fechaStr != null) {\r\n                            val fechaCita = sdf.parse(fechaStr)\r\n                            esFutura = fechaCita?.before(hoy) == false\r\n                        }\r\n                    } catch (e: Exception) {\r\n                        esFutura = true\r\n                    }\r\n\r\n                    val esEstadoValido = cita.estado?.lowercase(Locale.getDefault()) in estadosProximas\r\n\r\n                    esEstadoValido && esFutura\r\n                }\r\n\r\n                val pasadasLocal = todasLasCitas.filter { !proximasLocal.contains(it) }\r\n\r\n                pintarHistorialEnPantalla(proximasLocal, pasadasLocal, isOffline = true)\r\n            }\r\n\r\n\r\n            try {\r\n                val apiService = RetrofitClient.getApiService(this@HistorialCitasActivity)\r\n                val response = apiService.getHistorialCitas(usuarioId)\r\n\r\n                if (response.isSuccessful && response.body()?.exito == true) {\r\n                    val datos = response.body()?.datos\r\n\r\n                    if (datos != null) {\r\n                        val proximasRed = datos.proximas ?: emptyList()\r\n                        val pasadasRed = datos.pasadas ?: emptyList()\r\n\r\n                        val todasLasCitasRed = proximasRed + pasadasRed\r\n                        val citasEntities = todasLasCitasRed.map { it.toEntity() }\r\n\r\n                        citasDao.limpiarTablaCitas()\r\n                        citasDao.insertarCitas(citasEntities)\r\n\r\n                        pintarHistorialEnPantalla(proximasRed, pasadasRed, isOffline = false)\r\n                    }\r\n                }\r\n            } catch (e: Exception) {\r\n                Log.e(\"API_ERROR\", \"Fallo de red: ${e.message}\")\r\n                if (citasGuardadas.isNotEmpty()) {\r\n                    Toast.makeText(this@HistorialCitasActivity, \"Sin conexión. Viendo historial guardado.\", Toast.LENGTH_SHORT).show()\r\n                } else {\r\n                    Toast.makeText(this@HistorialCitasActivity, \"No hay historial guardado y no hay conexión.\", Toast.LENGTH_SHORT).show()\r\n                }\r\n            }\r\n        }\r\n    }\r\n\r\n    private fun pintarHistorialEnPantalla(proximas: List<CitaHistorial>, pasadas: List<com.citas.medicas.models.CitaHistorial>, isOffline: Boolean) {\r\n        listaProximas = proximas\r\n        listaPasadas = pasadas\r\n\r\n        val tabLayout = findViewById<TabLayout>(R.id.tabLayoutHistorial)\r\n        tabLayout.getTabAt(0)?.text = \"\uD83D\uDCC5 Próximas (${listaProximas.size})\"\r\n        tabLayout.getTabAt(1)?.text = \"✓ Pasadas (${listaPasadas.size})\"\r\n\r\n        val tabSeleccionada = tabLayout.selectedTabPosition\r\n        if (tabSeleccionada == 0) {\r\n            adapter.actualizarDatos(listaProximas)\r\n        } else {\r\n            adapter.actualizarDatos(listaPasadas)\r\n        }\r\n    }\r\n\r\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/citas/medicas/ui/paciente/HistorialCitasActivity.kt b/app/src/main/java/com/citas/medicas/ui/paciente/HistorialCitasActivity.kt
+--- a/app/src/main/java/com/citas/medicas/ui/paciente/HistorialCitasActivity.kt	(revision 78aa86c1d1e8044ecd44541adde97830075c5eb8)
++++ b/app/src/main/java/com/citas/medicas/ui/paciente/HistorialCitasActivity.kt	(date 1780363634094)
+@@ -12,6 +12,7 @@
+ import com.citas.medicas.R
+ import com.citas.medicas.data.RetrofitClient
+ import com.citas.medicas.models.CitaHistorial
++import com.citas.medicas.ui.AppDatabase
+ import com.citas.medicas.ui.paciente.local.entities.toEntity
+ import com.citas.medicas.ui.paciente.local.entities.toModel
+ import com.google.android.material.bottomnavigation.BottomNavigationView
+@@ -103,7 +104,7 @@
+         val usuarioId = prefs.getString("user_usuarioid", "") ?: ""
+ 
+         lifecycleScope.launch {
+-            val db = com.citas.medicas.ui.paciente.local.AppDatabase.getDatabase(this@HistorialCitasActivity)
++            val db = AppDatabase.getDatabase(this@HistorialCitasActivity)
+             val citasDao = db.citasDao()
+ 
+             val citasGuardadas = citasDao.obtenerTodasLasCitas()
+Index: app/src/main/java/com/citas/medicas/ui/paciente/PerfilActivity.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.citas.medicas.ui.paciente\r\n\r\nimport android.app.AlertDialog\r\nimport android.content.Intent\r\nimport android.os.Bundle\r\nimport android.util.Log\r\nimport android.view.LayoutInflater\r\nimport android.view.View\r\nimport android.widget.FrameLayout\r\nimport android.widget.LinearLayout\r\nimport android.widget.TextView\r\nimport android.widget.Toast\r\nimport androidx.activity.enableEdgeToEdge\r\nimport androidx.appcompat.app.AppCompatActivity\r\nimport androidx.lifecycle.lifecycleScope\r\nimport com.citas.medicas.R\r\nimport com.citas.medicas.data.RetrofitClient\r\nimport com.citas.medicas.models.DatosPerfil\r\nimport com.citas.medicas.models.PacienteUpdateRequest\r\nimport com.citas.medicas.ui.auth.LoginActivity\r\nimport com.google.android.material.bottomnavigation.BottomNavigationView\r\nimport com.google.android.material.button.MaterialButton\r\nimport com.google.android.material.dialog.MaterialAlertDialogBuilder\r\nimport com.google.android.material.textfield.TextInputEditText\r\nimport kotlinx.coroutines.launch\r\n\r\nclass PerfilActivity : AppCompatActivity() {\r\n\r\n    private var perfilActual: DatosPerfil? = null\r\n    private var pacienteId: String = \"\"\r\n\r\n    override fun onCreate(savedInstanceState: Bundle?) {\r\n        super.onCreate(savedInstanceState)\r\n        enableEdgeToEdge()\r\n        setContentView(R.layout.activity_perfil)\r\n\r\n        val prefs = getSharedPreferences(\"CitasMedicasPrefs\", MODE_PRIVATE)\r\n        pacienteId = prefs.getString(\"user_usuarioid\", \"\") ?: \"\"\r\n\r\n        val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavigationPerfil)\r\n        bottomNav.selectedItemId = R.id.nav_perfil\r\n\r\n        bottomNav.setOnItemSelectedListener { item ->\r\n            when (item.itemId) {\r\n                R.id.nav_inicio -> {\r\n                    val intent = Intent(this, HomePacienteActivity::class.java)\r\n                    intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)\r\n                    startActivity(intent)\r\n                    true\r\n                }\r\n                R.id.nav_solicitar -> {\r\n                    val intent = Intent(this, SolicitarCitaActivity::class.java)\r\n                    intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)\r\n                    startActivity(intent)\r\n                    true\r\n                }\r\n                R.id.nav_historial -> {\r\n                    val intent = Intent(this, HistorialCitasActivity::class.java)\r\n                    intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)\r\n                    startActivity(intent)\r\n                    true\r\n                }\r\n                R.id.nav_mapa -> {\r\n                    val intent = Intent(this, MapaActivity::class.java)\r\n                    intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)\r\n                    startActivity(intent)\r\n                    true\r\n                }\r\n                R.id.nav_perfil -> true\r\n                else -> false\r\n            }\r\n        }\r\n\r\n        val btnEditar = findViewById<MaterialButton>(R.id.btnEditarPerfil)\r\n        btnEditar.setOnClickListener {\r\n            val opciones = arrayOf(\"Actualizar Correo y Teléfono\", \"Cambiar Contraseña\")\r\n            AlertDialog.Builder(this)\r\n                .setTitle(\"Opciones de Edición\")\r\n                .setItems(opciones) { _, cual ->\r\n                    when (cual) {\r\n                        0 -> mostrarDialogoEditarContacto()\r\n                        1 -> mostrarDialogoCambiarClave()\r\n                    }\r\n                }\r\n                .show()\r\n        }\r\n\r\n        val btnCerrarSesion = findViewById<LinearLayout>(R.id.btnCerrarSesion)\r\n        btnCerrarSesion.setOnClickListener {\r\n            MaterialAlertDialogBuilder(this)\r\n                .setTitle(\"\uD83D\uDEAA Cerrar Sesión\")\r\n                .setMessage(\"¿Estás seguro de que deseas salir de tu cuenta?\")\r\n                .setNegativeButton(\"Cancelar\", null)\r\n                .setPositiveButton(\"Salir\") { _, _ ->\r\n                    val prefsEditor = getSharedPreferences(\"CitasMedicasPrefs\", MODE_PRIVATE).edit()\r\n                    prefsEditor.clear().apply()\r\n\r\n                    lifecycleScope.launch(kotlinx.coroutines.Dispatchers.IO) {\r\n                        val db = com.citas.medicas.ui.paciente.local.AppDatabase.getDatabase(this@PerfilActivity)\r\n                        db.clearAllTables()\r\n                    }\r\n\r\n                    val intent = Intent(this, LoginActivity::class.java)\r\n                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK\r\n                    startActivity(intent)\r\n                    finish()\r\n                }\r\n                .show()\r\n        }\r\n\r\n        cargarPerfil()\r\n    }\r\n\r\n\r\n    private fun cargarPerfil() {\r\n        val prefs = getSharedPreferences(\"CitasMedicasPrefs\", MODE_PRIVATE)\r\n\r\n        val nombre = prefs.getString(\"user_nombre\", \"Usuario\")\r\n        val apellido = prefs.getString(\"user_apellido\", \"\")\r\n        val afiliado = prefs.getString(\"user_afiliado\", \"No disponible\")\r\n        val dui = prefs.getString(\"user_dui\", \"No disponible\")\r\n        val email = prefs.getString(\"user_email\", \"No disponible\")\r\n        val telefono = prefs.getString(\"user_telefono\", \"No disponible\")\r\n        val cronicas = prefs.getString(\"user_cronicas\", \"Ninguna registrada\")\r\n        val alergias = prefs.getString(\"user_alergias\", \"Ninguna registrada\")\r\n        val medicinas = prefs.getString(\"user_medicinas\", \"Ninguna registrada\")\r\n        val sangre = prefs.getString(\"user_sangre\", \"No especificado\")\r\n\r\n        val iniciales = \"${nombre?.firstOrNull() ?: \"\"}${apellido?.firstOrNull() ?: \"\"}\"\r\n        findViewById<TextView>(R.id.tvAvatarInitials).text = iniciales.uppercase()\r\n        findViewById<TextView>(R.id.tvPerfilNombre).text = \"$nombre $apellido\"\r\n\r\n        findViewById<TextView>(R.id.tvPerfilAfiliado).text = afiliado\r\n        findViewById<TextView>(R.id.tvPerfilDUI).text = dui\r\n        findViewById<TextView>(R.id.tvPerfilCorreo).text = email\r\n        findViewById<TextView>(R.id.tvPerfilTelefono).text = telefono\r\n\r\n        findViewById<TextView>(R.id.tvSaludAlergias).text = alergias\r\n        findViewById<TextView>(R.id.tvSaludCronicas).text = cronicas\r\n        findViewById<TextView>(R.id.tvSaludMedicinas).text = medicinas\r\n\r\n        perfilActual = DatosPerfil(\r\n            nombre = nombre,\r\n            apellido = apellido,\r\n            num_afiliado = afiliado,\r\n            dui = dui,\r\n            email = email,\r\n            condiciones_cronicas = cronicas,\r\n            alergias = alergias,\r\n            telefono = telefono,\r\n            tipo_sangre = sangre,\r\n            medicinas = medicinas\r\n        )\r\n    }\r\n\r\n    private fun mostrarDialogoEditarContacto() {\r\n        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_editar_contacto_paciente, null)\r\n        val dialog = AlertDialog.Builder(this).setView(dialogView).create()\r\n\r\n        val etEmail = dialogView.findViewById<TextInputEditText>(R.id.etEditarEmail)\r\n        val etTelefono = dialogView.findViewById<TextInputEditText>(R.id.etEditarTelefono)\r\n        val btnGuardar = dialogView.findViewById<MaterialButton>(R.id.btnGuardarContacto)\r\n\r\n        val prefs = getSharedPreferences(\"CitasMedicasPrefs\", MODE_PRIVATE)\r\n        etEmail.setText(prefs.getString(\"user_email\", \"\"))\r\n        etTelefono.setText(prefs.getString(\"user_telefono\", \"\"))\r\n\r\n        btnGuardar.setOnClickListener {\r\n            val nuevoEmail = etEmail.text.toString().trim()\r\n            val nuevoTelefono = etTelefono.text.toString().trim()\r\n\r\n            if (nuevoEmail.isEmpty() || nuevoTelefono.isEmpty()) {\r\n                Toast.makeText(this, \"Completa ambos campos\", Toast.LENGTH_SHORT).show()\r\n                return@setOnClickListener\r\n            }\r\n\r\n            val updateRequest = crearRequestCompleto(nuevoEmail = nuevoEmail, nuevoTelefono = nuevoTelefono)\r\n            ejecutarActualizacionServidor(updateRequest, dialog, isPasswordChange = false)\r\n        }\r\n        dialog.show()\r\n    }\r\n\r\n\r\n    private fun mostrarDialogoCambiarClave() {\r\n        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_cambiar_clave, null)\r\n        val dialog = AlertDialog.Builder(this).setView(dialogView).create()\r\n\r\n        val txtClaveActual = dialogView.findViewById<TextInputEditText>(R.id.txtClaveActual)\r\n        val txtClaveNueva = dialogView.findViewById<TextInputEditText>(R.id.txtClaveNueva)\r\n        val btnActualizar = dialogView.findViewById<MaterialButton>(R.id.btnActualizarClave)\r\n\r\n        btnActualizar.setOnClickListener {\r\n            val claveActual = txtClaveActual.text.toString().trim()\r\n            val claveNueva = txtClaveNueva.text.toString().trim()\r\n\r\n            if (claveActual.isEmpty() || claveNueva.isEmpty()) {\r\n                Toast.makeText(this, \"Completa ambos campos\", Toast.LENGTH_SHORT).show()\r\n                return@setOnClickListener\r\n            }\r\n\r\n            val updateRequest = crearRequestCompleto(nuevaClave = claveNueva)\r\n            ejecutarActualizacionServidor(updateRequest, dialog, isPasswordChange = true)\r\n        }\r\n        dialog.show()\r\n    }\r\n\r\n\r\n    private fun crearRequestCompleto(\r\n        nuevoEmail: String? = null,\r\n        nuevoTelefono: String? = null,\r\n        nuevaClave: String? = null\r\n    ): PacienteUpdateRequest {\r\n        val prefs = getSharedPreferences(\"CitasMedicasPrefs\", MODE_PRIVATE)\r\n\r\n        val emailFinal = nuevoEmail ?: prefs.getString(\"user_email\", \"\") ?: \"\"\r\n        val telefonoFinal = nuevoTelefono ?: prefs.getString(\"user_telefono\", \"\") ?: \"\"\r\n\r\n        val sangreGuardada = prefs.getString(\"user_sangre\", \"\")\r\n        val sangreSegura = if (sangreGuardada == \"No especificado\" || sangreGuardada!!.length > 5) null else sangreGuardada\r\n\r\n        val estadoFamiliarGuardado = prefs.getString(\"user_estadofamiliar\", \"\")\r\n        val estadoFamiliarSeguro = if (estadoFamiliarGuardado.isNullOrEmpty() || estadoFamiliarGuardado == \"No especificado\") \"\" else estadoFamiliarGuardado\r\n\r\n        var fechaGuardada = prefs.getString(\"user_fechanacimiento\", \"\")\r\n        if (!fechaGuardada.isNullOrEmpty() && !fechaGuardada.contains(\"T\")) {\r\n            fechaGuardada += \"T00:00:00.000Z\"\r\n        } else if (fechaGuardada.isNullOrEmpty()) {\r\n            fechaGuardada = null\r\n        }\r\n\r\n        val numAfiliadoGuardado = prefs.getString(\"user_afiliado\", \"\")\r\n        val numAfiliadoSeguro = if (numAfiliadoGuardado == \"No disponible\") \"\" else numAfiliadoGuardado\r\n\r\n        return PacienteUpdateRequest(\r\n            id = pacienteId,\r\n            nombre = prefs.getString(\"user_nombre\", \"\") ?: \"\",\r\n            apellido = prefs.getString(\"user_apellido\", \"\") ?: \"\",\r\n            dui = prefs.getString(\"user_dui\", \"\") ?: \"\",\r\n            email = emailFinal,\r\n            password = nuevaClave,\r\n            telefono = telefonoFinal,\r\n            fechaNacimiento = fechaGuardada,\r\n            genero = prefs.getString(\"user_genero\", \"M\") ?: \"M\",\r\n            rol = prefs.getInt(\"user_role\", 1),\r\n            activo = true,\r\n            estadoFamiliar = estadoFamiliarSeguro,\r\n            numAfiliado = numAfiliadoSeguro,\r\n            tipoSangre = sangreSegura,\r\n            alergias = prefs.getString(\"user_alergias\", \"\"),\r\n            condicionesCronicas = prefs.getString(\"user_cronicas\", \"\"),\r\n            notaClinica = \"\",\r\n            medicamentosRecurrentes = prefs.getString(\"user_medicinas\", \"\")\r\n        )\r\n    }\r\n\r\n\r\n    private fun ejecutarActualizacionServidor(request: PacienteUpdateRequest, dialog: AlertDialog, isPasswordChange: Boolean) {\r\n        val overlayCarga = findViewById<FrameLayout>(R.id.overlayCarga)\r\n        overlayCarga.visibility = View.VISIBLE\r\n\r\n        lifecycleScope.launch {\r\n            try {\r\n                val apiService = RetrofitClient.getApiService(this@PerfilActivity)\r\n                val response = apiService.actualizarPaciente(pacienteId, request)\r\n\r\n                if (response.isSuccessful) {\r\n                    Toast.makeText(this@PerfilActivity, \"Actualizado correctamente\", Toast.LENGTH_SHORT).show()\r\n\r\n                    if (!isPasswordChange) {\r\n                        val prefs = getSharedPreferences(\"CitasMedicasPrefs\", MODE_PRIVATE)\r\n                        prefs.edit().apply {\r\n                            putString(\"user_email\", request.email)\r\n                            putString(\"user_telefono\", request.telefono)\r\n                            apply()\r\n                        }\r\n\r\n                        // Refrescar UI directamente\r\n                        findViewById<TextView>(R.id.tvPerfilCorreo).text = request.email\r\n                        findViewById<TextView>(R.id.tvPerfilTelefono).text = request.telefono\r\n                    }\r\n                    dialog.dismiss()\r\n                } else {\r\n                    val errorBody = response.errorBody()?.string()\r\n                    val errorCode = response.code()\r\n                    Log.e(\"API_ERROR_BACKEND\", \"Código HTTP $errorCode - Detalle: $errorBody\")\r\n\r\n                    Toast.makeText(this@PerfilActivity, \"Error $errorCode al actualizar\", Toast.LENGTH_LONG).show()\r\n                }\r\n            } catch (e: Exception) {\r\n                Log.e(\"API_ERROR\", \"Fallo de conexión\", e)\r\n                Toast.makeText(this@PerfilActivity, \"Error de red\", Toast.LENGTH_LONG).show()\r\n            } finally {\r\n                overlayCarga.visibility = View.GONE\r\n            }\r\n        }\r\n    }\r\n\r\n    override fun onResume() {\r\n        super.onResume()\r\n        cargarPerfil()\r\n    }\r\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/citas/medicas/ui/paciente/PerfilActivity.kt b/app/src/main/java/com/citas/medicas/ui/paciente/PerfilActivity.kt
+--- a/app/src/main/java/com/citas/medicas/ui/paciente/PerfilActivity.kt	(revision 78aa86c1d1e8044ecd44541adde97830075c5eb8)
++++ b/app/src/main/java/com/citas/medicas/ui/paciente/PerfilActivity.kt	(date 1780363634050)
+@@ -17,6 +17,7 @@
+ import com.citas.medicas.data.RetrofitClient
+ import com.citas.medicas.models.DatosPerfil
+ import com.citas.medicas.models.PacienteUpdateRequest
++import com.citas.medicas.ui.AppDatabase
+ import com.citas.medicas.ui.auth.LoginActivity
+ import com.google.android.material.bottomnavigation.BottomNavigationView
+ import com.google.android.material.button.MaterialButton
+@@ -96,7 +97,7 @@
+                     prefsEditor.clear().apply()
+ 
+                     lifecycleScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+-                        val db = com.citas.medicas.ui.paciente.local.AppDatabase.getDatabase(this@PerfilActivity)
++                        val db = AppDatabase.getDatabase(this@PerfilActivity)
+                         db.clearAllTables()
+                     }
+ 
+Index: app/src/main/java/com/citas/medicas/ui/paciente/MapaActivity.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.citas.medicas.ui.paciente\r\n\r\nimport android.content.Intent\r\nimport android.net.Uri\r\nimport android.os.Bundle\r\nimport android.util.Log\r\nimport android.widget.ImageView\r\nimport android.widget.TextView\r\nimport android.widget.Toast\r\nimport androidx.activity.enableEdgeToEdge\r\nimport androidx.appcompat.app.AppCompatActivity\r\nimport androidx.lifecycle.lifecycleScope\r\nimport androidx.recyclerview.widget.LinearLayoutManager\r\nimport androidx.recyclerview.widget.RecyclerView\r\nimport com.citas.medicas.R\r\nimport com.citas.medicas.ui.paciente.adapter.MapaAdapter\r\nimport com.citas.medicas.data.RetrofitClient\r\nimport com.citas.medicas.ui.paciente.adapter.UnidadMedicaAdapter\r\nimport com.citas.medicas.ui.paciente.local.entities.toEntity\r\nimport com.citas.medicas.ui.paciente.local.entities.toModel\r\nimport com.google.android.material.bottomnavigation.BottomNavigationView\r\nimport com.google.android.material.card.MaterialCardView\r\nimport kotlinx.coroutines.launch\r\n\r\nclass MapaActivity : AppCompatActivity() {\r\n\r\n    // \uD83C\uDF1F 1. Declaramos el adapter a nivel de clase para que todas las funciones lo conozcan\r\n    private lateinit var adapter: UnidadMedicaAdapter\r\n\r\n    override fun onCreate(savedInstanceState: Bundle?) {\r\n        super.onCreate(savedInstanceState)\r\n        enableEdgeToEdge()\r\n        setContentView(R.layout.activity_mapa)\r\n\r\n        val rvUnidades = findViewById<RecyclerView>(R.id.rvListaUnidadesMapa)\r\n        rvUnidades.layoutManager = LinearLayoutManager(this)\r\n\r\n        // \uD83D\uDEE0\uFE0F Inicializamos el adapter correctamente\r\n        adapter = UnidadMedicaAdapter()\r\n        rvUnidades.adapter = adapter // Asignamos al RecyclerView real\r\n\r\n        val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavigationMapa)\r\n        bottomNav.selectedItemId = R.id.nav_mapa\r\n\r\n        bottomNav.setOnItemSelectedListener { item ->\r\n            when (item.itemId) {\r\n                R.id.nav_inicio -> {\r\n                    val intent = Intent(this, HomePacienteActivity::class.java)\r\n                    intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)\r\n                    startActivity(intent)\r\n                    true\r\n                }\r\n                R.id.nav_solicitar -> {\r\n                    val intent = Intent(this, SolicitarCitaActivity::class.java)\r\n                    intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)\r\n                    startActivity(intent)\r\n                    true\r\n                }\r\n                R.id.nav_historial -> {\r\n                    val intent = Intent(this, HistorialCitasActivity::class.java)\r\n                    intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)\r\n                    startActivity(intent)\r\n                    true\r\n                }\r\n                R.id.nav_mapa -> true\r\n                R.id.nav_perfil -> {\r\n                    val intent = Intent(this, PerfilActivity::class.java)\r\n                    intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)\r\n                    startActivity(intent)\r\n                    true\r\n                }\r\n                else -> false\r\n            }\r\n        }\r\n\r\n        cargarUnidades()\r\n    }\r\n\r\n    private fun cargarUnidades() {\r\n        lifecycleScope.launch {\r\n            val db = com.citas.medicas.ui.paciente.local.AppDatabase.getDatabase(this@MapaActivity)\r\n            val unidadDao = db.unidadMedicaDao()\r\n\r\n            val unidadesGuardadas = unidadDao.obtenerTodasLasUnidades()\r\n            if (unidadesGuardadas.isNotEmpty()) {\r\n                val unidadesParaPantalla = unidadesGuardadas.map { it.toModel() }\r\n                pintarUnidadesEnPantalla(unidadesParaPantalla, isOffline = true)\r\n            }\r\n\r\n            try {\r\n                val apiService = RetrofitClient.getApiService(this@MapaActivity)\r\n                val response = apiService.getUnidadesMapa()\r\n\r\n                if (response.isSuccessful && response.body()?.exito == true) {\r\n                    val datosRed = response.body()?.datos\r\n\r\n                    if (datosRed != null && datosRed.isNotEmpty()) {\r\n                        val unidadesEntities = datosRed.map { it.toEntity() }\r\n\r\n                        unidadDao.limpiarTablaUnidades()\r\n                        unidadDao.insertarUnidades(unidadesEntities)\r\n\r\n                        pintarUnidadesEnPantalla(datosRed, isOffline = false)\r\n                    }\r\n                }\r\n            } catch (e: Exception) {\r\n                Log.e(\"API_ERROR\", \"Fallo de red: ${e.message}\")\r\n                if (unidadesGuardadas.isNotEmpty()) {\r\n                    Toast.makeText(this@MapaActivity, \"Sin conexión. Mostrando mapa guardado.\", Toast.LENGTH_SHORT).show()\r\n                } else {\r\n                    Toast.makeText(this@MapaActivity, \"No hay datos guardados y no hay conexión.\", Toast.LENGTH_SHORT).show()\r\n                }\r\n            }\r\n        }\r\n    }\r\n\r\n    private fun pintarUnidadesEnPantalla(datos: List<com.citas.medicas.models.UnidadMedicaMapa>, isOffline: Boolean) {\r\n        // 1. Actualizamos el título\r\n        val tituloUnidades = findViewById<TextView>(R.id.tvTituloTodasUnidades)\r\n        tituloUnidades?.text = \"\uD83C\uDFE2 Todas las Unidades (${datos.size})\"\r\n\r\n        // 2. Colocamos la foto genérica del mapa\r\n        val ivMapPreview = findViewById<ImageView>(R.id.ivMapPreview)\r\n        ivMapPreview.setImageResource(R.drawable.mapa_placeholder)\r\n\r\n        // 3. Cargamos la primera unidad por defecto al abrir la pantalla\r\n        if (datos.isNotEmpty()) {\r\n            actualizarUnidadDestacada(datos[0], isOffline)\r\n        }\r\n\r\n        // 4. Actualizamos el Adapter Y le decimos qué hacer al tocar una tarjeta\r\n        adapter.actualizarDatos(datos)\r\n\r\n        // ¡LA MAGIA DE LA INTERACTIVIDAD FUNCIONANDO!\r\n        adapter.setOnItemClickListener { unidadSeleccionada ->\r\n            actualizarUnidadDestacada(unidadSeleccionada, isOffline)\r\n        }\r\n    }\r\n\r\n    private fun actualizarUnidadDestacada(unidad: com.citas.medicas.models.UnidadMedicaMapa, isOffline: Boolean) {\r\n        findViewById<TextView>(R.id.tvDestacadoNombre).text = unidad.nombre\r\n        findViewById<TextView>(R.id.tvDestacadoDireccion).text = unidad.direccion\r\n\r\n        val lat = unidad.latitud\r\n        val lon = unidad.longitud\r\n\r\n        val btnAbrirMaps = findViewById<com.google.android.material.card.MaterialCardView>(R.id.btnAbrirMaps)\r\n        val btnIrDestacado = findViewById<com.google.android.material.card.MaterialCardView>(R.id.btnIrDestacado)\r\n\r\n        val clickListener = android.view.View.OnClickListener {\r\n            if (isOffline) {\r\n                Toast.makeText(this@MapaActivity, \"Necesitas internet para abrir navegación GPS.\", Toast.LENGTH_SHORT).show()\r\n                return@OnClickListener\r\n            }\r\n            if (lat != null && lon != null) {\r\n                val uri = \"geo:$lat,$lon?q=$lat,$lon(${unidad.nombre})\"\r\n                startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse(uri)))\r\n            } else {\r\n                Toast.makeText(this@MapaActivity, \"Coordenadas no disponibles para esta clínica.\", Toast.LENGTH_SHORT).show()\r\n            }\r\n        }\r\n\r\n        btnAbrirMaps.setOnClickListener(clickListener)\r\n        btnIrDestacado.setOnClickListener(clickListener)\r\n    }\r\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/citas/medicas/ui/paciente/MapaActivity.kt b/app/src/main/java/com/citas/medicas/ui/paciente/MapaActivity.kt
+--- a/app/src/main/java/com/citas/medicas/ui/paciente/MapaActivity.kt	(revision 78aa86c1d1e8044ecd44541adde97830075c5eb8)
++++ b/app/src/main/java/com/citas/medicas/ui/paciente/MapaActivity.kt	(date 1780363634125)
+@@ -15,6 +15,7 @@
+ import com.citas.medicas.R
+ import com.citas.medicas.ui.paciente.adapter.MapaAdapter
+ import com.citas.medicas.data.RetrofitClient
++import com.citas.medicas.ui.AppDatabase
+ import com.citas.medicas.ui.paciente.adapter.UnidadMedicaAdapter
+ import com.citas.medicas.ui.paciente.local.entities.toEntity
+ import com.citas.medicas.ui.paciente.local.entities.toModel
+@@ -78,7 +79,7 @@
+ 
+     private fun cargarUnidades() {
+         lifecycleScope.launch {
+-            val db = com.citas.medicas.ui.paciente.local.AppDatabase.getDatabase(this@MapaActivity)
++            val db = AppDatabase.getDatabase(this@MapaActivity)
+             val unidadDao = db.unidadMedicaDao()
+ 
+             val unidadesGuardadas = unidadDao.obtenerTodasLasUnidades()
+Index: app/src/main/java/com/citas/medicas/ui/paciente/local/AppDatabase.kt
+===================================================================
+diff --git a/app/src/main/java/com/citas/medicas/ui/paciente/local/AppDatabase.kt b/app/src/main/java/com/citas/medicas/ui/paciente/local/AppDatabase.kt
+deleted file mode 100644
+--- a/app/src/main/java/com/citas/medicas/ui/paciente/local/AppDatabase.kt	(revision 78aa86c1d1e8044ecd44541adde97830075c5eb8)
++++ /dev/null	(revision 78aa86c1d1e8044ecd44541adde97830075c5eb8)
+@@ -1,45 +0,0 @@
+-package com.citas.medicas.ui.paciente.local
+-
+-import android.content.Context
+-import androidx.room.Database
+-import androidx.room.Room
+-import androidx.room.RoomDatabase
+-import com.citas.medicas.ui.paciente.local.dao.CitasDao
+-import com.citas.medicas.ui.paciente.local.dao.PerfilDao
+-import com.citas.medicas.ui.paciente.local.dao.UnidadMedicaDao
+-import com.citas.medicas.ui.paciente.local.entities.CitaEntity
+-import com.citas.medicas.ui.paciente.local.entities.PerfilEntity
+-import com.citas.medicas.ui.paciente.local.entities.UnidadMedicaEntity
+-
+-
+-@Database(
+-    entities = [CitaEntity::class, PerfilEntity::class, UnidadMedicaEntity::class],
+-    version = 1,
+-    exportSchema = false
+-)
+-abstract class AppDatabase : RoomDatabase() {
+-
+-    abstract fun citasDao(): CitasDao
+-    abstract fun perfilDao(): PerfilDao
+-    abstract fun unidadMedicaDao(): UnidadMedicaDao
+-
+-    companion object {
+-        @Volatile
+-        private var INSTANCE: AppDatabase? = null
+-
+-        fun getDatabase(context: Context): AppDatabase {
+-            return INSTANCE ?: synchronized(this) {
+-                val instance = Room.databaseBuilder(
+-                    context.applicationContext,
+-                    AppDatabase::class.java,
+-                    "citas_medicas_db"
+-                )
+-
+-                    .fallbackToDestructiveMigration()
+-                    .build()
+-                INSTANCE = instance
+-                instance
+-            }
+-        }
+-    }
+-}
+\ No newline at end of file
+Index: app/src/main/java/com/citas/medicas/ui/AppDatabase.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/citas/medicas/ui/AppDatabase.kt b/app/src/main/java/com/citas/medicas/ui/AppDatabase.kt
+new file mode 100644
+--- /dev/null	(date 1780363829185)
++++ b/app/src/main/java/com/citas/medicas/ui/AppDatabase.kt	(date 1780363829185)
+@@ -0,0 +1,47 @@
++package com.citas.medicas.ui
++
++import android.content.Context
++import androidx.room.Database
++import androidx.room.Room
++import androidx.room.RoomDatabase
++import com.citas.medicas.ui.medico.local.dao.MedicoPerfilDao
++import com.citas.medicas.ui.medico.local.entities.MedicoPerfilEntity
++import com.citas.medicas.ui.paciente.local.dao.CitasDao
++import com.citas.medicas.ui.paciente.local.dao.PerfilDao
++import com.citas.medicas.ui.paciente.local.dao.UnidadMedicaDao
++import com.citas.medicas.ui.paciente.local.entities.CitaEntity
++import com.citas.medicas.ui.paciente.local.entities.PerfilEntity
++import com.citas.medicas.ui.paciente.local.entities.UnidadMedicaEntity
++
++@Database(
++    entities = [CitaEntity::class, PerfilEntity::class, UnidadMedicaEntity::class, MedicoPerfilEntity::class],
++    version = 2,
++    exportSchema = false
++)
++abstract class AppDatabase : RoomDatabase() {
++
++    // DAOs del Paciente
++    abstract fun citasDao(): CitasDao
++    abstract fun perfilDao(): PerfilDao
++    abstract fun unidadMedicaDao(): UnidadMedicaDao
++    abstract fun medicoPerfilDao(): MedicoPerfilDao
++
++    companion object {
++        @Volatile
++        private var INSTANCE: AppDatabase? = null
++
++        fun getDatabase(context: Context): AppDatabase {
++            return INSTANCE ?: synchronized(this) {
++                val instance = Room.databaseBuilder(
++                    context.applicationContext,
++                    AppDatabase::class.java,
++                    "citas_medicas_db"
++                )
++                    .fallbackToDestructiveMigration()
++                    .build()
++                INSTANCE = instance
++                instance
++            }
++        }
++    }
++}
+\ No newline at end of file
+Index: app/src/main/java/com/citas/medicas/ui/medico/local/entities/MedicoPerfilEntity.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/citas/medicas/ui/medico/local/entities/MedicoPerfilEntity.kt b/app/src/main/java/com/citas/medicas/ui/medico/local/entities/MedicoPerfilEntity.kt
+new file mode 100644
+--- /dev/null	(date 1780363317182)
++++ b/app/src/main/java/com/citas/medicas/ui/medico/local/entities/MedicoPerfilEntity.kt	(date 1780363317182)
+@@ -0,0 +1,50 @@
++package com.citas.medicas.ui.medico.local.entities
++
++
++import androidx.room.Entity
++import androidx.room.PrimaryKey
++import com.citas.medicas.models.MedicoProfileResponse
++
++@Entity(tableName = "perfil_medico")
++data class MedicoPerfilEntity(
++    @PrimaryKey val id: String,
++    val nombre: String,
++    val apellido: String,
++    val dui: String,
++    val email: String,
++    val telefono: String,
++    val fechaNacimiento: String,
++    val genero: String,
++    val generoId: String,
++    val rolId: Int,
++    val activo: Boolean,
++    val numJvpm: String,
++    val especialidad: Int,
++    val unidadMedica: Int,
++    val edad: Int
++) {
++
++    fun toModel(): MedicoProfileResponse {
++        return MedicoProfileResponse(
++            id = id, nombre = nombre, apellido = apellido, dui = dui,
++            email = email, telefono = telefono, fechaNacimiento = fechaNacimiento,
++            genero = genero, generoId = generoId, rolId = rolId,
++            activo = activo, numJvpm = numJvpm, especialidad = especialidad,
++            unidadMedica = unidadMedica,
++            edad = edad
++        )
++    }
++
++    companion object {
++        fun fromModel(model: MedicoProfileResponse): MedicoPerfilEntity {
++            return MedicoPerfilEntity(
++                id = model.id, nombre = model.nombre, apellido = model.apellido, dui = model.dui,
++                email = model.email, telefono = model.telefono, fechaNacimiento = model.fechaNacimiento,
++                genero = model.genero, generoId = model.generoId, rolId = model.rolId,
++                activo = model.activo, numJvpm = model.numJvpm, especialidad = model.especialidad,
++                unidadMedica = model.unidadMedica,
++                edad = model.edad
++            )
++        }
++    }
++}
+\ No newline at end of file
+Index: app/src/main/java/com/citas/medicas/ui/medico/local/dao/MedicoPerfilDao.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/citas/medicas/ui/medico/local/dao/MedicoPerfilDao.kt b/app/src/main/java/com/citas/medicas/ui/medico/local/dao/MedicoPerfilDao.kt
+new file mode 100644
+--- /dev/null	(date 1780363033573)
++++ b/app/src/main/java/com/citas/medicas/ui/medico/local/dao/MedicoPerfilDao.kt	(date 1780363033573)
+@@ -0,0 +1,19 @@
++package com.citas.medicas.ui.medico.local.dao
++
++import androidx.room.Dao
++import androidx.room.Insert
++import androidx.room.OnConflictStrategy
++import androidx.room.Query
++import com.citas.medicas.ui.medico.local.entities.MedicoPerfilEntity
++
++@Dao
++interface MedicoPerfilDao {
++    @Query("SELECT * FROM perfil_medico LIMIT 1")
++    suspend fun obtenerPerfil(): MedicoPerfilEntity?
++
++    @Insert(onConflict = OnConflictStrategy.REPLACE)
++    suspend fun guardarPerfil(perfil: MedicoPerfilEntity)
++
++    @Query("DELETE FROM perfil_medico")
++    suspend fun limpiarTabla()
++}
+\ No newline at end of file
