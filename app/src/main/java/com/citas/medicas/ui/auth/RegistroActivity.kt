@@ -92,6 +92,9 @@ class RegistroActivity : AppCompatActivity(),  Reseteable {
                 // Validar visualmente los spinners si fallan
                 if (estado.isValid) {
                     enviarRegistroAlServidor()
+                }else {
+                    btnCrearCuenta.isEnabled = true
+                    btnCrearCuenta.text = "Crear Cuenta"
                 }
             }
         }
@@ -159,6 +162,7 @@ class RegistroActivity : AppCompatActivity(),  Reseteable {
         binding.btnCrearCuenta.setOnClickListener {
             val contrasena = binding.etClaveR.text.toString()
             val confirmarContrasena = binding.etConfirmarClaveR.text.toString()
+            val numeroAfiliado = binding.etAfiliadoR.text.toString().trim()
 
             // Validación local para cerciorarse de que las claves coincidan
             if (contrasena != confirmarContrasena) {
@@ -168,6 +172,21 @@ class RegistroActivity : AppCompatActivity(),  Reseteable {
             } else {
                 binding.etConfirmarClaveR.error = null // Limpia el error si ya coincide
             }
+
+            // NUEVA VALIDACIÓN: Verificar que el número de afiliado tenga exactamente 9 dígitos numéricos
+            // Usamos Regex para asegurar que solo sean números y exactamente 9 caracteres
+            if (!numeroAfiliado.matches(Regex("^\\d{9}$"))) {
+                binding.etAfiliadoR.error = "El número de afiliado debe tener exactamente 9 dígitos numéricos"
+                Toast.makeText(this, "Por favor, ingrese un número de afiliado válido (9 dígitos)", Toast.LENGTH_LONG).show()
+                binding.etAfiliadoR.requestFocus() // Lleva el foco visual al campo con error
+                return@setOnClickListener // Frena la ejecución si no cumple
+            } else {
+                binding.etAfiliadoR.error = null // Limpia el error si la validación pasa
+            }
+
+            binding.btnCrearCuenta.isEnabled = false
+            binding.btnCrearCuenta.text = "Procesando..."
+
             authViewModel.validarFormulario(
                 rolId = RolesUsuario.ID_PACIENTE,
                 nombres = binding.etNombreR.text.toString(),

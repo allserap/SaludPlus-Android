@@ -73,6 +73,12 @@ class EstadisticasFragment : BaseFragment(R.layout.fragment_estadisticas) {
     }
 
     private fun setupObservers() {
+        authViewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
+            // Si el XML tiene un progressBar superior para estadísticas, contrólalo aquí:
+            // binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+
+            binding.spUnidades.isEnabled = !isLoading
+        }
         // Observer para el histórico de citas que viene del servidor
         authViewModel.historicoCitas.observe(viewLifecycleOwner) { listaCitas ->
 
@@ -205,6 +211,8 @@ class EstadisticasFragment : BaseFragment(R.layout.fragment_estadisticas) {
         binding.tvReprogramadas.text = "0"
         binding.tvTotalCitas.text = "Total de Citas: --"
         binding.tvPorcentajeCompletadas.text = "Tasa de completitud: --%"
+
+        binding.spUnidades.isEnabled = true
     }
 
     override fun onDestroyView() {

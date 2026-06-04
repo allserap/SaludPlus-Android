@@ -64,7 +64,12 @@ class UnidadEspecialidadFragment : BaseFragment(R.layout.fragment_unidades_espec
                         enviarActualizacionAlServidor(r.unidad_medica_id, r.especialidad_id)
                     } else {
                         Toast.makeText(requireContext(), "Por favor, seleccione una Unidad Especialidad válida.", Toast.LENGTH_SHORT).show()
+                        btnGuardarUnidad.isEnabled = true
+                        btnGuardarUnidad.text = "Guardar"
                     }
+                }else {
+                    btnGuardarUnidad.isEnabled = true
+                    btnGuardarUnidad.text = "Guardar"
                 }
             }
         }
@@ -185,6 +190,9 @@ class UnidadEspecialidadFragment : BaseFragment(R.layout.fragment_unidades_espec
             }
 
             val ejecutarValidacion = {
+                binding.btnGuardarUnidad.isEnabled = false
+                binding.btnGuardarUnidad.text = "Procesando..."
+
                 authViewModel.validarFormularioUnidadEspecialidad(
                     cupoDiarioStr = binding.etCupoDiario.text.toString()
                 )
@@ -193,7 +201,10 @@ class UnidadEspecialidadFragment : BaseFragment(R.layout.fragment_unidades_espec
             ejecutarValidacion()
         }
 
-        binding.btnCancelarUnidad.setOnClickListener { resetearInterfaz() }
+        binding.btnCancelarUnidad.setOnClickListener {
+            binding.btnCancelarUnidad.isEnabled = false
+            resetearInterfaz()
+        }
     }
 
     private fun enviarActualizacionAlServidor(unidadId: Int, especialidadId: Int) {
@@ -223,6 +234,10 @@ class UnidadEspecialidadFragment : BaseFragment(R.layout.fragment_unidades_espec
         idUnidadEspecialidadActual = null
         isEditMode = false
         estadoOriginal = true
+
+        binding.btnGuardarUnidad.isEnabled = true
+        binding.btnGuardarUnidad.text = "Guardar"
+        binding.btnCancelarUnidad.isEnabled = true
     }
 
     override fun onDestroyView() {

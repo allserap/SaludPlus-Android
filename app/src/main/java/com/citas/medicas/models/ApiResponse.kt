@@ -264,7 +264,15 @@ data class MedicamentoResponse(
     @SerializedName("formaFarmaceutica") val formaFarmaceutica: String,
     @SerializedName("concentracion") val concentracion: String,
     @SerializedName("activo") val activo: Boolean
-)
+){
+    override fun toString(): String {
+        return if (id == 0) {
+            nombreGenerico // Retorna únicamente "Seleccionar medicamento"
+        } else {
+            "$nombreGenerico ($nombreComercial) - $concentracion"
+        }
+    }
+}
 
 data class AsistenciaRequest(
     @SerializedName("asistio") val asistio: Boolean

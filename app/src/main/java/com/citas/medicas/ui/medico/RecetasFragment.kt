@@ -61,7 +61,23 @@ class RecetasFragment : BaseFragment(R.layout.fragment_recetas) {
 
         authViewModel.listaMedicamentos.observe(viewLifecycleOwner) { medicamentos ->
             if (!medicamentos.isNullOrEmpty()) {
-                this.catalogoMedicamentosReales = medicamentos
+                val listaConHint = mutableListOf<MedicamentoResponse>()
+
+                // Creamos el elemento Hint respetando TODOS los campos obligatorios del data class
+                listaConHint.add(
+                    MedicamentoResponse(
+                        id = 0,
+                        nombreGenerico = "Seleccionar medicamento",
+                        nombreComercial = "",
+                        formaFarmaceutica = "",
+                        concentracion = "",
+                        activo = false
+                    )
+                )
+                // Agregamos el resto de los medicamentos que vienen del servidor
+                listaConHint.addAll(medicamentos)
+                // Asignamos la lista final a tu variable global
+                this.catalogoMedicamentosReales = listaConHint
             }
         }
 
@@ -71,7 +87,7 @@ class RecetasFragment : BaseFragment(R.layout.fragment_recetas) {
             }
         }
 
-        // PASO 2: Éxito al marcar la asistencia y cambiar el estado en Node.js de Confirmada -> Atendida
+        // Éxito al marcar la asistencia y cambiar el estado en Node.js
         authViewModel.asistenciaMarcadaExito.observe(viewLifecycleOwner) { asistenciaOk ->
             if (asistenciaOk) {
                 Toast.makeText(context, "Receta generada y consulta finalizada.", Toast.LENGTH_SHORT).show()
@@ -141,6 +157,12 @@ class RecetasFragment : BaseFragment(R.layout.fragment_recetas) {
 
         for (i in 0 until binding.containerMedicamentos.childCount) {
             val itemView = binding.containerMedicamentos.getChildAt(i)
+            // 1. VALIDACIÓN DEL SPINNER (HINT): Impedir que se quede en la posición 0
+            val spinnerMed = itemView.findViewById<Spinner>(R.id.spnMunicipioMedicamento)
+            if (spinnerMed.selectedItemPosition == 0) {
+                Toast.makeText(requireContext(), "Por favor, seleccione un medicamento válido en la fila ${i + 1}", Toast.LENGTH_SHORT).show()
+                return false
+            }
             val txtDosis = itemView.findViewById<TextInputEditText>(R.id.txtDosis)
             val txtCantidad = itemView.findViewById<TextInputEditText>(R.id.txtCantidad)
             val txtDias = itemView.findViewById<TextInputEditText>(R.id.txtDuracionDias)
@@ -195,11 +217,12 @@ class RecetasFragment : BaseFragment(R.layout.fragment_recetas) {
         val viewMed = layoutInflater.inflate(R.layout.item_medicamento, binding.containerMedicamentos, false)
         val spinnerMed = viewMed.findViewById<Spinner>(R.id.spnMunicipioMedicamento)
 
-        val nombresMedicamentos = catalogoMedicamentosReales.map {
-            "${it.nombreGenerico} (${it.nombreComercial}) - ${it.concentracion}"
-        }.toTypedArray()
-
-        val adapterSpinner = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, nombresMedicamentos)
+        // PASAMOS LA LISTA DIRECTA: El ArrayAdapter llamará al toString() que modificamos arriba
+        val adapterSpinner = ArrayAdapter(
+            requireContext(),
+            android.R.layout.simple_spinner_dropdown_item,
+            catalogoMedicamentosReales
+        )
         spinnerMed.adapter = adapterSpinner
 
         viewMed.findViewById<View>(R.id.btnEliminarItemMedicamento).setOnClickListener {

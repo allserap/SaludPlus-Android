@@ -97,11 +97,17 @@ class HistorialFragment : BaseFragment(R.layout.fragment_historial) {
             } else {
                 binding.etNotasClinicas.error = null
             }
+            binding.btnGuardarExpediente.isEnabled = false
+            binding.btnGuardarExpediente.text = "Guardando..."
+            binding.btnCancelarFormulario.isEnabled = false
 
             enviarActualizacionAlServidor()
         }
 
-        binding.btnCancelarFormulario.setOnClickListener { resetearInterfaz() }
+        binding.btnCancelarFormulario.setOnClickListener {
+            binding.btnCancelarFormulario.isEnabled = false
+            resetearInterfaz()
+        }
     }
 
     private fun configurarBuscador(pacientes: List<PacienteResponse>) {
@@ -154,36 +160,46 @@ class HistorialFragment : BaseFragment(R.layout.fragment_historial) {
     }
 
     private fun enviarActualizacionAlServidor() {
-        val p = pacienteSeleccionado ?: return
-        val currentUsuarioId = usuarioIdRespaldo ?: return
+        val p = pacienteSeleccionado ?: run {
+        binding.btnGuardarExpediente.isEnabled = true
+        binding.btnGuardarExpediente.text = "Guardar Consulta"
+        binding.btnCancelarFormulario.isEnabled = true
+        return
+    }
+    val currentUsuarioId = usuarioIdRespaldo ?: run {
+        binding.btnGuardarExpediente.isEnabled = true
+        binding.btnGuardarExpediente.text = "Guardar Consulta"
+        binding.btnCancelarFormulario.isEnabled = true
+        return
+    }
 
         // Extracción segura del valor del spinner de tipo de sangre
         val tipoSangreSeleccionado = binding.spinnerTipoSangre.text.toString().trim()
 
-        val updateRequest = PacienteUpdateRequest(
-            id = currentUsuarioId,
-            nombre = p.nombre,
-            apellido = p.apellido,
-            dui = p.dui,
-            email = p.email,
-            password = null,
-            telefono = p.telefono,
-            fechaNacimiento = p.fechaNacimiento,
-            genero = p.genero,
-            rol = p.rolId,
-            activo = p.activo,
+    val updateRequest = PacienteUpdateRequest(
+        id = currentUsuarioId,
+        nombre = p.nombre,
+        apellido = p.apellido,
+        dui = p.dui,
+        email = p.email,
+        password = null,
+        telefono = p.telefono,
+        fechaNacimiento = p.fechaNacimiento,
+        genero = p.genero,
+        rol = p.rolId,
+        activo = p.activo,
 
-            estadoFamiliar = p.estadoFamiliar,
-            numAfiliado = p.numAfiliado,
-            tipoSangre = if (tipoSangreSeleccionado.isNotEmpty()) tipoSangreSeleccionado else null,
-            alergias = binding.etAlergias.text.toString().trim(),
-            condicionesCronicas = binding.etCondicionesCronicas.text.toString().trim(),
-            notaClinica = binding.etNotasClinicas.text.toString().trim(),
-            medicamentosRecurrentes = binding.etMedicamentosRecurrentes.text.toString().trim()
-        )
+        estadoFamiliar = p.estadoFamiliar,
+        numAfiliado = p.numAfiliado,
+        tipoSangre = if (tipoSangreSeleccionado.isNotEmpty()) tipoSangreSeleccionado else null,
+        alergias = binding.etAlergias.text.toString().trim(),
+        condicionesCronicas = binding.etCondicionesCronicas.text.toString().trim(),
+        notaClinica = binding.etNotasClinicas.text.toString().trim(),
+        medicamentosRecurrentes = binding.etMedicamentosRecurrentes.text.toString().trim()
+    )
 
-        authViewModel.actualizarPaciente(updateRequest)
-    }
+    authViewModel.actualizarPaciente(updateRequest)
+}
 
     override fun resetearInterfaz() {
         limpiarCampos(
@@ -204,7 +220,10 @@ class HistorialFragment : BaseFragment(R.layout.fragment_historial) {
 
         pacienteSeleccionado = null
         usuarioIdRespaldo = null
+
+        binding.btnGuardarExpediente.isEnabled = true
         binding.btnGuardarExpediente.text = "Guardar Consulta"
+        binding.btnCancelarFormulario.isEnabled = true
     }
 
     override fun onDestroyView() {

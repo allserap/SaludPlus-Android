@@ -15,6 +15,8 @@ class DashboardMedicoActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityDashboardMedicoBinding
 
+    private var dialogSalir: androidx.appcompat.app.AlertDialog? = null
+
     // Lista para iterar y manejar los estados de las pestañas de forma masiva
     private lateinit var listaTabs: List<LinearLayout>
 
@@ -72,11 +74,14 @@ class DashboardMedicoActivity : AppCompatActivity() {
             }
 
             btnSalir.setOnClickListener {
-                MaterialAlertDialogBuilder(this@DashboardMedicoActivity)
+                if (dialogSalir?.isShowing == true) return@setOnClickListener
+
+                dialogSalir = MaterialAlertDialogBuilder(this@DashboardMedicoActivity)
                     .setTitle("Cerrar Sesión")
                     .setMessage("¿Está seguro de que desea salir del sistema?")
                     .setNegativeButton("Cancelar", null)
                     .setPositiveButton("Salir") { _, _ ->
+                        btnSalir.isEnabled = false
                         // Limpiar SharedPreferences al salir
                         val prefs = getSharedPreferences("CitasMedicasPrefs", MODE_PRIVATE)
                         prefs.edit().clear().apply()
@@ -103,9 +108,14 @@ class DashboardMedicoActivity : AppCompatActivity() {
         if (fragmentActual != null && fragmentActual::class.java == fragment::class.java) {
             return
         }
+        listaTabs.forEach { it.isClickable = false }
+
         supportFragmentManager.beginTransaction()
             .replace(R.id.containerFragment, fragment)
             .commit()
+        binding.root.postDelayed({
+            listaTabs.forEach { it.isClickable = true }
+        }, 300)
     }
 
     // Cambia el estado .isSelected. Android se encarga de pintar el fondo con el XML

@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.view.inputmethod.EditorInfo
+import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.viewModels
@@ -12,6 +13,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.citas.medicas.R
 import com.citas.medicas.databinding.FragmentUsuariosBinding
 import com.citas.medicas.models.EspecialidadResponse
+import com.citas.medicas.models.MedicoResponse
 import com.citas.medicas.models.RegistroRequest
 import com.citas.medicas.models.RolResponse
 import com.citas.medicas.models.UnidadMedicaResponse
@@ -30,6 +32,7 @@ import com.citas.medicas.utils.configurarConHint
 import com.citas.medicas.utils.limpiarCampos
 import com.citas.medicas.utils.showDatePickerDialog
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class UsuariosFragment : BaseFragment(R.layout.fragment_usuarios) {
 
@@ -43,7 +46,8 @@ class UsuariosFragment : BaseFragment(R.layout.fragment_usuarios) {
     private var listaEspecialidades: List<EspecialidadResponse> = emptyList()
     private var listaUnidades: List<UnidadMedicaResponse> = emptyList()
     private var listaRoles: List<RolResponse> = emptyList()
-
+    // RESPALDO DE MÉDICOS: Para realizar los filtros sin perder la data original del servidor
+    private var listaMedicosOriginal: List<MedicoResponse> = emptyList()
     private lateinit var usuarioAdapter: UsuariosAdapter
 
     //endregion
@@ -59,15 +63,24 @@ class UsuariosFragment : BaseFragment(R.layout.fragment_usuarios) {
         setupListeners()
 
         viewLifecycleOwner.lifecycleScope.launch {
-            try {
-                // Ejecutamos las peticiones en paralelo para no bloquear el renderizado visual
-                authViewModel.cargarCatalogos()
-                authViewModel.cargarMedicos()
-                authViewModel.cargarPacientes()
+            // Petición 1: Catálogos
+            launch {
+                try {
+                    authViewModel.cargarCatalogos()
+                    Log.d("FRAGMENT_DEBUG", "Catálogos cargados")
+                } catch (e: Exception) {
+                    Log.e("FRAGMENT_DEBUG", "Error catálogos: ${e.message}")
+                }
+            }
 
-                android.util.Log.d("FRAGMENT_DEBUG", "Peticiones de arranque disparadas con éxito")
-            } catch (e: Exception) {
-                android.util.Log.e("FRAGMENT_DEBUG", "Error al inicializar datos: ${e.message}")
+            // Petición 2: Médicos (Arranca al mismo milisegundo que la anterior)
+            launch {
+                try {
+                    authViewModel.cargarMedicos()
+                    Log.d("FRAGMENT_DEBUG", "Médicos cargados")
+                } catch (e: Exception) {
+                    Log.e("FRAGMENT_DEBUG", "Error médicos: ${e.message}")
+                }
             }
         }
     }
@@ -110,6 +123,10 @@ class UsuariosFragment : BaseFragment(R.layout.fragment_usuarios) {
 
                 if (estado.isValid) {
                     enviarRegistroMedicoAlServidor()
+                }else {
+                    btnCrear.isEnabled = true
+                    btnCrear.text = "Crear Cuenta"
+                    btnNuevoUsuario.isEnabled = true
                 }
             }
         }
@@ -118,6 +135,7 @@ class UsuariosFragment : BaseFragment(R.layout.fragment_usuarios) {
             if (mensaje != null) {
                 Toast.makeText(requireContext(), "Médico creado exitosamente", Toast.LENGTH_SHORT).show()
                 toggleFormulario()
+                authViewModel.cargarMedicos()
             }
         }
 
@@ -129,10 +147,14 @@ class UsuariosFragment : BaseFragment(R.layout.fragment_usuarios) {
     private fun setupMedicosObserver() {
         authViewModel.listaMedicos.observe(viewLifecycleOwner) { medicos ->
             if (medicos != null && medicos.isNotEmpty()) {
-                val soloMedicos = medicos.filter { it.rolId == RolesUsuario.ID_MEDICO }
-                usuarioAdapter.updateList(soloMedicos)
-                Log.d("DEBUG_VIEW", "Lista actualizada en el Adapter con ${medicos.size} médicos")
+                listaMedicosOriginal = medicos.filter { it.rolId == RolesUsuario.ID_MEDICO }
+
+                // Evaluamos el estado actual los filtros superioriores
+                aplicarFiltrosCombinados()
+                Log.d("DEBUG_VIEW", "Lista actualizada y respaldada con ${listaMedicosOriginal.size} médicos")
             } else {
+                listaMedicosOriginal = emptyList()
+                usuarioAdapter.updateList(emptyList())
                 Log.d("DEBUG_VIEW", "La lista de médicos llegó vacía o nula al Fragment")
             }
         }
@@ -147,6 +169,16 @@ class UsuariosFragment : BaseFragment(R.layout.fragment_usuarios) {
             listaEspecialidades = lista
             val nombres = lista.map { it.nombre }.toTypedArray()
             binding.spnEspecialidad.configurarConHint(nombres, "Seleccione especialidad")
+
+            // CONFIGURACIÓN DEL SPINNER DE FILTRADO (Buscador superior)
+            // Agregamos la opción "Todas las especialidades" al inicio de la lista desplegable
+            val opcionesFiltro = arrayOf("Todas las especialidades") + nombres
+            val filterAdapter = ArrayAdapter(
+                requireContext(),
+                android.R.layout.simple_spinner_dropdown_item,
+                opcionesFiltro
+            )
+            binding.spnFiltroEspecialidad.adapter = filterAdapter
         }
 
         // Observar Unidades Médicas
@@ -176,6 +208,11 @@ class UsuariosFragment : BaseFragment(R.layout.fragment_usuarios) {
         // Botón Crear Usuario
         binding.btnCrear.setOnClickListener {
             ocultarTeclado()
+
+            binding.btnCrear.isEnabled = false
+            binding.btnCrear.text = "Procesando..."
+            binding.btnNuevoUsuario.isEnabled = false
+
             authViewModel.validarFormulario(
                 rolId = RolesUsuario.ID_MEDICO,
                 nombres = binding.etNombres.text.toString(),
@@ -196,9 +233,60 @@ class UsuariosFragment : BaseFragment(R.layout.fragment_usuarios) {
                 true
             } else false
         }
+
+        binding.spnFiltroEspecialidad.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: View?, position: Int, id: Long) {
+                aplicarFiltrosCombinados()
+            }
+            override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
+        }
+
+        binding.etBuscarNombre.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                aplicarFiltrosCombinados() // Filtra en tiempo real mientras escribe
+
+                if (s.isNullOrEmpty()) {
+                    binding.etBuscarNombre.clearFocus()
+                    ocultarTeclado()
+                }
+            }
+
+            override fun afterTextChanged(s: android.text.Editable?) {}
+        })
     }
 
     //endregion
+    private fun aplicarFiltrosCombinados() {
+        val textoBusqueda = binding.etBuscarNombre.text.toString().trim().lowercase()
+        val posicionEspecialidad = binding.spnFiltroEspecialidad.selectedItemPosition
+
+        viewLifecycleOwner.lifecycleScope.launch(kotlinx.coroutines.Dispatchers.Default) {
+            var listaFiltrada = listaMedicosOriginal
+
+            // Filtrar por especialidad
+            if (posicionEspecialidad > 0) {
+                val especialidadSeleccionada = listaEspecialidades.getOrNull(posicionEspecialidad - 1)
+                if (especialidadSeleccionada != null) {
+                    listaFiltrada = listaFiltrada.filter { it.especialidadId == especialidadSeleccionada.id }
+                }
+            }
+
+            // Filtrar por nombre
+            if (textoBusqueda.isNotEmpty()) {
+                listaFiltrada = listaFiltrada.filter { medico ->
+                    val nombreCompleto = "${medico.nombre} ${medico.apellido}".lowercase()
+                    nombreCompleto.contains(textoBusqueda)
+                }
+            }
+
+            // Regresar al hilo principal únicamente a pintar el RecyclerView
+            withContext(kotlinx.coroutines.Dispatchers.Main) {
+                usuarioAdapter.updateList(listaFiltrada)
+            }
+        }
+    }
     private fun toggleFormulario() {
         ocultarTeclado()
         isFormVisible = !isFormVisible
@@ -224,6 +312,11 @@ class UsuariosFragment : BaseFragment(R.layout.fragment_usuarios) {
         binding.spnGenero.setSelection(0)
         binding.spnEspecialidad.setSelection(0)
         binding.spnUnidad.setSelection(0)
+
+        binding.btnCrear.isEnabled = true
+        binding.btnCrear.text = "Crear Cuenta"
+        binding.btnNuevoUsuario.isEnabled = true
+        binding.btnNuevoUsuario.text = "Nuevo"
 
         if (isFormVisible) toggleFormulario()
     }

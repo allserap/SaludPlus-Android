@@ -92,6 +92,12 @@ class GestionPacientesFragment : BaseFragment(R.layout.fragment_gestion_paciente
 
             val estadoSeleccionado = binding.spnActivoPaciente.selectedItem.toString() == "Activo"
 
+            val ejecutarEnvio = {
+                binding.btnGuardarPaciente.isEnabled = false
+                binding.btnGuardarPaciente.text = "Actualizando..."
+                enviarActualizacionAlServidor()
+            }
+
             // Lógica de advertencia al desactivar
             if (estadoOriginal && !estadoSeleccionado) {
                 MaterialAlertDialogBuilder(requireContext())
@@ -101,11 +107,14 @@ class GestionPacientesFragment : BaseFragment(R.layout.fragment_gestion_paciente
                     .setPositiveButton("Desactivar") { _, _ -> enviarActualizacionAlServidor() }
                     .show()
             } else {
-                enviarActualizacionAlServidor()
+                ejecutarEnvio()
             }
         }
 
-        binding.btnCancelarPaciente.setOnClickListener { resetearInterfaz() }
+        binding.btnCancelarPaciente.setOnClickListener {
+            binding.btnCancelarPaciente.isEnabled = false
+            resetearInterfaz()
+        }
     }
 
     private fun configurarBuscador(pacientes: List<PacienteResponse>) {
@@ -159,6 +168,9 @@ class GestionPacientesFragment : BaseFragment(R.layout.fragment_gestion_paciente
         val idUsuario = p.usuarioId
         if (idUsuario.isNullOrBlank()) {
             Toast.makeText(context, "Error: El ID del paciente no es válido", Toast.LENGTH_SHORT).show()
+
+            binding.btnGuardarPaciente.isEnabled = true
+            binding.btnGuardarPaciente.text = "Actualizar"
             return
         }
 
@@ -202,7 +214,10 @@ class GestionPacientesFragment : BaseFragment(R.layout.fragment_gestion_paciente
         binding.spnActivoPaciente.setSelection(0)
         pacienteSeleccionado = null
         estadoOriginal = true
+
+        binding.btnGuardarPaciente.isEnabled = true
         binding.btnGuardarPaciente.text = "Actualizar"
+        binding.btnCancelarPaciente.isEnabled = true
     }
 
     override fun onDestroyView() {

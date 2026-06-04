@@ -136,6 +136,10 @@ class PerfilMedicoFragment : Fragment() {
                 return@setOnClickListener
             }
 
+            btnGuardar.isEnabled = false
+            btnGuardar.text = "Guardando..."
+            dialog.setCancelable(false)
+
             val updateRequest = MedicoUpdateRequest(
                 id = medico.id,
                 nombre = medico.nombre,
@@ -153,7 +157,7 @@ class PerfilMedicoFragment : Fragment() {
                 password = null
             )
 
-            ejecutarActualizacionServidor(medico.id, updateRequest, dialog)
+            ejecutarActualizacionServidor(medico.id, updateRequest, dialog, btnGuardar, "Actualizar Contraseña")
         }
         dialog.show()
     }
@@ -175,6 +179,10 @@ class PerfilMedicoFragment : Fragment() {
                 return@setOnClickListener
             }
 
+            btnActualizar.isEnabled = false
+            btnActualizar.text = "Actualizando..."
+            dialog.setCancelable(false)
+
             val updateRequest = MedicoUpdateRequest(
                 id = medico.id,
                 nombre = medico.nombre,
@@ -192,13 +200,18 @@ class PerfilMedicoFragment : Fragment() {
                 password = claveNueva
             )
 
-            ejecutarActualizacionServidor(medico.id, updateRequest, dialog)
+            ejecutarActualizacionServidor(medico.id, updateRequest, dialog, btnActualizar, "Actualizar Contraseña")
         }
         dialog.show()
     }
 
-    private fun ejecutarActualizacionServidor(id: String, request: MedicoUpdateRequest, dialog: AlertDialog) {
-        lifecycleScope.launch {
+    private fun ejecutarActualizacionServidor(
+        id: String,
+        request: MedicoUpdateRequest,
+        dialog: AlertDialog,
+        botonAccion: MaterialButton,
+        textoOriginalBoton: String
+    ) {lifecycleScope.launch {
             try {
                 val response = apiService.actualizarMedico(id, request)
                 if (response.isSuccessful) {
@@ -209,10 +222,16 @@ class PerfilMedicoFragment : Fragment() {
                     val errorContenido = response.errorBody()?.string() ?: ""
                     android.util.Log.e("PerfilMedico", "Error servidor: $errorContenido")
                     Toast.makeText(context, "No se pudo actualizar el perfil en el servidor", Toast.LENGTH_LONG).show()
+                    botonAccion.isEnabled = true
+                    botonAccion.text = textoOriginalBoton
+                    dialog.setCancelable(true)
                 }
             } catch (e: Exception) {
                 android.util.Log.e("PerfilMedico", "Fallo de conexión", e)
                 Toast.makeText(context, "Error de comunicación de red", Toast.LENGTH_LONG).show()
+                botonAccion.isEnabled = true
+                botonAccion.text = textoOriginalBoton
+                dialog.setCancelable(true)
             }
         }
     }

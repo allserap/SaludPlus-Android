@@ -24,9 +24,9 @@ class GestionesFragment : Fragment(R.layout.fragment_gestiones) {
     private fun setupNavigation() {
         with(binding) {
             cardMedicos.setOnClickListener {
+                congelarTarjetasTemporales()
                 // Instanciar el fragment de destino
                 val nuevoFragment = GestionMedicosFragment()
-
                 // Iniciar la transacción
                 parentFragmentManager.beginTransaction()
                     .setCustomAnimations(
@@ -40,6 +40,7 @@ class GestionesFragment : Fragment(R.layout.fragment_gestiones) {
                     .commit()
             }
             cardPacientes.setOnClickListener {
+                congelarTarjetasTemporales()
                 val nuevoFragment = GestionPacientesFragment()
                 parentFragmentManager.beginTransaction()
                     .setCustomAnimations(
@@ -53,6 +54,7 @@ class GestionesFragment : Fragment(R.layout.fragment_gestiones) {
                     .commit()
             }
             cardUnidadesEspecialidad.setOnClickListener {
+                congelarTarjetasTemporales()
                 val nuevoFragment = UnidadEspecialidadFragment()
                 parentFragmentManager.beginTransaction()
                     .setCustomAnimations(
@@ -65,6 +67,20 @@ class GestionesFragment : Fragment(R.layout.fragment_gestiones) {
                     .addToBackStack(null)
                     .commit()
             }
+        }
+    }
+    private fun congelarTarjetasTemporales() {
+        with(binding) {
+            cardMedicos.isClickable = false
+            cardPacientes.isClickable = false
+            cardUnidadesEspecialidad.isClickable = false
+
+            // Reactivamos los clics después de 400ms
+            root.postDelayed({
+                cardMedicos.isClickable = true
+                cardPacientes.isClickable = true
+                cardUnidadesEspecialidad.isClickable = true
+            }, 400)
         }
     }
     override fun onDestroyView() {

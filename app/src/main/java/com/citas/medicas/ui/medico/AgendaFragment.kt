@@ -27,7 +27,6 @@ class AgendaFragment : Fragment(R.layout.fragment_agenda) {
         _binding = FragmentAgendaBinding.bind(view)
 
         setupFechaActual()
-
         setupRecyclerView()
         setupObservers()
         fetchAppointments()
@@ -45,11 +44,15 @@ class AgendaFragment : Fragment(R.layout.fragment_agenda) {
 
     private fun setupRecyclerView() {
         citasAdapter = CitasAdapter(emptyList()) { idPacienteSeleccionado ->
-            // 1. Instanciar el BottomSheet con el ID del paciente clicado
-            val bottomSheet = HistorialBottomSheetFragment.newInstance(idPacienteSeleccionado)
+            val tagBottomSheet = "HistorialBottomSheet"
 
-            // 2. Mostrarlo inmediatamente sobre la pantalla actual
-            bottomSheet.show(childFragmentManager, "HistorialBottomSheet")
+            val dialogExistente = childFragmentManager.findFragmentByTag(tagBottomSheet)
+            if (dialogExistente != null && dialogExistente.isAdded) {
+                return@CitasAdapter
+            }
+
+            val bottomSheet = HistorialBottomSheetFragment.newInstance(idPacienteSeleccionado)
+            bottomSheet.show(childFragmentManager, tagBottomSheet)
         }
 
         binding.rvCitas.apply {
@@ -94,7 +97,7 @@ class AgendaFragment : Fragment(R.layout.fragment_agenda) {
 
         // Observar estado de carga (ProgressBar)
         authViewModel.isLoading.observe(viewLifecycleOwner, { isLoading ->
-            // binding.progressBar.visibility = if (isLoading == true) View.VISIBLE else View.GONE
+            binding.progressBar.visibility = if (isLoading == true) View.VISIBLE else View.GONE
         })
     }
 

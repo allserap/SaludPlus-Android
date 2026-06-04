@@ -86,6 +86,9 @@ class GestionMedicosFragment : BaseFragment(R.layout.fragment_gestion_medicos) {
 
                 if (estado.isValid) {
                     enviarActualizacionAlServidor()
+                }else {
+                    btnGuardarMedico.isEnabled = true
+                    btnGuardarMedico.text = "Actualizar Datos"
                 }
             }
         }
@@ -137,6 +140,9 @@ class GestionMedicosFragment : BaseFragment(R.layout.fragment_gestion_medicos) {
             val estadoSeleccionado = binding.spnEstado.selectedItem.toString() == "Activo"
 
             val ejecutarValidacion = {
+                binding.btnGuardarMedico.isEnabled = false
+                binding.btnGuardarMedico.text = "Procesando..."
+
                     authViewModel.validarFormulario(
                         rolId = RolesUsuario.ID_MEDICO,
                         nombres = binding.etNombreMedico.text.toString(),
@@ -164,7 +170,10 @@ class GestionMedicosFragment : BaseFragment(R.layout.fragment_gestion_medicos) {
                 ejecutarValidacion()
             }
         }
-        binding.btnCancelarMedico.setOnClickListener { resetearInterfaz() }
+        binding.btnCancelarMedico.setOnClickListener {
+            binding.btnCancelarMedico.isEnabled = false
+            resetearInterfaz()
+        }
     }
 
     private fun configurarBuscador(medicos: List<MedicoResponse>) {
@@ -287,6 +296,10 @@ class GestionMedicosFragment : BaseFragment(R.layout.fragment_gestion_medicos) {
         binding.spnEstado.setSelection(0)
         binding.autoCompleteMedicos.setText("")
         medicoIdSeleccionado = null
+
+        binding.btnGuardarMedico.isEnabled = true
+        binding.btnGuardarMedico.text = "Actualizar Datos"
+        binding.btnCancelarMedico.isEnabled = true
     }
 
     override fun onDestroyView() {

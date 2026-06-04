@@ -31,11 +31,7 @@ class LoginActivity : AppCompatActivity() {
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-
         verificarSesionGuardada()
-
-        // Limpieza de caché previa para desarrollo
-        //getSharedPreferences("CitasMedicasPrefs", MODE_PRIVATE).edit().clear().apply()
 
         // Configuración inicial de la UI genérica
         binding.tvIrARegistro.visibility = View.VISIBLE
@@ -92,22 +88,6 @@ class LoginActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
-        // Detecta dinámicamente si escribe un correo para alterar la UI y mostrar el campo secreto
-        /*binding.etAfiliado.doAfterTextChanged { text ->
-            val input = text.toString().trim()
-            if (input.contains("@") && input.contains(".")) {
-                binding.tvLabelSecreto.visibility = View.VISIBLE
-                binding.etFraseSecreta.visibility = View.VISIBLE
-                binding.tvIrARegistro.visibility = View.GONE
-            } else {
-                binding.tvLabelSecreto.visibility = View.GONE
-                binding.etFraseSecreta.visibility = View.GONE
-                binding.tvIrARegistro.visibility = View.VISIBLE
-                // Limpiamos el campo si el usuario borra el correo para evitar envíos accidentales
-                binding.etFraseSecreta.text?.clear()
-            }
-        }*/
-
         binding.btnLogin.setOnClickListener {
             val identificador = binding.etAfiliado.text.toString().trim()
             val pass = binding.etClave.text.toString()
@@ -115,6 +95,8 @@ class LoginActivity : AppCompatActivity() {
             if (identificador.isEmpty() || pass.isEmpty()) {
                 Toast.makeText(this, "Por favor complete todos los campos", Toast.LENGTH_SHORT).show()
             } else {
+                binding.btnLogin.isEnabled = false
+                binding.btnLogin.text = "Cargando..."
                 ejecutarLoginUnificado(identificador, pass)
             }
         }
@@ -127,7 +109,7 @@ class LoginActivity : AppCompatActivity() {
         // Mapeo Dinámico del Request con la integración de la frase secreta
         val request = when {
             usuario.contains("@") -> {
-                // Validación local opcional: Evita enviar la petición si el administrador no digita la frase obligatoria
+                // Evita enviar la petición si el administrador no digita la frase obligatoria
                 /*if (fraseSecreta == null) {
                     Toast.makeText(this, "La frase secreta es obligatoria para Administradores", Toast.LENGTH_SHORT).show()
                     return
@@ -219,16 +201,22 @@ class LoginActivity : AppCompatActivity() {
                     finish()
 
                 } else {
-                    val errorJson = response.errorBody()?.string()
-                    val mensajeParaMostrar = try {
-                        val parsedError = Gson().fromJson(errorJson, ErrorResponse::class.java)
-                        parsedError.message
-                    } catch (e: Exception) {
-                        "Credenciales incorrectas"
+                    binding.btnLogin.isEnabled = true
+                    binding.btnLogin.text = "Ingresar"
+                    val mensajeParaMostrar = when (response.code()) {
+                        403 -> "Esta cuenta se encuentra inactiva. Por favor, contacta al administrador."
+                        401 -> "Correo, código o contraseña incorrectos."
+                        else -> {
+                            try {
+                                val errorJson = response.errorBody()?.string()
+                                Gson().fromJson(errorJson, ErrorResponse::class.java).message
+                            } catch (e: Exception) {
+                                "Error al iniciar sesión (${response.code()})"
+                            }
+                        }
                     }
-                    Toast.makeText(this@LoginActivity, mensajeParaMostrar, Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@LoginActivity, mensajeParaMostrar, Toast.LENGTH_LONG).show()
                 }
-
             } catch (e: Exception) {
                 Log.e("LOGIN_ERROR", "Fallo: ${e.message}")
                 Toast.makeText(this@LoginActivity, "Error de red: Verifique su conexión", Toast.LENGTH_SHORT).show()

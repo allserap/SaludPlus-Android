@@ -15,6 +15,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 class DashboardAdminActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityDashboardAdminBinding
+    private var dialogSalir: androidx.appcompat.app.AlertDialog? = null
 
     // Lista para iterar los tabs fácilmente usando View Binding
     private lateinit var listaTabs: List<LinearLayout>
@@ -77,11 +78,13 @@ class DashboardAdminActivity : AppCompatActivity() {
 
             // Botón Salir
             btnSalir.setOnClickListener {
-                MaterialAlertDialogBuilder(this@DashboardAdminActivity)
+                if (dialogSalir?.isShowing == true) return@setOnClickListener
+                dialogSalir = MaterialAlertDialogBuilder(this@DashboardAdminActivity)
                     .setTitle("Cerrar Sesión")
                     .setMessage("¿Está seguro de que desea salir del sistema?")
                     .setNegativeButton("Cancelar", null)
                     .setPositiveButton("Salir") { _, _ ->
+                        btnSalir.isEnabled = false
                         val prefs = getSharedPreferences("CitasMedicasPrefs", MODE_PRIVATE)
                         prefs.edit().clear().apply()
                         SessionManager.logout(this@DashboardAdminActivity)
@@ -100,16 +103,21 @@ class DashboardAdminActivity : AppCompatActivity() {
 
     // Función encargada del intercambio de fragmentos
     private fun replaceFragment(fragment: Fragment) {
-        // 1. Buscamos el fragmento que se encuentra cargado actualmente
+        // Buscamos el fragmento que se encuentra cargado actualmente
         val fragmentActual = supportFragmentManager.findFragmentById(R.id.containerFragment)
 
-        // 2. Si el tipo de fragmento es exactamente igual al que se quiere abrir, abortamos la operación
+        // Si el tipo de fragmento es exactamente igual al que se quiere abrir, abortamos la operación
         if (fragmentActual != null && fragmentActual::class.java == fragment::class.java) {
             return
         }
+        listaTabs.forEach { it.isClickable = false }
         supportFragmentManager.beginTransaction()
             .replace(R.id.containerFragment, fragment)
             .commit()
+
+        binding.root.postDelayed({
+            listaTabs.forEach { it.isClickable = true }
+        }, 300)
     }
 
     // Función optimizada: Cambia el estado de la pestaña seleccionada.
