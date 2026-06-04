@@ -32,7 +32,16 @@ class HistorialAdapter(private var listaCitas: List<CitaHistorial>) :
         val cita = listaCitas[position]
 
         holder.tvEspecialidad.text = cita.especialidad
-        holder.tvEstado.text = cita.estado?.uppercase()
+
+        // 1. Obtenemos el texto crudo (ej. "CANCELADA_PACIENTE" o "REPROGRAMADA")
+        val estadoCrudo = cita.estado ?: "Desconocido"
+
+        val estadoLimpio = estadoCrudo.split("_")[0].uppercase()
+
+        holder.tvEstado.text = estadoLimpio // (Usa el nombre de tu TextView aquí)
+
+//        holder.tvEstado.text = cita.estado?.uppercase()
+
         holder.tvDoctor.text = "Doctor: ${cita.doctor}"
         holder.tvUnidad.text = "Unidad: ${cita.unidad_medica}"
 

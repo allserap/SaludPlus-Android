@@ -3,16 +3,18 @@ package com.citas.medicas.ui.paciente
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.widget.Button
+import android.widget.HorizontalScrollView
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.LinearLayoutManager
 import com.citas.medicas.R
 import com.citas.medicas.data.RetrofitClient
-import com.citas.medicas.models.CitaHistorial
 import com.citas.medicas.ui.AppDatabase
+import com.citas.medicas.models.CitaHistorial
 import com.citas.medicas.ui.paciente.local.entities.toEntity
 import com.citas.medicas.ui.paciente.local.entities.toModel
 import com.google.android.material.bottomnavigation.BottomNavigationView
@@ -21,82 +23,86 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-private var listaProximas = listOf<CitaHistorial>()
-private var listaPasadas = listOf<CitaHistorial>()
-
-private lateinit var adapter: HistorialAdapter
 class HistorialCitasActivity : AppCompatActivity() {
+
+    private var listaProximas = listOf<CitaHistorial>()
+    private var listaPasadas = listOf<CitaHistorial>()
+    private lateinit var adapter: HistorialAdapter
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_historial_citas)
 
-
-
+        // Inicializar RecyclerView
         val rvHistorial = findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.rvHistorialCitas)
-        rvHistorial.layoutManager = LinearLayoutManager(this)
+        rvHistorial.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(this)
         adapter = HistorialAdapter(emptyList())
         rvHistorial.adapter = adapter
 
+        // Referencias de los nuevos filtros en el XML
         val tabLayout = findViewById<TabLayout>(R.id.tabLayoutHistorial)
+        val scrollFiltros = findViewById<HorizontalScrollView>(R.id.scrollFiltros)
+        val chipGroupFiltros = findViewById<com.google.android.material.chip.ChipGroup>(R.id.chipGroupFiltros)
+
+        // Control de pestañas (Próximas vs Pasadas)
         tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             override fun onTabSelected(tab: TabLayout.Tab?) {
                 when (tab?.position) {
-                    0 -> adapter.actualizarDatos(listaProximas) // Clic en Próximas
-                    1 -> adapter.actualizarDatos(listaPasadas)  // Clic en Pasadas
+                    0 -> { // Pestaña Próximas
+                        scrollFiltros.visibility = View.GONE
+                        adapter.actualizarDatos(listaProximas)
+                    }
+                    1 -> { // Pestaña Pasadas (Aquí prendemos los Chips)
+                        scrollFiltros.visibility = View.VISIBLE
+                        aplicarFiltroPasadas()
+                    }
                 }
             }
             override fun onTabUnselected(tab: TabLayout.Tab?) {}
             override fun onTabReselected(tab: TabLayout.Tab?) {}
         })
 
+        chipGroupFiltros.setOnCheckedStateChangeListener { _, _ ->
+            if (tabLayout.selectedTabPosition == 1) {
+                aplicarFiltroPasadas()
+            }
+        }
 
-
+        // Configuración de botón Solicitar Nueva Cita
         val btnNuevaCita = findViewById<Button>(R.id.btnNuevaCitaFlotante)
-
-
         btnNuevaCita.setOnClickListener {
             startActivity(Intent(this, SolicitarCitaActivity::class.java))
         }
 
+        // Configuración de la barra de navegación inferior
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavigationHistorial)
         bottomNav.selectedItemId = R.id.nav_historial
-
         bottomNav.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.nav_inicio -> {
-                    val intent = Intent(this, HomePacienteActivity::class.java)
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
-                    startActivity(intent)
+                    startActivity(Intent(this, HomePacienteActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION))
                     true
                 }
                 R.id.nav_solicitar -> {
-                    val intent = Intent(this, SolicitarCitaActivity::class.java)
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
-                    startActivity(intent)
+                    startActivity(Intent(this, SolicitarCitaActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION))
                     true
                 }
-                R.id.nav_historial -> {
-                    true
-                }
+                R.id.nav_historial -> true
                 R.id.nav_mapa -> {
-                    val intent = Intent(this, MapaActivity::class.java)
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
-                    startActivity(intent)
+                    startActivity(Intent(this, MapaActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION))
                     true
                 }
                 R.id.nav_perfil -> {
-                    val intent = Intent(this, PerfilActivity::class.java)
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
-                    startActivity(intent)
+                    startActivity(Intent(this, PerfilActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION))
                     true
                 }
                 else -> false
             }
         }
 
-        cargarHistorial();
-
+        // Carga inicial de datos
+        cargarHistorial()
     }
 
     private fun cargarHistorial() {
@@ -114,7 +120,7 @@ class HistorialCitasActivity : AppCompatActivity() {
                 val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
                 val hoy = sdf.parse(sdf.format(java.util.Date()))
 
-                val estadosProximas = listOf("pendiente", "confirmada", "reprogramada")
+                val estadosProximas = listOf("pendiente", "confirmada")
 
                 val proximasLocal = todasLasCitas.filter { cita ->
                     var esFutura = false
@@ -127,17 +133,13 @@ class HistorialCitasActivity : AppCompatActivity() {
                     } catch (e: Exception) {
                         esFutura = true
                     }
-
                     val esEstadoValido = cita.estado?.lowercase(Locale.getDefault()) in estadosProximas
-
                     esEstadoValido && esFutura
                 }
 
                 val pasadasLocal = todasLasCitas.filter { !proximasLocal.contains(it) }
-
                 pintarHistorialEnPantalla(proximasLocal, pasadasLocal, isOffline = true)
             }
-
 
             try {
                 val apiService = RetrofitClient.getApiService(this@HistorialCitasActivity)
@@ -145,7 +147,6 @@ class HistorialCitasActivity : AppCompatActivity() {
 
                 if (response.isSuccessful && response.body()?.exito == true) {
                     val datos = response.body()?.datos
-
                     if (datos != null) {
                         val proximasRed = datos.proximas ?: emptyList()
                         val pasadasRed = datos.pasadas ?: emptyList()
@@ -170,7 +171,7 @@ class HistorialCitasActivity : AppCompatActivity() {
         }
     }
 
-    private fun pintarHistorialEnPantalla(proximas: List<CitaHistorial>, pasadas: List<com.citas.medicas.models.CitaHistorial>, isOffline: Boolean) {
+    private fun pintarHistorialEnPantalla(proximas: List<CitaHistorial>, pasadas: List<CitaHistorial>, isOffline: Boolean) {
         listaProximas = proximas
         listaPasadas = pasadas
 
@@ -178,12 +179,31 @@ class HistorialCitasActivity : AppCompatActivity() {
         tabLayout.getTabAt(0)?.text = "📅 Próximas (${listaProximas.size})"
         tabLayout.getTabAt(1)?.text = "✓ Pasadas (${listaPasadas.size})"
 
-        val tabSeleccionada = tabLayout.selectedTabPosition
-        if (tabSeleccionada == 0) {
+        if (tabLayout.selectedTabPosition == 0) {
             adapter.actualizarDatos(listaProximas)
         } else {
-            adapter.actualizarDatos(listaPasadas)
+            aplicarFiltroPasadas() // Mantiene el filtro si la API responde estando parados en Pasadas
         }
     }
 
+    private fun aplicarFiltroPasadas() {
+        val chipGroup = findViewById<com.google.android.material.chip.ChipGroup>(R.id.chipGroupFiltros)
+        val seleccion = chipGroup.checkedChipId
+
+        val listaFiltrada = when (seleccion) {
+            R.id.chipCanceladas -> listaPasadas.filter {
+                it.estado?.lowercase()?.contains("cancelada") == true
+            }
+            R.id.chipReprogramadas -> listaPasadas.filter {
+                it.estado?.lowercase()?.contains("reprogramada") == true
+            }
+            R.id.chipCompletadas -> listaPasadas.filter {
+                it.estado?.lowercase()?.contains("atendida") == true ||
+                        it.estado?.lowercase()?.contains("finalizada") == true
+            }
+            else -> listaPasadas // "Todos"
+        }
+
+        adapter.actualizarDatos(listaFiltrada)
+    }
 }

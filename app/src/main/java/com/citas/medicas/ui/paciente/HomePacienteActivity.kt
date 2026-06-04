@@ -140,7 +140,9 @@ class HomePacienteActivity : AppCompatActivity() {
 
                 val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
                 val hoy = sdf.parse(sdf.format(java.util.Date()))
-                val estadosProximas = listOf("pendiente", "confirmada", "reprogramada")
+
+
+                val estadosProximas = listOf("pendiente", "confirmada")
 
                 val proximasLocal = todasLasCitas.filter { cita ->
                     var esFutura = false

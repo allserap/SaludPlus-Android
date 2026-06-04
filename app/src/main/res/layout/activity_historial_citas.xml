@@ -63,19 +63,66 @@
             android:text="✓ Pasadas (3)" />
     </com.google.android.material.tabs.TabLayout>
 
+    <HorizontalScrollView
+        android:id="@+id/scrollFiltros"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="8dp"
+        android:scrollbars="none"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/tabLayoutHistorial">
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chipGroupFiltros"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:singleSelection="true"
+            app:selectionRequired="true">
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipTodos"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Todos"
+                android:checked="true"/>
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipCanceladas"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Canceladas"/>
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipReprogramadas"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Reprogramadas"/>
+
+            <com.google.android.material.chip.Chip
+                android:id="@+id/chipCompletadas"
+                style="@style/Widget.MaterialComponents.Chip.Choice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Completadas"/>
+
+        </com.google.android.material.chip.ChipGroup>
+    </HorizontalScrollView>
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvHistorialCitas"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="8dp"
         android:paddingHorizontal="16dp"
         android:clipToPadding="false"
         android:paddingBottom="80dp"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-        app:layout_constraintTop_toBottomOf="@id/tabLayoutHistorial"
+        app:layout_constraintTop_toBottomOf="@id/scrollFiltros"
         app:layout_constraintBottom_toTopOf="@id/btnNuevaCitaFlotante" />
-
-
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnNuevaCitaFlotante"
@@ -89,7 +136,6 @@
         app:backgroundTint="@color/citas_primary"
         app:cornerRadius="8dp"
         app:layout_constraintBottom_toTopOf="@id/bottomNavigationHistorial"/>
-
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNavigationHistorial"

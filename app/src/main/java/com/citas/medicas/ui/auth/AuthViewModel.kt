@@ -291,7 +291,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    _error.value = "Fallo de conexión: ${e.message}"
+                    _error.value = "Modo sin conexión activo "
                 }
             } finally {
                 withContext(Dispatchers.Main) { _isLoading.value = false }
@@ -324,7 +324,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    _error.value = "Fallo de conexión: ${e.message}"
+                    _error.value = "Modo sin conexión activo "
                 }
             }
         }
@@ -396,7 +396,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    _error.value = "Fallo de conexión: ${e.message}"
+//                    _error.value = "Fallo de conexión: ${e.message}"
+                    _error.value = "Modo sin conexión activo "
                 }
             }
         }
