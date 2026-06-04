@@ -63,6 +63,7 @@ class UsuariosFragment : BaseFragment(R.layout.fragment_usuarios) {
         setupListeners()
 
         viewLifecycleOwner.lifecycleScope.launch {
+            binding.progressBar.visibility = View.VISIBLE
             // Petición 1: Catálogos
             launch {
                 try {
@@ -146,6 +147,7 @@ class UsuariosFragment : BaseFragment(R.layout.fragment_usuarios) {
 
     private fun setupMedicosObserver() {
         authViewModel.listaMedicos.observe(viewLifecycleOwner) { medicos ->
+            binding.progressBar.visibility = View.GONE
             if (medicos != null && medicos.isNotEmpty()) {
                 listaMedicosOriginal = medicos.filter { it.rolId == RolesUsuario.ID_MEDICO }
 
@@ -172,7 +174,7 @@ class UsuariosFragment : BaseFragment(R.layout.fragment_usuarios) {
 
             // CONFIGURACIÓN DEL SPINNER DE FILTRADO (Buscador superior)
             // Agregamos la opción "Todas las especialidades" al inicio de la lista desplegable
-            val opcionesFiltro = arrayOf("Todas las especialidades") + nombres
+            val opcionesFiltro = arrayOf("Seleccione una especialidad") + nombres
             val filterAdapter = ArrayAdapter(
                 requireContext(),
                 android.R.layout.simple_spinner_dropdown_item,
@@ -271,6 +273,9 @@ class UsuariosFragment : BaseFragment(R.layout.fragment_usuarios) {
                 if (especialidadSeleccionada != null) {
                     listaFiltrada = listaFiltrada.filter { it.especialidadId == especialidadSeleccionada.id }
                 }
+            } else {
+                // Sin especialidad seleccionada: no mostrar nada
+                listaFiltrada = emptyList()
             }
 
             // Filtrar por nombre
