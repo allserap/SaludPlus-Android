@@ -281,8 +281,15 @@ class HomePacienteActivity : AppCompatActivity() {
 
 
     private fun abrirMenuReprogramar(cita: CitaHistorial) {
+        val hoy = com.google.android.material.datepicker.MaterialDatePicker.todayInUtcMilliseconds()
+        val restricciones = com.google.android.material.datepicker.CalendarConstraints.Builder()
+            .setValidator(com.google.android.material.datepicker.DateValidatorPointForward.from(hoy))
+            .build()
+
         val datePicker = com.google.android.material.datepicker.MaterialDatePicker.Builder.datePicker()
             .setTitleText("Selecciona una nueva fecha")
+            .setSelection(hoy)
+            .setCalendarConstraints(restricciones)
             .build()
 
         datePicker.addOnPositiveButtonClickListener { selection ->
@@ -317,33 +324,52 @@ class HomePacienteActivity : AppCompatActivity() {
         lifecycleScope.launch {
             try {
                 val apiService = RetrofitClient.getApiService(this@HomePacienteActivity)
-
                 val response = apiService.getHorariosDisponibles(cita.unidad_medica_id!!, cita.especialidad_id!!, nuevaFecha)
 
                 pbLoading.visibility = android.view.View.GONE
 
                 if (response.isSuccessful) {
-                    val horasDisponibles = response.body()?.datos
-                    if (horasDisponibles != null && horasDisponibles.isNotEmpty()) {
+                    val datosApi = response.body()?.datos
 
+                    if (datosApi != null && datosApi.isNotEmpty()) {
 
-                        for (horaStr in horasDisponibles) {
+                        val formatFecha = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+                        val fechaHoyStr = formatFecha.format(java.util.Date())
 
-                            val nuevoChip = com.google.android.material.chip.Chip(this@HomePacienteActivity).apply {
-                                text = horaStr
-                                isCheckable = true
-                                isClickable = true
+                        val horasDisponibles = if (nuevaFecha == fechaHoyStr) {
+                            val formatHora = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
+                            val horaActualStr = formatHora.format(java.util.Date())
 
-                                setOnCheckedChangeListener { _, isChecked ->
-                                    if (isChecked) {
-                                        horaSeleccionada = this.text.toString()
-                                        btnConfirmar.isEnabled = true
+                            datosApi.filter { horaString ->
+                                val horaLimpia = if (horaString.length == 5) "$horaString:00" else horaString
+                                horaLimpia > horaActualStr
+                            }
+                        } else {
+                            datosApi
+                        }
+
+                        // PINTAR LOS CHIPS SI SOBREVIVIERON AL FILTRO
+                        if (horasDisponibles.isNotEmpty()) {
+                            for (horaStr in horasDisponibles) {
+                                val nuevoChip = com.google.android.material.chip.Chip(this@HomePacienteActivity).apply {
+                                    text = horaStr
+                                    isCheckable = true
+                                    isClickable = true
+
+                                    setOnCheckedChangeListener { _, isChecked ->
+                                        if (isChecked) {
+                                            horaSeleccionada = this.text.toString()
+                                            btnConfirmar.isEnabled = true
+                                        }
                                     }
                                 }
+                                chipGroup.addView(nuevoChip)
                             }
-
-                            chipGroup.addView(nuevoChip)
+                        } else {
+                            tvEmpty.text = "Ya no hay horarios disponibles para hoy"
+                            tvEmpty.visibility = android.view.View.VISIBLE
                         }
+
                     } else {
                         tvEmpty.visibility = android.view.View.VISIBLE
                     }
