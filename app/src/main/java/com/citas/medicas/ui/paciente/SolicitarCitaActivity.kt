@@ -82,17 +82,27 @@ class SolicitarCitaActivity : AppCompatActivity() {
         rvHoras.adapter = adapterHoras
 
         tvSelectDate.setOnClickListener {
+            val hoy = com.google.android.material.datepicker.MaterialDatePicker.todayInUtcMilliseconds()
+
+            val restricciones = com.google.android.material.datepicker.CalendarConstraints.Builder()
+                .setValidator(com.google.android.material.datepicker.DateValidatorPointForward.from(hoy))
+                .build()
+
             val picker = com.google.android.material.datepicker.MaterialDatePicker.Builder.datePicker()
                 .setTitleText("Seleccione la fecha")
-                .setSelection(com.google.android.material.datepicker.MaterialDatePicker.todayInUtcMilliseconds())
+                .setSelection(hoy)
+                .setCalendarConstraints(restricciones)
                 .build()
 
             picker.addOnPositiveButtonClickListener { selection ->
                 val date = java.util.Date(selection)
+
                 val formatVisual = java.text.SimpleDateFormat("dd MMM yyyy", java.util.Locale("es", "ES"))
+                formatVisual.timeZone = java.util.TimeZone.getTimeZone("UTC")
                 tvSelectDate.text = formatVisual.format(date)
 
                 val formatApi = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+                formatApi.timeZone = java.util.TimeZone.getTimeZone("UTC")
                 fechaSeleccionadaReal = formatApi.format(date)
 
                 Log.d("API_DEBUG", "Fecha seleccionada: $fechaSeleccionadaReal")
@@ -344,8 +354,32 @@ class SolicitarCitaActivity : AppCompatActivity() {
                 if (response.isSuccessful) {
                     val datos = response.body()?.datos
                     if (datos != null && datos.isNotEmpty()) {
-                        Log.d("API_DEBUG", "¡Éxito! Node devolvió ${datos.size} horas")
-                        adapterHoras.actualizarDatos(datos)
+
+                        val formatFecha = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+                        val fechaHoyStr = formatFecha.format(java.util.Date())
+
+                        val horasDisponibles = if (fecha == fechaHoyStr) {
+                            // Si la cita es para HOY, sacamos la hora actual
+                            val formatHora = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault())
+                            val horaActualStr = formatHora.format(java.util.Date())
+
+                            datos.filter { horaString ->
+                                val horaLimpia = if (horaString.length == 5) "$horaString:00" else horaString
+                                horaLimpia > horaActualStr
+                            }
+                        } else {
+                            datos
+                        }
+
+                        if (horasDisponibles.isNotEmpty()) {
+                            Log.d("API_DEBUG", "¡Éxito! Node devolvió horas y el filtro dejó: ${horasDisponibles.size}")
+                            adapterHoras.actualizarDatos(horasDisponibles)
+                        } else {
+                            Log.d("API_DEBUG", "Habían citas, pero todas ya pasaron la hora actual")
+                            adapterHoras.actualizarDatos(emptyList())
+                            Toast.makeText(this@SolicitarCitaActivity, "Ya no hay horarios disponibles para hoy", Toast.LENGTH_SHORT).show()
+                        }
+
                     } else {
                         Log.d("API_DEBUG", "Node devolvió un arreglo vacío []")
                         adapterHoras.actualizarDatos(emptyList())
