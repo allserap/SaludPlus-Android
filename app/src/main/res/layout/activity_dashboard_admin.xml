@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://tools.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/citas_background"
@@ -10,80 +12,96 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:paddingBottom="16dp">
 
-        <LinearLayout
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cvHeaderWelcome"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@color/citas_secondary"
-            android:padding="16dp"
-            android:orientation="vertical">
+            android:layout_margin="16dp"
+            app:cardBackgroundColor="@color/citas_secondary"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="4dp"
+            app:strokeWidth="0dp">
 
-            <TextView
-                android:id="@+id/tvHeaderRol"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Administrador"
-                android:textColor="@color/citas_white"
-                android:textSize="14sp"/>
+                android:padding="16dp"
+                android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/tvHeaderNombre"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Administrador Sistema"
-                android:textColor="@color/citas_white"
-                android:textSize="20sp"
-                android:textStyle="bold"/>
+                <TextView
+                    android:id="@+id/tvHeaderRol"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Administrador"
+                    android:textColor="@color/citas_white"
+                    android:textSize="14sp"/>
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Panel de Control"
-                android:textColor="@color/citas_white"
-                android:textSize="14sp"/>
+                <TextView
+                    android:id="@+id/tvHeaderNombre"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Administrador Sistema"
+                    android:textColor="@color/citas_white"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:layout_marginTop="2dp"/>
 
-            <Button
-                android:id="@+id/btnSalir"
-                android:layout_width="wrap_content"
-                android:layout_height="40dp"
-                android:text="Salir"
-                android:textAllCaps="false"
-                android:textColor="@color/citas_white"
-                android:backgroundTint="@color/citas_primary"
-                android:layout_gravity="end"
-                android:layout_marginTop="8dp"/>
-        </LinearLayout>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Panel de Control"
+                    android:textColor="@color/citas_white"
+                    android:textSize="14sp"
+                    android:layout_marginTop="2dp"/>
+
+                <Button
+                    android:id="@+id/btnSalir"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:text="Salir"
+                    android:textAllCaps="false"
+                    android:textColor="@color/citas_white"
+                    android:backgroundTint="@color/citas_primary"
+                    android:layout_gravity="end"
+                    android:layout_marginTop="8dp"/>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="16dp"
-            android:layout_marginTop="8dp"
             android:background="@drawable/bg_tabs"
             android:orientation="horizontal"
             android:padding="8dp"
-            android:weightSum="3"> <LinearLayout
-            android:id="@+id/tabUsuarios"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:clickable="true"
-            android:focusable="true"
-            android:background="@drawable/bg_tab_item" android:orientation="vertical"
-            android:gravity="center"
-            android:padding="8dp">
-            <TextView
-                android:layout_width="wrap_content"
+            android:weightSum="3">
+
+            <LinearLayout
+                android:id="@+id/tabUsuarios"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="👥"
-                android:textSize="18sp"/>
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Usuarios"
-                android:textSize="10sp"/>
-        </LinearLayout>
+                android:layout_weight="1"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="@drawable/bg_tab_item"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:padding="8dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="👥"
+                    android:textSize="18sp"
+                    tools:ignore="HardcodedText" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Usuarios"
+                    android:textColor="@color/citas_primary"
+                    android:textSize="11sp"/>
+            </LinearLayout>
 
             <LinearLayout
                 android:id="@+id/tabEstadisticas"
@@ -92,19 +110,22 @@
                 android:layout_weight="1"
                 android:clickable="true"
                 android:focusable="true"
-                android:background="@drawable/bg_tab_item" android:orientation="vertical"
+                android:background="@drawable/bg_tab_item"
+                android:orientation="vertical"
                 android:gravity="center"
                 android:padding="8dp">
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="📊"
-                    android:textSize="18sp"/>
+                    android:textSize="18sp"
+                    tools:ignore="HardcodedText" />
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Estadísticas"
-                    android:textSize="10sp"/>
+                    android:textColor="@color/citas_primary"
+                    android:textSize="11sp"/>
             </LinearLayout>
 
             <LinearLayout
@@ -114,27 +135,31 @@
                 android:layout_weight="1"
                 android:clickable="true"
                 android:focusable="true"
-                android:background="@drawable/bg_tab_item" android:orientation="vertical"
+                android:background="@drawable/bg_tab_item"
+                android:orientation="vertical"
                 android:gravity="center"
                 android:padding="8dp">
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="⚙️"
-                    android:textSize="18sp"/>
+                    android:textSize="18sp"
+                    tools:ignore="HardcodedText" />
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Gestiones"
-                    android:textSize="10sp"/>
+                    android:textColor="@color/citas_primary"
+                    android:textSize="11sp"/>
             </LinearLayout>
         </LinearLayout>
 
         <FrameLayout
             android:id="@+id/containerFragment"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_marginTop="12dp"
-            android:layout_weight="1" />
+            android:layout_height="match_parent"
+            android:layout_marginTop="16dp"
+            android:layout_marginHorizontal="16dp"/>
+
     </LinearLayout>
 </ScrollView>
