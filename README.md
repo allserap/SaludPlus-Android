@@ -1,4 +1,4 @@
-# 📱 Frontend SaludPlus Android - Sistema de Gestión de Citas Médicas
+# 🏥 Frontend SaludPlus Android - Sistema de Gestión de Citas Médicas
 
 ![Kotlin](https://img.shields.io/badge/Kotlin-1.9-7F52FF?style=for-the-badge&logo=kotlin)
 ![Android Studio](https://img.shields.io/badge/Android%20Studio-Hedgehog+-3DDC84?style=for-the-badge&logo=android-studio)
