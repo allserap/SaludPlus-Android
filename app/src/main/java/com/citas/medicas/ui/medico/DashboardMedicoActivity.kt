@@ -8,6 +8,7 @@ import androidx.fragment.app.Fragment
 import com.citas.medicas.R
 import com.citas.medicas.databinding.ActivityDashboardMedicoBinding
 import com.citas.medicas.ui.auth.LoginActivity
+import com.citas.medicas.utils.SessionDialogHelper
 import com.citas.medicas.utils.SessionManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
@@ -82,17 +83,7 @@ class DashboardMedicoActivity : AppCompatActivity() {
                     .setNegativeButton("Cancelar", null)
                     .setPositiveButton("Salir") { _, _ ->
                         btnSalir.isEnabled = false
-                        // Limpiar SharedPreferences al salir
-                        val prefs = getSharedPreferences("CitasMedicasPrefs", MODE_PRIVATE)
-                        prefs.edit().clear().apply()
-
-                        SessionManager.logout(this@DashboardMedicoActivity)
-
-                        val intent = Intent(this@DashboardMedicoActivity, LoginActivity::class.java).apply {
-                            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                        }
-                        startActivity(intent)
-                        finish()
+                        SessionDialogHelper.ejecutarLogoutCompleto(this@DashboardMedicoActivity)
                     }
                     .show()
             }
@@ -101,10 +92,10 @@ class DashboardMedicoActivity : AppCompatActivity() {
 
     // Función genérica para cambiar fragmentos
     private fun replaceFragment(fragment: Fragment) {
-        // 1. Buscamos el fragmento que actualmente está pintado en el contenedor
+        // Buscar el fragmento que actualmente está pintado en el contenedor
         val fragmentActual = supportFragmentManager.findFragmentById(R.id.containerFragment)
 
-        // 2. Si el fragmento actual es de la misma clase que el que queremos abrir, ignoramos el click
+        // Si el fragmento actual es de la misma clase que el que queremos abrir, ignoramos el click
         if (fragmentActual != null && fragmentActual::class.java == fragment::class.java) {
             return
         }

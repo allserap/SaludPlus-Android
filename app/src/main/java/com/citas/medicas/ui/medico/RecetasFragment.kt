@@ -1,5 +1,7 @@
 package com.citas.medicas.ui.medico
 
+import android.icu.text.SimpleDateFormat
+import android.icu.util.TimeZone
 import android.os.Bundle
 import android.view.View
 import android.widget.ArrayAdapter
@@ -18,6 +20,7 @@ import com.citas.medicas.ui.base.BaseFragment
 import com.citas.medicas.utils.limpiarCampos
 import com.google.android.material.textfield.TextInputEditText
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 class RecetasFragment : BaseFragment(R.layout.fragment_recetas) {
 
@@ -42,62 +45,6 @@ class RecetasFragment : BaseFragment(R.layout.fragment_recetas) {
         }
     }
 
-    private fun setupObservers() {
-        authViewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
-            binding.btnGenerarReceta.isEnabled = !isLoading
-            binding.btnGenerarReceta.text = if (isLoading) "Guardando..." else "Generar Receta"
-        }
-
-        authViewModel.listaCitas.observe(viewLifecycleOwner) { citas ->
-            val citasPendientes = citas?.filter { it.estadocita?.lowercase()?.trim() in listOf("confirmada" , "reprogramada", "pendiente") }
-
-            if (citasPendientes.isNullOrEmpty()) {
-                Toast.makeText(requireContext(), "No hay citas confirmadas para atención", Toast.LENGTH_LONG).show()
-                binding.autoCompleteConsultarReceta.setAdapter(null)
-            } else {
-                configurarBuscadorCitas(citasPendientes)
-            }
-        }
-
-        authViewModel.listaMedicamentos.observe(viewLifecycleOwner) { medicamentos ->
-            if (!medicamentos.isNullOrEmpty()) {
-                val listaConHint = mutableListOf<MedicamentoResponse>()
-
-                // Creamos el elemento Hint respetando TODOS los campos obligatorios del data class
-                listaConHint.add(
-                    MedicamentoResponse(
-                        id = 0,
-                        nombreGenerico = "Seleccionar medicamento",
-                        nombreComercial = "",
-                        formaFarmaceutica = "",
-                        concentracion = "",
-                        activo = false
-                    )
-                )
-                // Agregamos el resto de los medicamentos que vienen del servidor
-                listaConHint.addAll(medicamentos)
-                // Asignamos la lista final a tu variable global
-                this.catalogoMedicamentosReales = listaConHint
-            }
-        }
-
-        authViewModel.error.observe(viewLifecycleOwner) { errorMsg ->
-            errorMsg?.let {
-                Toast.makeText(requireContext(), it, Toast.LENGTH_LONG).show()
-            }
-        }
-
-        // Éxito al marcar la asistencia y cambiar el estado en Node.js
-        authViewModel.asistenciaMarcadaExito.observe(viewLifecycleOwner) { asistenciaOk ->
-            if (asistenciaOk) {
-                Toast.makeText(context, "Receta generada y consulta finalizada.", Toast.LENGTH_SHORT).show()
-                resetearInterfaz()
-                authViewModel.resetRecetaStatus()
-                authViewModel.resetAsistenciaStatus()
-                authViewModel.cargarTodasLasCitas(requireContext())
-            }
-        }
-    }
 
     private fun setupListeners() {
         binding.btnGenerarReceta.setOnClickListener {
@@ -116,15 +63,97 @@ class RecetasFragment : BaseFragment(R.layout.fragment_recetas) {
         binding.btnAgregarMedicamento.setOnClickListener { agregarCampoMedicamento() }
         binding.btnCancelarReceta.setOnClickListener { resetearInterfaz() }
     }
+    private fun setupObservers() {
+        authViewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
+            binding.btnGenerarReceta.isEnabled = !isLoading
+            binding.btnGenerarReceta.text = if (isLoading) "Guardando..." else "Generar Receta"
+        }
 
-    private fun configurarBuscadorCitas(citas: List<CitaResponse>) {
-        val sugerencias = citas.map { "[${it.horaasignada}] ${it.nombrepaciente} ${it.apellidopaciente}" }
+        authViewModel.listaCitas.observe(viewLifecycleOwner) { citas ->
+            // filtrar citas por estado
+            val citasValidas = citas?.filter {
+                val estado = it.estadocita?.lowercase()?.trim()
+                estado == "confirmada" || estado == "pendiente" || estado == "reprogramada"
+            }
+
+            // Si después de filtrar la lista está vacía o es nula
+            if (citasValidas.isNullOrEmpty()) {
+                Toast.makeText(requireContext(), "No hay citas pendientes o confirmadas para atención", Toast.LENGTH_LONG).show()
+                binding.autoCompleteConsultarReceta.setAdapter(null)
+                resetearInterfaz() // Limpiamos campos residuales por seguridad
+            } else {
+                configurarBuscadorCitas(citasValidas)
+            }
+        }
+
+        authViewModel.listaMedicamentos.observe(viewLifecycleOwner) { medicamentos ->
+            if (!medicamentos.isNullOrEmpty()) {
+                val listaConHint = mutableListOf<MedicamentoResponse>()
+                listaConHint.add(
+                    MedicamentoResponse(
+                        id = 0,
+                        nombreGenerico = "Seleccionar medicamento",
+                        nombreComercial = "",
+                        formaFarmaceutica = "",
+                        concentracion = "",
+                        activo = false
+                    )
+                )
+                listaConHint.addAll(medicamentos)
+                this.catalogoMedicamentosReales = listaConHint
+            }
+        }
+
+        authViewModel.error.observe(viewLifecycleOwner) { errorMsg ->
+            errorMsg?.let {
+                Toast.makeText(requireContext(), it, Toast.LENGTH_LONG).show()
+            }
+        }
+
+        authViewModel.asistenciaMarcadaExito.observe(viewLifecycleOwner) { asistenciaOk ->
+            if (asistenciaOk) {
+                Toast.makeText(context, "Receta generada y consulta finalizada.", Toast.LENGTH_SHORT).show()
+                resetearInterfaz()
+                authViewModel.resetRecetaStatus()
+                authViewModel.resetAsistenciaStatus()
+                authViewModel.cargarTodasLasCitas(requireContext())
+            }
+        }
+    }
+
+    private fun configurarBuscadorCitas(citasFiltradas: List<CitaResponse>) {
+        val isoInputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault()).apply {
+            timeZone = TimeZone.getTimeZone("UTC")
+        }
+        val fechaOutputFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+
+        val sugerencias = citasFiltradas.map { cita ->
+            val fechaFormateada = try {
+                val date = isoInputFormat.parse(cita.fechacita ?: "")
+                date?.let { fechaOutputFormat.format(it) } ?: cita.fechacita
+            } catch (e: Exception) {
+                cita.fechacita
+            }
+
+            "[${cita.horaasignada} - $fechaFormateada] ${cita.nombrepaciente} ${cita.apellidopaciente}"
+        }
+
         val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_dropdown_item_1line, sugerencias)
-
         binding.autoCompleteConsultarReceta.setAdapter(adapter)
+
         binding.autoCompleteConsultarReceta.setOnItemClickListener { _, _, position, _ ->
             val seleccion = adapter.getItem(position)
-            val cita = citas.find { "[${it.horaasignada}] ${it.nombrepaciente} ${it.apellidopaciente}" == seleccion }
+
+            val cita = citasFiltradas.find { cita ->
+                val fechaFormateada = try {
+                    val date = isoInputFormat.parse(cita.fechacita ?: "")
+                    date?.let { fechaOutputFormat.format(it) } ?: cita.fechacita
+                } catch (e: Exception) {
+                    cita.fechacita
+                }
+
+                "[${cita.horaasignada} - $fechaFormateada] ${cita.nombrepaciente} ${cita.apellidopaciente}" == seleccion
+            }
 
             cita?.let {
                 this.citaSeleccionada = it
@@ -157,7 +186,7 @@ class RecetasFragment : BaseFragment(R.layout.fragment_recetas) {
 
         for (i in 0 until binding.containerMedicamentos.childCount) {
             val itemView = binding.containerMedicamentos.getChildAt(i)
-            // 1. VALIDACIÓN DEL SPINNER (HINT): Impedir que se quede en la posición 0
+            // Impedir que se quede en la posición 0
             val spinnerMed = itemView.findViewById<Spinner>(R.id.spnMunicipioMedicamento)
             if (spinnerMed.selectedItemPosition == 0) {
                 Toast.makeText(requireContext(), "Por favor, seleccione un medicamento válido en la fila ${i + 1}", Toast.LENGTH_SHORT).show()
@@ -217,7 +246,7 @@ class RecetasFragment : BaseFragment(R.layout.fragment_recetas) {
         val viewMed = layoutInflater.inflate(R.layout.item_medicamento, binding.containerMedicamentos, false)
         val spinnerMed = viewMed.findViewById<Spinner>(R.id.spnMunicipioMedicamento)
 
-        // PASAMOS LA LISTA DIRECTA: El ArrayAdapter llamará al toString() que modificamos arriba
+        // El ArrayAdapter llamará al toString() que modificamos arriba
         val adapterSpinner = ArrayAdapter(
             requireContext(),
             android.R.layout.simple_spinner_dropdown_item,

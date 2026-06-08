@@ -7,6 +7,7 @@ import android.net.NetworkCapabilities
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.view.inputmethod.InputMethodManager // 1. Importación necesaria
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.doAfterTextChanged
@@ -33,18 +34,33 @@ class LoginActivity : AppCompatActivity() {
 
         verificarSesionGuardada()
 
-        // Configuración inicial de la UI genérica
         binding.tvIrARegistro.visibility = View.VISIBLE
 
         setupListeners()
+        setupOcultarTecladoAlTocarFondo() // 2. Inicializar detector de toques en el fondo
+    }
+
+    // --- FUNCIÓN UTILITARIA GLOBAL PARA OCULTAR EL TECLADO ---
+    private fun ocultarTeclado() {
+        val view = this.currentFocus
+        if (view != null) {
+            val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+            imm.hideSoftInputFromWindow(view.windowToken, 0)
+            view.clearFocus() // Quita la línea de selección activa del EditText
+        }
+    }
+
+    // 3. Permite ocultar el teclado si el usuario toca cualquier espacio vacío del layout raíz
+    private fun setupOcultarTecladoAlTocarFondo() {
+        binding.root.setOnClickListener {
+            ocultarTeclado()
+        }
     }
 
     private fun verificarSesionGuardada() {
         val prefs = getSharedPreferences("CitasMedicasPrefs", MODE_PRIVATE)
         val rolGuardado = prefs.getInt("user_rolid", -1)
 
-        // Si es -1, significa que nadie se ha logueado antes o cerraron sesión.
-        // Nos quedamos en esta pantalla para que se logueen.
         if (rolGuardado == -1) return
 
         if (!hayConexionInternet()) {
@@ -53,7 +69,6 @@ class LoginActivity : AppCompatActivity() {
             Toast.makeText(this, "Bienvenido de nuevo", Toast.LENGTH_SHORT).show()
         }
 
-        // Saltamos directo al menú correspondiente
         redireccionarSegunRol(rolGuardado)
     }
 
@@ -61,7 +76,7 @@ class LoginActivity : AppCompatActivity() {
         when (rolId) {
             RolesUsuario.ID_PACIENTE -> {
                 startActivity(Intent(this, HomePacienteActivity::class.java))
-                finish() // Matamos el Login para que no puedan regresar con el botón de "Atrás"
+                finish()
             }
             RolesUsuario.ID_MEDICO -> {
                 startActivity(Intent(this, DashboardMedicoActivity::class.java))
@@ -81,7 +96,6 @@ class LoginActivity : AppCompatActivity() {
         return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
     }
 
-
     private fun setupListeners() {
         binding.tvIrARegistro.setOnClickListener {
             val intent = Intent(this, RegistroActivity::class.java)
@@ -95,6 +109,7 @@ class LoginActivity : AppCompatActivity() {
             if (identificador.isEmpty() || pass.isEmpty()) {
                 Toast.makeText(this, "Por favor complete todos los campos", Toast.LENGTH_SHORT).show()
             } else {
+                ocultarTeclado() // 4. Ocultamos el teclado inmediatamente al presionar ingresar
                 binding.btnLogin.isEnabled = false
                 binding.btnLogin.text = "Cargando..."
                 ejecutarLoginUnificado(identificador, pass)
@@ -103,17 +118,8 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun ejecutarLoginUnificado(usuario: String, clave: String) {
-        // Captura de la frase secreta desde la UI si el campo está visible y lleno
-        //val fraseSecreta = binding.etFraseSecreta.text.toString().trim().takeIf { it.isNotEmpty() }
-
-        // Mapeo Dinámico del Request con la integración de la frase secreta
         val request = when {
             usuario.contains("@") -> {
-                // Evita enviar la petición si el administrador no digita la frase obligatoria
-                /*if (fraseSecreta == null) {
-                    Toast.makeText(this, "La frase secreta es obligatoria para Administradores", Toast.LENGTH_SHORT).show()
-                    return
-                }*/
                 LoginRequest(
                     password = clave,
                     rolId = RolesUsuario.ID_ADMIN,
@@ -136,7 +142,6 @@ class LoginActivity : AppCompatActivity() {
                 )
         }
 
-        // RESPALDO LOCAL: Calculamos el rol deducido en el Front-End
         val rolDeducidoPorFront = when {
             usuario.contains("@") -> RolesUsuario.ID_ADMIN
             usuario.length == 9 -> RolesUsuario.ID_PACIENTE
@@ -152,11 +157,9 @@ class LoginActivity : AppCompatActivity() {
                     val user = loginResponse.data
                     val tokenExtraido = user?.token
 
-                    // AJUSTE TÉCNICO EVASIVO
                     val serverRol = user?.rolId ?: 0
                     val rolIdAsignado = if (serverRol > 0) serverRol else rolDeducidoPorFront
 
-                    // --- PERSISTENCIA DE DATOS ---
                     val prefs = getSharedPreferences("CitasMedicasPrefs", MODE_PRIVATE)
                     val exitoEscritura = prefs.edit().apply {
                         putString("user_usuarioid", user?.id ?: "")
@@ -167,13 +170,11 @@ class LoginActivity : AppCompatActivity() {
                         putString("user_email", user?.email ?: "")
                         putString("user_telefono", user?.telefono ?: "")
 
-                        // Campos clínicos del paciente
                         putString("user_alergias", user?.alergias ?: "Ninguna registrada")
                         putString("user_cronicas", user?.condicionesCronicas ?: "Ninguna registrada")
                         putString("user_medicinas", user?.medicamentosRecurrentes ?: "Ninguna")
                         putString("user_sangre", user?.tipoSangre ?: "No especificado")
 
-                        // Campos de perfil adicionales
                         putString("user_genero", user?.genero ?: "M")
                         putString("user_fechanacimiento", user?.fechaNacimiento ?: "")
                         putString("user_estadofamiliar", user?.estadoFamiliar ?: "No especificado")
@@ -188,10 +189,6 @@ class LoginActivity : AppCompatActivity() {
 
                     val nombreUsuario = user?.nombre ?: "Usuario"
 
-                    Log.d("LOGIN_DEBUG_FINAL", "JSON en crudo del usuario: ${Gson().toJson(user)}")
-                    Log.d("LOGIN_DEBUG_FINAL", "rolIdAsignado final utilizado: $rolIdAsignado")
-
-                    // Redirección dinámica según el rol final asignado
                     when (rolIdAsignado) {
                         RolesUsuario.ID_PACIENTE -> navegarA(HomePacienteActivity::class.java, rolIdAsignado, "Bienvenido $nombreUsuario")
                         RolesUsuario.ID_MEDICO -> navegarA(DashboardMedicoActivity::class.java, rolIdAsignado, "Bienvenido Dr. $nombreUsuario")

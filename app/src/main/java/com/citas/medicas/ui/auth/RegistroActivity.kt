@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.InputMethodManager // Importación para el teclado
 import android.widget.ArrayAdapter
 import android.widget.EditText
 import android.widget.Spinner
@@ -31,7 +32,8 @@ import java.util.*
 interface Reseteable {
     fun resetearInterfaz()
 }
-class RegistroActivity : AppCompatActivity(),  Reseteable {
+
+class RegistroActivity : AppCompatActivity(), Reseteable {
 
     private lateinit var binding: ActivityRegistroBinding
 
@@ -54,22 +56,36 @@ class RegistroActivity : AppCompatActivity(),  Reseteable {
         super.onCreate(savedInstanceState)
         // Inicializar el binding
         binding = ActivityRegistroBinding.inflate(layoutInflater)
-        // Uso de binding.root en lugar de R.layout
         setContentView(binding.root)
 
-        //feedback durante el registro
+        // Feedback durante el registro
         authViewModel.isLoading.observe(this) { isLoading ->
             binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
             binding.btnCrearCuenta.isEnabled = !isLoading
-
             binding.btnCrearCuenta.text = if (isLoading) "Procesando..." else "Crear Cuenta"
         }
 
         setupObservers()
         setupCatalogosObservers()
         setupListeners()
-
+        setupOcultarTecladoAlTocarFondo()
         authViewModel.cargarCatalogos()
+    }
+
+    private fun ocultarTeclado() {
+        val view = this.currentFocus
+        if (view != null) {
+            val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+            imm.hideSoftInputFromWindow(view.windowToken, 0)
+            view.clearFocus() // Quita la selección activa del campo
+        }
+    }
+
+    // Configuración del listener para capturar toques en el fondo del ScrollView
+    private fun setupOcultarTecladoAlTocarFondo() {
+        binding.containerForm.setOnClickListener {
+            ocultarTeclado()
+        }
     }
 
     private fun setupObservers() {
@@ -92,7 +108,7 @@ class RegistroActivity : AppCompatActivity(),  Reseteable {
                 // Validar visualmente los spinners si fallan
                 if (estado.isValid) {
                     enviarRegistroAlServidor()
-                }else {
+                } else {
                     btnCrearCuenta.isEnabled = true
                     btnCrearCuenta.text = "Crear Cuenta"
                 }
@@ -126,6 +142,8 @@ class RegistroActivity : AppCompatActivity(),  Reseteable {
 
         // Control y restricción de fechas futuras nativas con DatePickerDialog directo
         binding.etFechaR.setOnClickListener {
+            ocultarTeclado() // Ocultamos el teclado para que no tape el calendario
+
             val calendarioActual = Calendar.getInstance()
             val año = calendarioActual.get(Calendar.YEAR)
             val mes = calendarioActual.get(Calendar.MONTH)
@@ -148,7 +166,7 @@ class RegistroActivity : AppCompatActivity(),  Reseteable {
                 }
             }, año, mes, dia)
 
-            // Bloquear visualmente los días posteriores al día de hoy (se verán deshabilitados)
+            // Bloquear visualmente los días posteriores al día de hoy
             picker.datePicker.maxDate = System.currentTimeMillis()
             picker.show()
         }
@@ -156,7 +174,7 @@ class RegistroActivity : AppCompatActivity(),  Reseteable {
         // Volver al login
         binding.tvVolverALogin.setOnClickListener {
             startActivity(Intent(this, LoginActivity::class.java))
-            finish() // Cerrar registro para no acumular pantallas
+            finish()
         }
 
         binding.btnCrearCuenta.setOnClickListener {
@@ -168,22 +186,22 @@ class RegistroActivity : AppCompatActivity(),  Reseteable {
             if (contrasena != confirmarContrasena) {
                 binding.etConfirmarClaveR.error = "Las contraseñas no coinciden"
                 Toast.makeText(this, "Las contraseñas ingresadas deben ser iguales", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener // Frena la ejecución del registro si falla
+                return@setOnClickListener // Frena la ejecución si falla
             } else {
-                binding.etConfirmarClaveR.error = null // Limpia el error si ya coincide
+                binding.etConfirmarClaveR.error = null
             }
 
-            // NUEVA VALIDACIÓN: Verificar que el número de afiliado tenga exactamente 9 dígitos numéricos
-            // Usamos Regex para asegurar que solo sean números y exactamente 9 caracteres
+            // Verificar que el número de afiliado tenga exactamente 9 dígitos numéricos
             if (!numeroAfiliado.matches(Regex("^\\d{9}$"))) {
                 binding.etAfiliadoR.error = "El número de afiliado debe tener exactamente 9 dígitos numéricos"
                 Toast.makeText(this, "Por favor, ingrese un número de afiliado válido (9 dígitos)", Toast.LENGTH_LONG).show()
-                binding.etAfiliadoR.requestFocus() // Lleva el foco visual al campo con error
-                return@setOnClickListener // Frena la ejecución si no cumple
+                binding.etAfiliadoR.requestFocus()
+                return@setOnClickListener
             } else {
-                binding.etAfiliadoR.error = null // Limpia el error si la validación pasa
+                binding.etAfiliadoR.error = null
             }
 
+            ocultarTeclado()
             binding.btnCrearCuenta.isEnabled = false
             binding.btnCrearCuenta.text = "Procesando..."
 
@@ -196,19 +214,18 @@ class RegistroActivity : AppCompatActivity(),  Reseteable {
                 telefono = binding.etTelefonoR.text.toString(),
                 password = binding.etClaveR.text.toString(),
                 extraCampo = binding.etAfiliadoR.text.toString(),
-                especialidadPos = 1, // 1 para que no de error
+                especialidadPos = 1, // 1 para evitar errores de validación interna
                 unidadPos = 1
             )
         }
     }
+
     override fun resetearInterfaz() {
-        // limpiarCampos del BaseFragment pasando todos los EditTexts
         limpiarCampos(
             binding.etNombreR, binding.etApellidoR, binding.etDuiR,
             binding.etFechaR, binding.etCorreoR, binding.etTelefonoR,
             binding.etAfiliadoR, binding.etClaveR
         )
-        // Resetear Spinner
         binding.spGeneroR.setSelection(0)
     }
 
@@ -219,7 +236,7 @@ class RegistroActivity : AppCompatActivity(),  Reseteable {
             "Femenino" -> "F"
             else -> "O"
         }
-        // Preparar los datos
+
         val nuevoUsuario = RegistroRequest(
             nombre = binding.etNombreR.text.toString().trim(),
             apellido = binding.etApellidoR.text.toString().trim(),

@@ -7,11 +7,14 @@
     android:background="@color/citas_background">
 
     <LinearLayout
+        android:id="@+id/containerForm"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:padding="24dp"
-        android:gravity="center_horizontal">
+        android:gravity="center_horizontal"
+        android:clickable="true"
+        android:focusable="true">
 
         <ImageView
             android:id="@+id/ivLogo"

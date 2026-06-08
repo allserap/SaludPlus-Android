@@ -9,6 +9,7 @@ import androidx.fragment.app.Fragment
 import com.citas.medicas.R
 import com.citas.medicas.databinding.ActivityDashboardAdminBinding
 import com.citas.medicas.ui.auth.LoginActivity
+import com.citas.medicas.utils.SessionDialogHelper
 import com.citas.medicas.utils.SessionManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
@@ -85,16 +86,7 @@ class DashboardAdminActivity : AppCompatActivity() {
                     .setNegativeButton("Cancelar", null)
                     .setPositiveButton("Salir") { _, _ ->
                         btnSalir.isEnabled = false
-                        val prefs = getSharedPreferences("CitasMedicasPrefs", MODE_PRIVATE)
-                        prefs.edit().clear().apply()
-                        SessionManager.logout(this@DashboardAdminActivity)
-
-                        // Redirige al Login limpiando el historial de navegación
-                        val intent = Intent(this@DashboardAdminActivity, LoginActivity::class.java).apply {
-                            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                        }
-                        startActivity(intent)
-                        finish()
+                        SessionDialogHelper.ejecutarLogoutCompleto(this@DashboardAdminActivity)
                     }
                     .show()
             }

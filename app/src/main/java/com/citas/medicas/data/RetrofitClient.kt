@@ -1,6 +1,9 @@
 package com.citas.medicas.data
 
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
+import com.citas.medicas.utils.SessionDialogHelper // Tu helper centralizado
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -15,7 +18,7 @@ object RetrofitClient {
     private fun getClient(context: Context): Retrofit {
         if (retrofit == null) {
 
-            // 1. Definimos el interceptor para agregar el Token JWT de forma dinámica
+            // Inyectar Token y capturar Expiración de Sesión
             val authInterceptor = Interceptor { chain ->
                 val originalRequest = chain.request()
 
@@ -26,27 +29,44 @@ object RetrofitClient {
 
                 if (!token.isNullOrEmpty()) {
                     val tokenFormateado = if (token.startsWith("Bearer ")) token else "Bearer $token"
-                    requestBuilder.addHeader("Authorization", tokenFormateado) // <-- Corregido aquí
+                    requestBuilder.addHeader("Authorization", tokenFormateado)
                 }
 
-                chain.proceed(requestBuilder.build())
+                // Ejecutar la petición hacia el servidor de Railway
+                val response = chain.proceed(requestBuilder.build())
+
+                // Capturar la respuesta del middleware de Node.js
+                if (response.code == 401) {
+                    val responseBodyString = response.peekBody(Long.MAX_VALUE).string()
+
+                    // Buscar el flag exacto que manda tu backend
+                    if (responseBodyString.contains("\"expired\":true")) {
+
+                        // Saltar de forma segura al hilo principal (UI Thread) para mostrar el AlertDialog
+                        Handler(Looper.getMainLooper()).post {
+                            SessionDialogHelper.mostrarDialogoExpiracion(context)
+                        }
+                    }
+                }
+
+                response
             }
 
-            // 2. Agregamos un Logging Interceptor para poder auditar el tráfico en Logcat
+            // Agregar un Logging Interceptor para poder auditar el tráfico en Logcat
             val loggingInterceptor = HttpLoggingInterceptor().apply {
                 level = HttpLoggingInterceptor.Level.BODY
             }
 
-            // 3. Construimos el cliente OkHttp enlazando los interceptores y tiempos
+            // Construir el cliente OkHttp enlazando los interceptores y tiempos
             val okHttpClient = OkHttpClient.Builder()
                 .connectTimeout(60, TimeUnit.SECONDS)
                 .readTimeout(60, TimeUnit.SECONDS)
                 .writeTimeout(60, TimeUnit.SECONDS)
-                .addInterceptor(authInterceptor)
+                .addInterceptor(authInterceptor) // Sigue consumiéndose aquí de manera transparente
                 .addInterceptor(loggingInterceptor)
                 .build()
 
-            // 4. Inicializamos Retrofit
+            // Inicializar Retrofit
             retrofit = Retrofit.Builder()
                 .baseUrl(BASE_URL)
                 .client(okHttpClient)

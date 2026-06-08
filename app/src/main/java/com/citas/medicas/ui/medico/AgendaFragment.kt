@@ -74,9 +74,7 @@ class AgendaFragment : Fragment(R.layout.fragment_agenda) {
             val citasFiltradas = listaCitas.filter { cita ->
                 val estadoCita = cita.estadocita?.lowercase()?.trim() ?: ""
 
-                // Compara contra las 3 variantes que necesitas
-                estadoCita == "confirmada" ||
-                        estadoCita == "reprogramada"
+                estadoCita == "confirmada"
             }
 
             // Evaluamos e inflamos la UI con la lista ya depurada

@@ -2,8 +2,8 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("com.google.devtools.ksp")
-    id("kotlin-kapt")
-    //id("com.google.gms.google-services")
+    // id("kotlin-kapt") // Comentado si solo usas KSP para Room, mejora el rendimiento de compilación
+    // id("com.google.gms.google-services")
 }
 
 android {
@@ -44,7 +44,7 @@ android {
     }
 
     buildFeatures {
-        viewBinding = true //permite la relación xml con .kt
+        viewBinding = true
         dataBinding = false
         buildConfig = true
     }
@@ -52,6 +52,7 @@ android {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.3")
+
     // --- LIBRERÍAS BASE ---
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
@@ -59,14 +60,11 @@ dependencies {
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.activity:activity-ktx:1.8.2")
     implementation("androidx.fragment:fragment-ktx:1.6.2")
-    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
-
 
     // --- NETWORKING (Retrofit) ---
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
-    implementation(libs.androidx.activity)
 
     // Corrutinas para llamadas asíncronas
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
@@ -77,7 +75,7 @@ dependencies {
     implementation("androidx.room:room-ktx:$roomVersion")
     ksp("androidx.room:room-compiler:$roomVersion")
 
-    //mapas
+    // --- IMÁGENES & GLIDE ---
     implementation("com.github.bumptech.glide:glide:4.16.0")
 
     // --- LIFECYCLE (ViewModel & LiveData) ---

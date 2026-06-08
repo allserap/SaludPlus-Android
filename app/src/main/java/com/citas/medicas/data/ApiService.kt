@@ -38,6 +38,13 @@ interface ApiService {
     @POST("auth/login")
     suspend fun loginUsuario(@Body request: LoginRequest): Response<LoginResponse>
 
+    @POST("auth/logout")
+    suspend fun logoutUsuario(@Body request: Map<String, String>): Response<Void>
+
+    @POST("auth/refresh_token")
+    suspend fun refreshToken(@Body request: Map<String, String>): Response<LoginResponse>
+
+
     //Globales
     @GET("global/roles/catalogos")
     suspend fun obtenerRoles(): Response<CatalogosResponse<List<RolResponse>>>
