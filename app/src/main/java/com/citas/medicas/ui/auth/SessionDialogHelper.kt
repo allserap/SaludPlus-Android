@@ -3,6 +3,7 @@ package com.citas.medicas.utils
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
+import android.util.Log
 import android.widget.Toast
 import com.citas.medicas.data.RetrofitClient
 import kotlinx.coroutines.CoroutineScope
@@ -15,15 +16,14 @@ object SessionDialogHelper {
     private var dialogAbierto = false
 
     fun mostrarDialogoExpiracion(context: Context) {
-        // Evita que la app intente levantar un Dialog sobre una pantalla destruida o si ya hay uno abierto
-        if (context !is Activity || context.isFinishing || dialogAbierto) return
+        if (context !is Activity || context.isFinishing || context.isDestroyed || dialogAbierto) return
 
         dialogAbierto = true
 
         AlertDialog.Builder(context)
             .setTitle("Sesión Expirada")
             .setMessage("Tu sesión ha caducado. ¿Deseas mantenerte conectado en SaludPlus?")
-            .setCancelable(false) // Obligamos al usuario a tomar una decisión
+            .setCancelable(false)
             .setPositiveButton("Mantener sesión activa") { dialog, _ ->
                 dialogAbierto = false
                 dialog.dismiss()
@@ -37,10 +37,16 @@ object SessionDialogHelper {
             .show()
     }
 
-    // refresh token
     private fun solicitarRefreshToken(context: Context) {
-        val tokenActual = AuthManager.getToken(context) ?: return
-        val requestBody = mapOf("token" to tokenActual)
+        val tokenActual = AuthManager.getToken(context)
+
+        if (tokenActual.isNullOrEmpty()) {
+            ejecutarLogoutCompleto(context)
+            return
+        }
+
+        // Estructura idéntica a req.body esperada por el endpoint separado
+        val requestBody = mapOf("refreshToken" to tokenActual)
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
@@ -48,17 +54,23 @@ object SessionDialogHelper {
                 val response = apiService.refreshToken(requestBody)
 
                 withContext(Dispatchers.Main) {
-                    if (response.isSuccessful && response.body()?.success == true) {
-                        val nuevoToken = response.body()?.data?.token
-                        if (nuevoToken != null) {
-                            AuthManager.guardarNuevoToken(context, nuevoToken)
-                            Toast.makeText(context, "Sesión renovada con éxito", Toast.LENGTH_SHORT).show()
+                    if (response.isSuccessful && response.body() != null) {
+                        val jsonResponse = response.body()!!
+
+                        if (jsonResponse.get("success").asBoolean) {
+                            val dataObj = jsonResponse.getAsJsonObject("data")
+                            val nuevoToken = dataObj?.get("accessToken")?.asString
+
+                            if (!nuevoToken.isNullOrEmpty()) {
+                                AuthManager.guardarNuevoToken(context, nuevoToken)
+                                Toast.makeText(context, "Sesión renovada con éxito", Toast.LENGTH_SHORT).show()
+                            } else {
+                                ejecutarLogoutCompleto(context)
+                            }
                         } else {
                             ejecutarLogoutCompleto(context)
                         }
                     } else {
-                        // El refresh token también caducó en base de datos
-                        Toast.makeText(context, "Sesión inválida. Debe loguearse de nuevo", Toast.LENGTH_LONG).show()
                         ejecutarLogoutCompleto(context)
                     }
                 }
@@ -71,11 +83,10 @@ object SessionDialogHelper {
         }
     }
 
-     // Cierre de sesión definitivo (Invocado voluntariamente o por expiración rechazada)
     fun ejecutarLogoutCompleto(context: Context) {
         val tokenActual = AuthManager.getToken(context)
 
-        if (tokenActual == null) {
+        if (tokenActual.isNullOrEmpty()) {
             AuthManager.clearSessionLocal(context)
             return
         }
@@ -85,13 +96,11 @@ object SessionDialogHelper {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val apiService = RetrofitClient.getApiService(context)
-                // aviso para borrar la fila de refresh_tokens
                 apiService.logoutUsuario(requestBody)
             } catch (e: Exception) {
-                // Si falla la red, ignoramos el error para no trabar el flujo del usuario
+                Log.e("LOGOUT_ERROR", "Error silenciado en red de logout", e)
             } finally {
                 withContext(Dispatchers.Main) {
-                    // Limpieza local de SharedPreferences y redirección a LoginActivity
                     AuthManager.clearSessionLocal(context)
                 }
             }
