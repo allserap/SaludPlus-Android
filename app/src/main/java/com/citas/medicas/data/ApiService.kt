@@ -42,8 +42,7 @@ interface ApiService {
     suspend fun logoutUsuario(@Body request: Map<String, String>): Response<Void>
 
     @POST("auth/refresh_token")
-    suspend fun refreshToken(@Body request: Map<String, String>): Response<LoginResponse>
-
+    suspend fun refreshToken(@Body request: Map<String, String>): Response<com.google.gson.JsonObject>
 
     //Globales
     @GET("global/roles/catalogos")
