@@ -42,8 +42,7 @@ interface ApiService {
     suspend fun logoutUsuario(@Body request: Map<String, String>): Response<Void>
 
     @POST("auth/refresh_token")
-    suspend fun refreshToken(@Body request: Map<String, String>): Response<LoginResponse>
-
+    suspend fun refreshToken(@Body request: Map<String, String>): Response<com.google.gson.JsonObject>
 
     //Globales
     @GET("global/roles/catalogos")
@@ -182,6 +181,12 @@ interface ApiService {
         @Path("pacienteId") pacienteId: Int,
         @Body request: EditarPerfilRequest
     ): Response<ApiResponseEditarPerfil>
+
+    @GET("paciente/historial/receta/{id}")
+    suspend fun getRecetaCita(
+        @Path("id") citaId: String
+    ): Response<RecetaPacienteResponse>
+
 
     // =========================================================================
     // AGREGADO: NUEVOS ENDPOINTS PARA EL FLUJO OPERATIVO DEL MÉDICO

@@ -15,6 +15,7 @@ import com.citas.medicas.R
 import com.citas.medicas.data.RetrofitClient
 import com.citas.medicas.ui.AppDatabase
 import com.citas.medicas.models.CitaHistorial
+import com.citas.medicas.ui.paciente.adapter.RecetaBottomSheet
 import com.citas.medicas.ui.paciente.local.entities.toEntity
 import com.citas.medicas.ui.paciente.local.entities.toModel
 import com.google.android.material.bottomnavigation.BottomNavigationView
@@ -37,7 +38,21 @@ class HistorialCitasActivity : AppCompatActivity() {
         // Inicializar RecyclerView
         val rvHistorial = findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.rvHistorialCitas)
         rvHistorial.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(this)
-        adapter = HistorialAdapter(emptyList())
+
+        adapter = HistorialAdapter(emptyList()) { citaSeleccionada ->
+            val estado = citaSeleccionada.estado?.lowercase() ?: ""
+
+            // Verificamos que sea una cita completada
+            if (estado.contains("atendida") || estado.contains("finalizada") || estado.contains("completada")) {
+
+                // Levantamos el BottomSheet pasándole el ID de la cita
+                val bottomSheet = RecetaBottomSheet.newInstance(citaSeleccionada.id)
+                bottomSheet.show(supportFragmentManager, "RecetaSheet")
+
+            } else {
+                Toast.makeText(this, "Solo las citas atendidas tienen receta", Toast.LENGTH_SHORT).show()
+            }
+        }
         rvHistorial.adapter = adapter
 
         // Referencias de los nuevos filtros en el XML

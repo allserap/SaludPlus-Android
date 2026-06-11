@@ -315,3 +315,25 @@ data class DetalleRecetaResponse(
     @SerializedName("cantidad") val cantidad: Int,
     @SerializedName("instrucciones") val instrucciones: String
 )
+
+data class RecetaPacienteResponse(
+    val success: Boolean?,
+    val message: String?,
+    val data: DetalleRecetaPaciente?
+)
+
+data class DetalleRecetaPaciente(
+    val medico_nombre: String?,
+    val apellido: String?,
+    val telefono: String?,
+    val especialidad: String?,
+    val fecha: String?,
+    val nombre_generico: String?,
+    val forma_farmaceutica: String?,
+    val concentracion: String?,
+    val dosis: String?,
+    val duracion_dias: Int?,
+    val cantidad: Int?,
+    val instrucciones: String?
+)
+
