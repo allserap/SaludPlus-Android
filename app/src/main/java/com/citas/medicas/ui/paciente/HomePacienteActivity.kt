@@ -21,6 +21,7 @@ import com.citas.medicas.ui.AppDatabase
 import com.citas.medicas.ui.auth.LoginActivity
 import com.citas.medicas.ui.paciente.local.entities.toEntity
 import com.citas.medicas.ui.paciente.local.entities.toModel
+import com.citas.medicas.utils.SessionDialogHelper
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -28,6 +29,9 @@ import java.util.Locale
 import java.util.TimeZone
 
 class HomePacienteActivity : AppCompatActivity() {
+
+    private var dialogSalir: androidx.appcompat.app.AlertDialog? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -85,24 +89,17 @@ class HomePacienteActivity : AppCompatActivity() {
             }
         }
         btnCerrarSesion.setOnClickListener {
-            com.google.android.material.dialog.MaterialAlertDialogBuilder(this@HomePacienteActivity)
+            if (dialogSalir?.isShowing == true) return@setOnClickListener
+
+            dialogSalir = com.google.android.material.dialog.MaterialAlertDialogBuilder(this@HomePacienteActivity)
                 .setTitle("Cerrar Sesión")
                 .setMessage("¿Estás seguro de que deseas salir de tu cuenta?")
                 .setNegativeButton("Cancelar", null)
-                .setPositiveButton("Salir") { dialog, which ->
+                .setPositiveButton("Salir") { _, _ ->
 
-                    val prefs = getSharedPreferences("CitasMedicasPrefs", MODE_PRIVATE)
-                    prefs.edit().clear().apply()
+                    btnCerrarSesion.isEnabled = false
 
-                    lifecycleScope.launch(kotlinx.coroutines.Dispatchers.IO) {
-                        val db = AppDatabase.getDatabase(this@HomePacienteActivity)
-                        db.clearAllTables()
-                    }
-
-                    val intent = Intent(this@HomePacienteActivity, LoginActivity::class.java)
-                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                    startActivity(intent)
-                    finish()
+                    SessionDialogHelper.ejecutarLogoutCompleto(this@HomePacienteActivity)
                 }
                 .show()
         }

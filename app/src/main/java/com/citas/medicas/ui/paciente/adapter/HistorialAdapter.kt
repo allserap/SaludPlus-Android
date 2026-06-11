@@ -10,8 +10,10 @@ import com.citas.medicas.models.CitaHistorial
 import java.text.SimpleDateFormat
 import java.util.Locale
 
-class HistorialAdapter(private var listaCitas: List<CitaHistorial>) :
-    RecyclerView.Adapter<HistorialAdapter.HistorialViewHolder>() {
+class HistorialAdapter(
+    private var listaCitas: List<CitaHistorial>,
+    private val onCitaClick: ((CitaHistorial) -> Unit)? = null
+) : RecyclerView.Adapter<HistorialAdapter.HistorialViewHolder>() {
 
     class HistorialViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val tvEspecialidad: TextView = view.findViewById(R.id.tvHistorialEspecialidad)
@@ -36,11 +38,9 @@ class HistorialAdapter(private var listaCitas: List<CitaHistorial>) :
         // 1. Obtenemos el texto crudo (ej. "CANCELADA_PACIENTE" o "REPROGRAMADA")
         val estadoCrudo = cita.estado ?: "Desconocido"
 
+        // Limpiamos el estado cortando por el "_"
         val estadoLimpio = estadoCrudo.split("_")[0].uppercase()
-
-        holder.tvEstado.text = estadoLimpio // (Usa el nombre de tu TextView aquí)
-
-//        holder.tvEstado.text = cita.estado?.uppercase()
+        holder.tvEstado.text = estadoLimpio
 
         holder.tvDoctor.text = "Doctor: ${cita.doctor}"
         holder.tvUnidad.text = "Unidad: ${cita.unidad_medica}"
@@ -58,6 +58,11 @@ class HistorialAdapter(private var listaCitas: List<CitaHistorial>) :
             holder.layoutBotones.visibility = View.GONE
         } else {
             holder.layoutBotones.visibility = View.VISIBLE
+        }
+
+        // 👈 CAMBIO 2: Hacemos que la tarjeta entera sea un botón
+        holder.itemView.setOnClickListener {
+            onCitaClick?.invoke(cita)
         }
     }
 

@@ -183,6 +183,12 @@ interface ApiService {
         @Body request: EditarPerfilRequest
     ): Response<ApiResponseEditarPerfil>
 
+    @GET("paciente/historial/receta/{id}")
+    suspend fun getRecetaCita(
+        @Path("id") citaId: String
+    ): Response<RecetaPacienteResponse>
+
+
     // =========================================================================
     // AGREGADO: NUEVOS ENDPOINTS PARA EL FLUJO OPERATIVO DEL MÉDICO
     // =========================================================================
