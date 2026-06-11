@@ -66,6 +66,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
+            android:backgroundTint="@color/citas_white"
             android:padding="16dp">
 
             <TextView
@@ -119,6 +120,7 @@
         android:layout_weight="1"
         android:clipToPadding="false"
         android:paddingBottom="16dp"
+        android:backgroundTint="@color/citas_white"
         tools:listitem="@layout/item_medicamento_receta"/>
 
     <com.google.android.material.button.MaterialButton
