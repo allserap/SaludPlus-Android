@@ -1,8 +1,10 @@
 package com.citas.medicas.data
 
+import android.app.Activity
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
+import com.citas.medicas.ActivityProvider
 import com.citas.medicas.utils.SessionDialogHelper // Tu helper centralizado
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -18,33 +20,29 @@ object RetrofitClient {
     private fun getClient(context: Context): Retrofit {
         if (retrofit == null) {
 
-            // Inyectar Token y capturar Expiración de Sesión
             val authInterceptor = Interceptor { chain ->
                 val originalRequest = chain.request()
+                val path = originalRequest.url.encodedPath   // ← nuevo
 
                 val prefs = context.applicationContext.getSharedPreferences("CitasMedicasPrefs", Context.MODE_PRIVATE)
                 val token = prefs.getString("token_jwt", "")
 
                 val requestBuilder = originalRequest.newBuilder()
-
                 if (!token.isNullOrEmpty()) {
                     val tokenFormateado = if (token.startsWith("Bearer ")) token else "Bearer $token"
                     requestBuilder.addHeader("Authorization", tokenFormateado)
                 }
 
-                // Ejecutar la petición hacia el servidor de Railway
                 val response = chain.proceed(requestBuilder.build())
 
-                // Capturar la respuesta del middleware de Node.js
-                if (response.code == 401) {
+                if (response.code == 401 && !path.contains("auth/logout")) {
                     val responseBodyString = response.peekBody(Long.MAX_VALUE).string()
-
-                    // Buscar el flag exacto que manda tu backend
                     if (responseBodyString.contains("\"expired\":true")) {
-
-                        // Saltar de forma segura al hilo principal (UI Thread) para mostrar el AlertDialog
                         Handler(Looper.getMainLooper()).post {
-                            SessionDialogHelper.mostrarDialogoExpiracion(context)
+                            val activity = ActivityProvider.currentActivity
+                            if (activity != null && !activity.isFinishing && !activity.isDestroyed) {
+                                SessionDialogHelper.mostrarDialogoExpiracion(activity)
+                            }
                         }
                     }
                 }
