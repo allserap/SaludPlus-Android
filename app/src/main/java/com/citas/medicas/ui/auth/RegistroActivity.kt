@@ -124,7 +124,13 @@ class RegistroActivity : AppCompatActivity(), Reseteable {
         }
 
         authViewModel.error.observe(this) { errorMsg ->
-            Toast.makeText(this, errorMsg, Toast.LENGTH_SHORT).show()
+            if (errorMsg != null) {
+                Toast.makeText(this, errorMsg, Toast.LENGTH_LONG).show()
+
+                if (errorMsg.contains("afiliado", ignoreCase = true)) {
+                    binding.etAfiliadoR.requestFocus()
+                }
+            }
         }
     }
 

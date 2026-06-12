@@ -110,10 +110,22 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             } else {
                 repository.registrarPaciente(datos)
             }
+
             resultado.onSuccess { mensaje ->
                 _registroExitoso.value = mensaje
             }.onFailure { excepcion ->
-                _error.value = excepcion.message
+                val mensajeError = excepcion.message ?: "Error desconocido"
+
+                if (mensajeError.contains("409") || mensajeError.contains("afiliado", ignoreCase = true)) {
+                    _error.value = "El número de afiliado ya está registrado en el sistema"
+
+                    _formState.value = _formState.value?.copy(
+                        afiliadoError = "Este número de afiliado ya existe",
+                        isValid = false
+                    )
+                } else {
+                    _error.value = mensajeError
+                }
             }
             _isLoading.value = false
         }
