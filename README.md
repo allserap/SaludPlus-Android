@@ -141,4 +141,4 @@ private const val BASE_URL = "https://<TU_IP_O_HOST>_VAL_BACKEND:8080/"
 
 
 ## 📄 Licencia
-Este software se ha desarrollado bajo un entorno estrictamente académico y de formación técnica profesional para la institución ITCA. Todos los derechos reservados 2026.
+Este software se ha desarrollado bajo un entorno estrictamente académico y de formación técnica profesional para la institución ITCA.
